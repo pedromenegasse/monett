@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Monett — Clarity for Performance</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<title>Monett</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL='https://rsqzzzubdyobvrnviqse.supabase.co';
@@ -15,9 +16,9 @@ let currentUser=null;
 <style>
   :root{
     --bg:#080a0d;--surface:#0f1115;--surface2:#141619;--border:#1e2025;
-    --accent:#c9a84c;--accent2:#e8c97a;--red:#ff4d6d;--yellow:#c9a84c;
-    --text:#f0ece4;--muted:#5a5040;
-    --gold-bg:rgba(184,134,11,0.20);--gold-text:#c9a84c;--gold-border:rgba(201,168,76,0.45);
+    --accent:#c9a84c;--accent2:#3bf0a0;--red:#ff4d6d;--yellow:#e8c97a;
+    --text:#f0ece4;--muted:#6b6050;
+    --gold-bg:rgba(184,134,11,0.20);--gold-text:#e8c97a;--gold-border:rgba(201,168,76,0.45);
     --bord-bg:rgba(90,30,140,0.22);--bord-text:#c084fc;--bord-border:rgba(120,50,180,0.45);
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -183,15 +184,8 @@ let currentUser=null;
 <body>
 
 <header>
-  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-    <svg width="32" height="27" viewBox="0 0 36 30" style="flex-shrink:0">
-      <path d="M0,30 L0,0 L11,17 L11,30 L7,30 L7,10 L1.5,3 L1.5,30Z" fill="#c9a84c"/>
-      <path d="M36,30 L36,0 L25,17 L25,30 L29,30 L29,10 L34.5,3 L34.5,30Z" fill="#c9a84c"/>
-      <rect x="13" y="22" width="3" height="8" rx="1" fill="#c9a84c" opacity="0.5"/>
-      <rect x="17" y="18" width="3" height="12" rx="1" fill="#c9a84c" opacity="0.75"/>
-      <rect x="21" y="14" width="3" height="16" rx="1" fill="#c9a84c"/>
-    </svg>
-    <h1 style="font-family:'Syne',sans-serif;letter-spacing:2px;color:#f0ece4">MONETT</h1>
+  <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <img src="header.png" alt="Monett" style="height:52px;object-fit:contain">
   </div>
   <div class="header-right">
     <button class="btn-outline" onclick="exportData()">⬇ Exportar</button>
@@ -347,8 +341,10 @@ async function renameAccountDB(id,name){
   const a=_accounts.find(x=>x.id===id);if(a)a.name=name;
 }
 async function saveISSDB(acctId,val){
-  await sb.from('user_accounts').update({iss_rate:val}).eq('id',acctId);
+  const{error}=await sb.from('user_accounts').update({iss_rate:val}).eq('id',acctId);
+  if(error){console.error('saveISSDB error:',error);return false;}
   const a=_accounts.find(x=>x.id===acctId);if(a)a.iss=val;
+  return true;
 }
 
 function getActiveAcct(){
@@ -494,7 +490,10 @@ async function saveISS(){
   const v=parseFloat(raw);
   if(isNaN(v)||v<0||v>100){alert('Valor inválido');return;}
   const acct=getActiveAcct();
-  if(acct)await saveISSDB(acct.id,v);
+  if(acct){
+    const ok=await saveISSDB(acct.id,v);
+    if(!ok){alert('Erro ao salvar ISS. Verifique o console.');return;}
+  }
   document.getElementById('iss-display').textContent=fmtPct(v);
   showToast('ISS → '+fmtPct(v));
   await renderAll();

@@ -3,11 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Monett — Clarity for Performance</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<title>Monett</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#080a0d;--surface:#0f1115;--surface2:#141619;--border:#1e2025;--accent:#c9a84c;--red:#ff4d6d;--text:#f0ece4;--muted:#5a5040}
+  :root{--bg:#080a0d;--surface:#0f1115;--surface2:#141619;--border:#1e2025;--accent:#c9a84c;--red:#ff4d6d;--text:#f0ece4;--muted:#6b6050}
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 32px;width:100%;max-width:400px}
@@ -31,18 +32,8 @@
 </head>
 <body>
 <div class="card">
-  <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px">
-    <svg width="32" height="27" viewBox="0 0 36 30">
-      <path d="M0,30 L0,0 L11,17 L11,30 L7,30 L7,10 L1.5,3 L1.5,30Z" fill="#c9a84c"/>
-      <path d="M36,30 L36,0 L25,17 L25,30 L29,30 L29,10 L34.5,3 L34.5,30Z" fill="#c9a84c"/>
-      <rect x="13" y="22" width="3" height="8" rx="1" fill="#c9a84c" opacity="0.5"/>
-      <rect x="17" y="18" width="3" height="12" rx="1" fill="#c9a84c" opacity="0.75"/>
-      <rect x="21" y="14" width="3" height="16" rx="1" fill="#c9a84c"/>
-    </svg>
-    <h1 style="font-family:'Syne',sans-serif;letter-spacing:3px;font-size:24px">MONETT</h1>
-  </div>
-  <p class="sub" style="text-align:center;letter-spacing:2px;font-size:10px;color:#c9a84c;margin-bottom:4px">CLARITY FOR PERFORMANCE</p>
-  <p class="sub">Faça login para acessar seu dashboard</p>
+  <div style="text-align:center;margin-bottom:8px"><img src="login.png" alt="Monett" style="width:100%;max-width:280px;object-fit:contain"></div>
+  <p class="sub" style="text-align:center;margin-bottom:20px">Faça login para acessar seu dashboard</p>
 
   <div class="tabs">
     <button class="tab active" id="tab-login" onclick="switchTab('login')">Entrar</button>
