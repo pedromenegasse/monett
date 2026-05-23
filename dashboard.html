@@ -203,7 +203,11 @@ let currentUser=null;
 <!-- ISS BAR -->
 <div id="iss-bar">
   <label>ISS Nota Fiscal</label>
-  <input type="number" id="iss-inp" min="0" max="100" step="0.01" value="6.00">
+  <div style="display:flex;align-items:center;gap:0;background:var(--surface2);border:1px solid var(--border);border-radius:6px;overflow:hidden;width:100px">
+    <button onclick="stepISS(-0.01)" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:5px 7px;font-size:14px;line-height:1">−</button>
+    <input type="text" id="iss-inp" value="6,00" inputmode="decimal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;padding:5px 0;width:50px;text-align:center;outline:none">
+    <button onclick="stepISS(0.01)" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:5px 7px;font-size:14px;line-height:1">+</button>
+  </div>
   <span class="iss-pct">%</span>
   <button class="btn-sm" onclick="saveISS()">Salvar</button>
   <span class="iss-meta">Taxa Meta (investimento): <b>13,85% fixo</b> &nbsp;|&nbsp; ISS deduzido da venda: <b id="iss-display">9,79%</b></span>
@@ -406,7 +410,7 @@ async function confirmAddAccount(){
   if(!acct){alert('Erro ao criar conta.');return;}
   _accounts.push(acct);
   setActiveAcct(acct.id);
-  document.getElementById('iss-inp').value=(6).toFixed(2);
+  document.getElementById('iss-inp').value='6,00';
   document.getElementById('iss-display').textContent=fmtPct(6);
   closeModal();
   renderAccountTabs();
@@ -461,7 +465,7 @@ async function switchAccount(id){
   setActiveAcct(id);
   renderAccountTabs();
   const iss=getISS();
-  document.getElementById('iss-inp').value=parseFloat(iss).toFixed(2);
+  document.getElementById('iss-inp').value=parseFloat(iss).toFixed(2).replace('.',',');
   document.getElementById('iss-display').textContent=fmtPct(iss);
   await renderAll();
 }
@@ -472,6 +476,12 @@ function getISS(){
   const key=acct?'trafego_iss_'+acct.id:SK_ISS;
   const v=parseFloat(localStorage.getItem(key));
   return isNaN(v)?6:v;
+}
+function stepISS(delta){
+  const inp=document.getElementById('iss-inp');
+  const current=parseFloat(inp.value.replace(',','.'))||0;
+  const next=Math.max(0,Math.min(100,Math.round((current+delta)*100)/100));
+  inp.value=next.toFixed(2).replace('.',',');
 }
 async function saveISS(){
   const raw=document.getElementById('iss-inp').value.replace(',','.');
@@ -1150,7 +1160,7 @@ function sortRankModal(col){
   }
 
   const iss=getISS();
-  document.getElementById('iss-inp').value=parseFloat(iss).toFixed(2);
+  document.getElementById('iss-inp').value=parseFloat(iss).toFixed(2).replace('.',',');
   document.getElementById('iss-display').textContent=fmtPct(iss);
   document.getElementById('inp-date').value=new Date().toISOString().slice(0,10);
   const savedMode=localStorage.getItem('tp_import_mode')||'3col';
