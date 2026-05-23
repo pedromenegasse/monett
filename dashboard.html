@@ -865,18 +865,34 @@ async function exportData(){
   showToast('✓ Exportado!');
 }
 function importFile(e){
+function importFile(e){
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
-  reader.onload=ev=>{
+  reader.onload=async ev=>{
     try{
       const bundle=JSON.parse(ev.target.result);
       if(!bundle.accounts||!bundle.data)throw new Error('Formato inválido');
-      if(!confirm(`Importar ${bundle.accounts.length} conta(s)? Os dados atuais serão SUBSTITUÍDOS.`))return;
-      saveAccounts(bundle.accounts);
-      for(const [id,d] of Object.entries(bundle.data))saveData(id,d);
-      if(bundle.iss){localStorage.setItem(SK_ISS,bundle.iss);document.getElementById('iss-inp').value=bundle.iss;document.getElementById('iss-display').textContent=fmtPct(bundle.iss);}
-      if(bundle.accounts.length)setActiveAcct(bundle.accounts[0].id);
-      renderAccountTabs();renderAll();
+      if(!confirm(`Importar ${bundle.accounts.length} conta(s)? Os dados serão adicionados à sua conta atual.`))return;
+      showToast('⏳ Importando...');
+      for(const srcAcct of bundle.accounts){
+        // create account in Supabase
+        const newAcct=await createAccount(srcAcct.name, srcAcct.color||'#c6f135');
+        if(!newAcct)continue;
+        _accounts.push(newAcct);
+        // save ISS if present
+        if(srcAcct.iss)await saveISSDB(newAcct.id,srcAcct.iss);
+        // import daily data
+        const srcData=bundle.data[srcAcct.id]||{};
+        for(const month of Object.keys(srcData)){
+          for(const date of Object.keys(srcData[month])){
+            const rows=srcData[month][date];
+            if(rows&&rows.length)await saveRows(newAcct.id,date,rows);
+          }
+        }
+      }
+      if(_accounts.length)setActiveAcct(_accounts[0].id);
+      renderAccountTabs();
+      await renderAll();
       showToast('✓ Dados importados!');
     }catch(err){alert('Erro ao importar: '+err.message);}
   };
