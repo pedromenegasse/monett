@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tráfego Pago — Login</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0d0f14;--surface:#151821;--surface2:#1c2030;--border:#252a3a;--accent:#c6f135;--red:#ff4d6d;--text:#e8ecf4;--muted:#6b7394}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 32px;width:100%;max-width:400px}
+  h1{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--accent);margin-bottom:6px}
+  .sub{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:28px}
+  .tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:24px}
+  .tab{flex:1;padding:8px;background:transparent;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.06em}
+  .tab.active{background:var(--surface2);color:var(--text)}
+  label{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px}
+  input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:10px 12px;outline:none;transition:border .15s;margin-bottom:14px}
+  input:focus{border-color:var(--accent)}
+  .btn{width:100%;background:var(--accent);color:#0d0f14;border:none;border-radius:8px;padding:11px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s;margin-top:6px}
+  .btn:hover{opacity:.85}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .msg{font-family:'DM Mono',monospace;font-size:12px;padding:10px 12px;border-radius:8px;margin-top:14px;display:none}
+  .msg.err{background:rgba(255,77,109,.1);color:var(--red);border:1px solid rgba(255,77,109,.3)}
+  .msg.ok{background:rgba(59,240,160,.1);color:#3bf0a0;border:1px solid rgba(59,240,160,.3)}
+  .forgot{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center;margin-top:12px;cursor:pointer;transition:color .15s}
+  .forgot:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>📊 Tráfego Pago</h1>
+  <p class="sub">Faça login para acessar seu dashboard</p>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-login" onclick="switchTab('login')">Entrar</button>
+    <button class="tab" id="tab-signup" onclick="switchTab('signup')">Criar conta</button>
+  </div>
+
+  <div id="form-login">
+    <label>Email</label>
+    <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="email">
+    <label>Senha</label>
+    <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn" id="btn-login" onclick="doLogin()">Entrar</button>
+    <p class="forgot" onclick="doReset()">Esqueci minha senha</p>
+  </div>
+
+  <div id="form-signup" style="display:none">
+    <label>Email</label>
+    <input type="email" id="signup-email" placeholder="seu@email.com" autocomplete="email">
+    <label>Senha</label>
+    <input type="password" id="signup-pass" placeholder="mínimo 6 caracteres" autocomplete="new-password" onkeydown="if(event.key==='Enter')doSignup()">
+    <label>Confirmar senha</label>
+    <input type="password" id="signup-pass2" placeholder="repita a senha" onkeydown="if(event.key==='Enter')doSignup()">
+    <button class="btn" id="btn-signup" onclick="doSignup()">Criar conta</button>
+  </div>
+
+  <div class="msg" id="msg"></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://rsqzzzubdyobvrnviqse.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzcXp6enViZHlvYnZybnZpcXNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTUxMTIsImV4cCI6MjA5NTEzMTExMn0.nNMDUloGQoYYpRnCos7LyANRs5rU6IBA_bdk51VlUDs';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Check if already logged in
+sb.auth.getSession().then(({data:{session}})=>{
+  if(session) window.location.href='dashboard.html';
+});
+
+function switchTab(t){
+  document.getElementById('form-login').style.display=t==='login'?'':'none';
+  document.getElementById('form-signup').style.display=t==='signup'?'':'none';
+  document.getElementById('tab-login').classList.toggle('active',t==='login');
+  document.getElementById('tab-signup').classList.toggle('active',t==='signup');
+  hideMsg();
+}
+
+function showMsg(txt,type){
+  const el=document.getElementById('msg');
+  el.textContent=txt;el.className='msg '+(type||'err');el.style.display='block';
+}
+function hideMsg(){document.getElementById('msg').style.display='none';}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  if(!email||!pass){showMsg('Preencha email e senha.');return;}
+  const btn=document.getElementById('btn-login');
+  btn.disabled=true;btn.textContent='Entrando...';
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){showMsg(error.message);btn.disabled=false;btn.textContent='Entrar';}
+  else window.location.href='dashboard.html';
+}
+
+async function doSignup(){
+  const email=document.getElementById('signup-email').value.trim();
+  const pass=document.getElementById('signup-pass').value;
+  const pass2=document.getElementById('signup-pass2').value;
+  if(!email||!pass){showMsg('Preencha todos os campos.');return;}
+  if(pass!==pass2){showMsg('As senhas não coincidem.');return;}
+  if(pass.length<6){showMsg('Senha precisa ter pelo menos 6 caracteres.');return;}
+  const btn=document.getElementById('btn-signup');
+  btn.disabled=true;btn.textContent='Criando conta...';
+  const {error}=await sb.auth.signUp({email,password:pass});
+  if(error){showMsg(error.message);btn.disabled=false;btn.textContent='Criar conta';}
+  else showMsg('Conta criada! Verifique seu email para confirmar.','ok');
+}
+
+async function doReset(){
+  const email=document.getElementById('login-email').value.trim();
+  if(!email){showMsg('Digite seu email primeiro.');return;}
+  await sb.auth.resetPasswordForEmail(email);
+  showMsg('Email de redefinição enviado!','ok');
+}
+</script>
+</body>
+</html>
