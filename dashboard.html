@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Tráfego Pago</title>
+<title>Monett — Clarity for Performance</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL='https://rsqzzzubdyobvrnviqse.supabase.co';
@@ -14,10 +14,10 @@ let currentUser=null;
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0d0f14;--surface:#151821;--surface2:#1c2030;--border:#252a3a;
-    --accent:#c6f135;--accent2:#3bf0a0;--red:#ff4d6d;--yellow:#ffd166;
-    --text:#e8ecf4;--muted:#6b7394;
-    --gold-bg:rgba(184,134,11,0.20);--gold-text:#f0c040;--gold-border:rgba(184,134,11,0.45);
+    --bg:#080a0d;--surface:#0f1115;--surface2:#141619;--border:#1e2025;
+    --accent:#c9a84c;--accent2:#e8c97a;--red:#ff4d6d;--yellow:#c9a84c;
+    --text:#f0ece4;--muted:#5a5040;
+    --gold-bg:rgba(184,134,11,0.20);--gold-text:#c9a84c;--gold-border:rgba(201,168,76,0.45);
     --bord-bg:rgba(90,30,140,0.22);--bord-text:#c084fc;--bord-border:rgba(120,50,180,0.45);
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -184,8 +184,14 @@ let currentUser=null;
 
 <header>
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-    <h1>📊 Tráfego Pago</h1>
-    
+    <svg width="32" height="27" viewBox="0 0 36 30" style="flex-shrink:0">
+      <path d="M0,30 L0,0 L11,17 L11,30 L7,30 L7,10 L1.5,3 L1.5,30Z" fill="#c9a84c"/>
+      <path d="M36,30 L36,0 L25,17 L25,30 L29,30 L29,10 L34.5,3 L34.5,30Z" fill="#c9a84c"/>
+      <rect x="13" y="22" width="3" height="8" rx="1" fill="#c9a84c" opacity="0.5"/>
+      <rect x="17" y="18" width="3" height="12" rx="1" fill="#c9a84c" opacity="0.75"/>
+      <rect x="21" y="14" width="3" height="16" rx="1" fill="#c9a84c"/>
+    </svg>
+    <h1 style="font-family:'Syne',sans-serif;letter-spacing:2px;color:#f0ece4">MONETT</h1>
   </div>
   <div class="header-right">
     <button class="btn-outline" onclick="exportData()">⬇ Exportar</button>
