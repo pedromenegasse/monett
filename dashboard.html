@@ -853,14 +853,13 @@ async function deleteRow(day,name){
 
 /* ── EXPORT / IMPORT ── */
 async function exportData(){
-  const bundle={accounts:_accounts,data:{}};
+  const bundle={accounts:_accounts.map(a=>({...a})),data:{}};
   for(const a of _accounts)bundle.data[a.id]=await loadData(a.id);
-  bundle.iss=getISS();
   const blob=new Blob([JSON.stringify(bundle,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;
-  a.download='trafego-pago-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.download='monett-backup-'+new Date().toISOString().slice(0,10)+'.json';
   a.click();URL.revokeObjectURL(url);
   showToast('✓ Exportado!');
 }
