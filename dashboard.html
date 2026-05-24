@@ -587,7 +587,7 @@ async function importData(){
           <p style="font-family:'DM Mono',monospace;font-size:13px;color:#f0ece4;margin-bottom:8px">Sub ID em conflito</p>
           <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#6b6050;margin-bottom:20px"><b style="color:#e8c97a">"${row.name}"</b> parece ser o mesmo que <b style="color:#e8c97a">"${match}"</b> já existente neste mês.<br><br>Deseja unificar com <b style="color:#e8c97a">"${match}"</b>?</p>
           <div style="display:flex;gap:10px;justify-content:center">
-            <button id="cfm-yes" style="background:transparent;color:#e8c97a;border:1px solid #e8c97a;border-radius:8px;padding:8px 24px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer">Sim</button>
+            <button id="cfm-yes" style="background:transparent;color:#3bf0a0;border:1px solid #3bf0a0;border-radius:8px;padding:8px 24px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer">Sim</button>
             <button id="cfm-no" style="background:transparent;color:#ff4d6d;border:1px solid #ff4d6d;border-radius:8px;padding:8px 24px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer">Não</button>
           </div>
         </div>`;
@@ -595,7 +595,11 @@ async function importData(){
         d.querySelector('#cfm-yes').onclick=()=>{document.body.removeChild(d);resolve(true);};
         d.querySelector('#cfm-no').onclick=()=>{document.body.removeChild(d);resolve(false);};
       });
-      finalRows.push(ok?{...row,name:match}:row);
+      if(ok){
+        finalRows.push({...row,name:match});
+      } else {
+        finalRows.push(row);
+      }
     } else {
       finalRows.push(row);
     }
