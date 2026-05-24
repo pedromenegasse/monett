@@ -565,8 +565,22 @@ async function importData(){
     if(!rows.length){alert('Formato inválido.');return;}
   }
 
-  await saveRows(acct.id,dt,rows);
-  // clear inputs
+  // check for case-insensitive duplicates with existing sub IDs
+  const data=await loadData(acct.id);
+  const month=dt.slice(0,7);
+  const existing=(data[month]&&data[month][dt])||[];
+  const finalRows=[];
+  for(const row of rows){
+    const match=existing.find(e=>e.name.toLowerCase()===row.name.toLowerCase()&&e.name!==row.name);
+    if(match){
+      const ok=confirm(`"${row.name}" parece ser o mesmo que "${match.name}" já existente.\nDeseja adicionar ao sub ID "${match.name}"?`);
+      finalRows.push(ok?{...row,name:match.name}:row);
+    } else {
+      finalRows.push(row);
+    }
+  }
+
+  await saveRows(acct.id,dt,finalRows);
   ['inp-names','inp-inv','inp-venda','inp-paste'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   showToast('✓ Importado!');
   await renderAll();
@@ -615,7 +629,8 @@ async function renderAll(){
 function renderMonthTabs(months,acct,activeMonth){
   const active=activeMonth||getActiveMonth();
   const cur=curMonthKey();
-  const all=[...new Set([...months,cur])].sort().reverse();
+  const all=[...new Set([...months])].sort().reverse();
+  if(!all.length)all.push(cur);
   document.getElementById('month-tabs').innerHTML=all.map(m=>{
     const [y,mo]=m.split('-');
     const d=new Date(+y,+mo-1,1);
