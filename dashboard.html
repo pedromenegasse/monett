@@ -565,40 +565,39 @@ async function importData(){
     if(!rows.length){alert('Formato inválido.');return;}
   }
 
-  // check for case-insensitive duplicates across all days of the month
+  // save all rows first with original names
+  await saveRows(acct.id,dt,rows);
   invalidateCache(acct.id);
-  const data=await loadData(acct.id);
+  ['inp-names','inp-inv','inp-venda','inp-paste'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  showToast('✓ Importado!');
+  await renderAll();
+
+  // then check for case-insensitive conflicts and ask to rename
+  const data2=await loadData(acct.id);
   const month=dt.slice(0,7);
-  const monthData=data[month]||{};
-  // collect all unique sub IDs in this month
+  const monthData=data2[month]||{};
   const allSubIds=[];
   for(const day of Object.keys(monthData)){
     for(const r of monthData[day]){
       if(!allSubIds.find(s=>s.toLowerCase()===r.name.toLowerCase()))allSubIds.push(r.name);
     }
   }
-  const finalRows=[];
   for(const row of rows){
     const match=allSubIds.find(s=>s.toLowerCase()===row.name.toLowerCase()&&s!==row.name);
     if(match){
-      const ok=await showConflictModal(row.name, match);
+      const ok=await showConflictModal(row.name,match);
       if(ok){
-        finalRows.push({...row,name:match});
-      } else {
-        finalRows.push(row);
-        // add the new name so subsequent rows with same spelling don't ask again
-        if(!allSubIds.includes(row.name))allSubIds.push(row.name);
+        // rename the just-saved row to match existing
+        await deleteRowDB(acct.id,dt,row.name);
+        await saveRows(acct.id,dt,[{...row,name:match}]);
+        invalidateCache(acct.id);
+        await renderAll();
       }
-    } else {
-      finalRows.push(row);
-      if(!allSubIds.find(s=>s.toLowerCase()===row.name.toLowerCase()))allSubIds.push(row.name);
+      // update list so same name doesn't trigger again
+      const idx=allSubIds.findIndex(s=>s===row.name);
+      if(idx>=0)allSubIds.splice(idx,1);
     }
   }
-
-  await saveRows(acct.id,dt,finalRows);
-  ['inp-names','inp-inv','inp-venda','inp-paste'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  showToast('✓ Importado!');
-  await renderAll();
 }
 
 function showConflictModal(rowName, matchName){
