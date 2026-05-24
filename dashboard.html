@@ -605,6 +605,7 @@ async function importData(){
     }
   }
 
+  console.log('finalRows to save on', dt, JSON.stringify(finalRows));
   await saveRows(acct.id,dt,finalRows);
   ['inp-names','inp-inv','inp-venda','inp-paste'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   showToast('✓ Importado!');
