@@ -328,6 +328,7 @@ async function loadAccounts(){
   if(!currentUser)return[];
   const{data}=await sb.from('user_accounts').select('*').order('created_at');
   _accounts=(data||[]).map(a=>({id:a.id,name:a.name,color:a.color,iss:parseFloat(a.iss_rate)||6}));
+  console.log('loadAccounts result:', JSON.stringify(_accounts.map(a=>({id:a.id,name:a.name,iss:a.iss}))));
   return _accounts;
 }
 async function createAccount(name,color){
