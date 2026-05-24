@@ -580,21 +580,7 @@ async function importData(){
   for(const row of rows){
     const match=allSubIds.find(s=>s.toLowerCase()===row.name.toLowerCase()&&s!==row.name);
     if(match){
-      const ok=await new Promise(resolve=>{
-        const d=document.createElement('div');
-        d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:9999';
-        d.innerHTML=`<div style="background:#0f1115;border:1px solid #1e2025;border-radius:14px;padding:28px 32px;max-width:380px;width:90%;text-align:center">
-          <p style="font-family:'DM Mono',monospace;font-size:13px;color:#f0ece4;margin-bottom:8px">Sub ID em conflito</p>
-          <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#6b6050;margin-bottom:20px"><b style="color:#e8c97a">"${row.name}"</b> parece ser o mesmo que <b style="color:#e8c97a">"${match}"</b> já existente neste mês.<br><br>Deseja unificar com <b style="color:#e8c97a">"${match}"</b>?</p>
-          <div style="display:flex;gap:10px;justify-content:center">
-            <button id="cfm-yes" style="background:transparent;color:#3bf0a0;border:1px solid #3bf0a0;border-radius:8px;padding:8px 24px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer">Sim</button>
-            <button id="cfm-no" style="background:transparent;color:#ff4d6d;border:1px solid #ff4d6d;border-radius:8px;padding:8px 24px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer">Não</button>
-          </div>
-        </div>`;
-        document.body.appendChild(d);
-        d.querySelector('#cfm-yes').onclick=()=>{document.body.removeChild(d);resolve(true);};
-        d.querySelector('#cfm-no').onclick=()=>{document.body.removeChild(d);resolve(false);};
-      });
+      const ok=await showConflictModal(row.name, match);
       if(ok){
         finalRows.push({...row,name:match});
       } else {
@@ -605,13 +591,29 @@ async function importData(){
     }
   }
 
-  console.log('finalRows to save on', dt, JSON.stringify(finalRows));
   await saveRows(acct.id,dt,finalRows);
   ['inp-names','inp-inv','inp-venda','inp-paste'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   showToast('✓ Importado!');
   await renderAll();
 }
 
+function showConflictModal(rowName, matchName){
+  return new Promise(resolve=>{
+    const d=document.createElement('div');
+    d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:9999';
+    d.innerHTML=`<div style="background:#0f1115;border:1px solid #1e2025;border-radius:14px;padding:28px 32px;max-width:380px;width:90%;text-align:center">
+      <p style="font-family:'DM Mono',monospace;font-size:13px;color:#f0ece4;margin-bottom:8px">Sub ID em conflito</p>
+      <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#6b6050;margin-bottom:20px"><b style="color:#e8c97a">"${rowName}"</b> parece ser o mesmo que <b style="color:#e8c97a">"${matchName}"</b> já existente neste mês.<br><br>Deseja unificar com <b style="color:#e8c97a">"${matchName}"</b>?</p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button id="cfm-yes" style="background:transparent;color:#3bf0a0;border:1px solid #3bf0a0;border-radius:8px;padding:8px 24px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer">Sim</button>
+        <button id="cfm-no" style="background:transparent;color:#ff4d6d;border:1px solid #ff4d6d;border-radius:8px;padding:8px 24px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer">Não</button>
+      </div>
+    </div>`;
+    document.body.appendChild(d);
+    d.querySelector('#cfm-yes').onclick=()=>{document.body.removeChild(d);resolve(true);};
+    d.querySelector('#cfm-no').onclick=()=>{document.body.removeChild(d);resolve(false);};
+  });
+}
 function toggleImport(){
   const body=document.getElementById('import-body');
   const icon=document.getElementById('import-toggle-icon');
@@ -1011,15 +1013,15 @@ async function openSubModal(name){
   document.getElementById('sub-modal-cards').innerHTML=`
     <div class="card" style="text-align:center">
       <div class="card-label">Investimento</div>
-      <div class="card-value cv-yellow" style="font-size:16px;margin:6px 0 4px">${fmt(totInv)}</div>
+      <div class="card-value cv-muted" style="font-size:16px;margin:6px 0 4px">${fmt(totInv)}</div>
       <hr style="border:none;border-top:1px solid var(--border);margin:6px 0">
-      <div class="card-value cv-muted" style="font-size:16px">${fmt(totC.comMeta)}</div>
+      <div class="card-value cv-yellow" style="font-size:16px">${fmt(totC.comMeta)}</div>
     </div>
     <div class="card" style="text-align:center">
       <div class="card-label">Venda</div>
-      <div class="card-value cv-accent" style="font-size:16px;margin:6px 0 4px">${fmt(totVenda)}</div>
+      <div class="card-value cv-muted" style="font-size:16px;margin:6px 0 4px">${fmt(totVenda)}</div>
       <hr style="border:none;border-top:1px solid var(--border);margin:6px 0">
-      <div class="card-value cv-muted" style="font-size:16px">${fmt(totC.menosISS)}</div>
+      <div class="card-value cv-accent" style="font-size:16px">${fmt(totC.menosISS)}</div>
     </div>
     <div class="card" style="text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center"><div class="card-label">Saldo Mês</div><div class="card-value ${totSc}" style="text-align:center">${fmt(totSaldo)}</div></div>
     <div class="card" style="text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center"><div class="card-label">ROAS Médio</div><div class="card-value ${totRc}" style="text-align:center">${totC.roi!==null?totC.roi.toFixed(2):'—'}</div></div>`;
@@ -1116,15 +1118,15 @@ async function openRankModal(){
   document.getElementById('rank-modal-cards').innerHTML=`
     <div class="card" style="text-align:center">
       <div class="card-label">Investimento</div>
-      <div class="card-value cv-yellow" style="font-size:16px;margin:6px 0 4px">${fmt(totInv)}</div>
+      <div class="card-value cv-muted" style="font-size:16px;margin:6px 0 4px">${fmt(totInv)}</div>
       <hr style="border:none;border-top:1px solid var(--border);margin:6px 0">
-      <div class="card-value cv-muted" style="font-size:16px">${fmt(totC.comMeta)}</div>
+      <div class="card-value cv-yellow" style="font-size:16px">${fmt(totC.comMeta)}</div>
     </div>
     <div class="card" style="text-align:center">
       <div class="card-label">Venda</div>
-      <div class="card-value cv-accent" style="font-size:16px;margin:6px 0 4px">${fmt(totVenda)}</div>
+      <div class="card-value cv-muted" style="font-size:16px;margin:6px 0 4px">${fmt(totVenda)}</div>
       <hr style="border:none;border-top:1px solid var(--border);margin:6px 0">
-      <div class="card-value cv-muted" style="font-size:16px">${fmt(totC.menosISS)}</div>
+      <div class="card-value cv-accent" style="font-size:16px">${fmt(totC.menosISS)}</div>
     </div>
     <div class="card" style="text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center">
       <div class="card-label">Saldo Mês</div>
