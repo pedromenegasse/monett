@@ -243,7 +243,10 @@ let currentUser=null;
 
 <!-- IMPORT -->
 <div id="import-section">
-  <h2>➕ Lançar dia</h2>
+  <h2 onclick="toggleImport()" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px">
+    <span id="import-toggle-icon" style="color:var(--yellow);font-size:16px;transition:transform .2s;display:inline-block">−</span> Lançar dia
+  </h2>
+  <div id="import-body">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
     <div class="mode-toggle" style="margin-bottom:0;height:36px">
       <button class="mode-btn active" id="mode-btn-3col" onclick="setMode('3col')" style="height:36px">3×</button>
@@ -255,7 +258,7 @@ let currentUser=null;
   <!-- 3 colunas -->
   <div id="mode-3col" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
     <div>
-      <label style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID</label>
+      <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID</label>
       <textarea id="inp-names" placeholder="" style="min-height:90px"></textarea>
     </div>
     <div>
@@ -269,8 +272,9 @@ let currentUser=null;
   </div>
   <!-- 1 caixa -->
   <div id="mode-1col" style="display:none">
-    <label style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID | Investimento | Venda</label>
+    <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID | Investimento | Venda</label>
     <textarea id="inp-paste" placeholder="" style="min-height:90px"></textarea>
+  </div>
   </div>
 </div>
 
@@ -564,6 +568,14 @@ async function importData(){
   ['inp-names','inp-inv','inp-venda','inp-paste'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   showToast('✓ Importado!');
   await renderAll();
+}
+
+function toggleImport(){
+  const body=document.getElementById('import-body');
+  const icon=document.getElementById('import-toggle-icon');
+  const isOpen=body.style.display!=='none';
+  body.style.display=isOpen?'none':'block';
+  icon.textContent=isOpen?'+':'−';
 }
 
 /* ── RANKING ── */
