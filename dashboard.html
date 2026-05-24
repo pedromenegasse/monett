@@ -89,7 +89,7 @@ let currentUser=null;
   /* LEGEND */
   #rank-legend{display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);align-items:center}
   .chip{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle;margin-right:3px}
-  .chip-gold{background:#b8860b}.chip-bord{background:#7e22ce}
+  .chip-gold{background:#e8c97a}.chip-bord{background:#7e22ce}
 
   /* TABLE */
   #table-section h2{font-family:'Syne',sans-serif;font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
@@ -177,7 +177,8 @@ let currentUser=null;
   .sub-modal td{padding:9px 12px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap}
   .sub-modal td:first-child{text-align:left;font-family:'DM Sans',sans-serif}
   .sub-modal tr:last-child td{border-bottom:none}
-  .sub-modal-close{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:5px 14px;cursor:pointer;font-family:'DM Mono',monospace;font-size:12px}
+  .sub-modal-close{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:5px 14px;cursor:pointer;font-family:'DM Mono',monospace;font-size:12px;transition:all .15s}
+  .sub-modal-close:hover{border-color:var(--red);color:var(--red)}
   .sub-modal .card-value{text-align:center}
   .sub-modal .card-label{text-align:center}
 </style>
