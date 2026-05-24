@@ -70,6 +70,7 @@ let currentUser=null;
 
   /* IMPORT */
   #import-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px}
+  #import-section h2{margin-bottom:0}
   #import-section h2{font-family:'Syne',sans-serif;font-size:15px;margin-bottom:12px}
   .field{display:flex;flex-direction:column;gap:5px}
   .field label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em}
@@ -247,7 +248,7 @@ let currentUser=null;
   <h2 onclick="toggleImport()" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px">
     <span id="import-toggle-icon" style="color:var(--yellow);font-size:16px;transition:transform .2s;display:inline-block">−</span> Lançar dia
   </h2>
-  <div id="import-body">
+  <div id="import-body" style="margin-top:12px">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
     <div class="mode-toggle" style="margin-bottom:0;height:36px">
       <button class="mode-btn active" id="mode-btn-3col" onclick="setMode('3col')" style="height:36px">3×</button>
