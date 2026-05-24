@@ -50,7 +50,8 @@ let currentUser=null;
   .iss-pct{font-family:'DM Mono',monospace;font-size:13px;color:var(--muted)}
   .iss-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
   .iss-meta b{color:var(--yellow)}
-  .btn-sm{background:var(--accent);color:#0d0f14;border:none;border-radius:6px;padding:6px 14px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:opacity .15s}
+  .btn-sm{background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:6px 14px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+  .btn-sm:hover{background:var(--accent);color:#0d0f14}
   .btn-sm:hover{opacity:.8}
   .btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;white-space:nowrap}
   .btn-outline:hover{border-color:var(--accent2);color:var(--accent2)}
@@ -75,8 +76,8 @@ let currentUser=null;
   .field label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em}
   input[type="date"]{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:8px 12px;outline:none;transition:border .15s;box-sizing:border-box;line-height:normal;height:auto}
   input[type="date"]:focus{border-color:var(--accent)}
-  .btn-import{background:var(--accent);color:#0d0f14;border:none;border-radius:8px;padding:8px 20px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;white-space:nowrap;box-sizing:border-box;line-height:normal}
-  .btn-import:hover{opacity:.85}
+  .btn-import{background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:8px 20px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;box-sizing:border-box;line-height:normal}
+  .btn-import:hover{background:var(--accent);color:#0d0f14}
   textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:10px 12px;outline:none;resize:vertical;width:100%;transition:border .15s}
   textarea:focus{border-color:var(--accent)}
   textarea::placeholder{color:var(--muted)}
