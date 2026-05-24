@@ -565,16 +565,37 @@ async function importData(){
     if(!rows.length){alert('Formato inválido.');return;}
   }
 
-  // check for case-insensitive duplicates with existing sub IDs
+  // check for case-insensitive duplicates across all days of the month
   const data=await loadData(acct.id);
   const month=dt.slice(0,7);
-  const existing=(data[month]&&data[month][dt])||[];
+  const monthData=data[month]||{};
+  // collect all unique sub IDs in this month
+  const allSubIds=[];
+  for(const day of Object.keys(monthData)){
+    for(const r of monthData[day]){
+      if(!allSubIds.find(s=>s.toLowerCase()===r.name.toLowerCase()))allSubIds.push(r.name);
+    }
+  }
   const finalRows=[];
   for(const row of rows){
-    const match=existing.find(e=>e.name.toLowerCase()===row.name.toLowerCase()&&e.name!==row.name);
+    const match=allSubIds.find(s=>s.toLowerCase()===row.name.toLowerCase()&&s!==row.name);
     if(match){
-      const ok=confirm(`"${row.name}" parece ser o mesmo que "${match.name}" já existente.\nDeseja adicionar ao sub ID "${match.name}"?`);
-      finalRows.push(ok?{...row,name:match.name}:row);
+      const ok=await new Promise(resolve=>{
+        const d=document.createElement('div');
+        d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:9999';
+        d.innerHTML=`<div style="background:#0f1115;border:1px solid #1e2025;border-radius:14px;padding:28px 32px;max-width:380px;width:90%;text-align:center">
+          <p style="font-family:'DM Mono',monospace;font-size:13px;color:#f0ece4;margin-bottom:8px">Sub ID em conflito</p>
+          <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#6b6050;margin-bottom:20px"><b style="color:#e8c97a">"${row.name}"</b> parece ser o mesmo que <b style="color:#e8c97a">"${match}"</b> já existente neste mês.<br><br>Deseja unificar com <b style="color:#e8c97a">"${match}"</b>?</p>
+          <div style="display:flex;gap:10px;justify-content:center">
+            <button id="cfm-yes" style="background:transparent;color:#e8c97a;border:1px solid #e8c97a;border-radius:8px;padding:8px 24px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer">Sim</button>
+            <button id="cfm-no" style="background:transparent;color:#ff4d6d;border:1px solid #ff4d6d;border-radius:8px;padding:8px 24px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer">Não</button>
+          </div>
+        </div>`;
+        document.body.appendChild(d);
+        d.querySelector('#cfm-yes').onclick=()=>{document.body.removeChild(d);resolve(true);};
+        d.querySelector('#cfm-no').onclick=()=>{document.body.removeChild(d);resolve(false);};
+      });
+      finalRows.push(ok?{...row,name:match}:row);
     } else {
       finalRows.push(row);
     }
@@ -620,8 +641,9 @@ async function renderAll(){
   }
   const data=await loadData(acct.id);
   const months=Object.keys(data).sort().reverse();
-  // always open on most recent month with data
-  const activeMonth=months.length?months[0]:curMonthKey();
+  // preserve current active month if it exists, otherwise use most recent
+  const currentActive=getActiveMonth();
+  const activeMonth=(months.includes(currentActive)?currentActive:(months.length?months[0]:curMonthKey()));
   renderMonthTabs(months,acct,activeMonth);
   renderMonth(data,activeMonth);
 }
@@ -629,7 +651,7 @@ async function renderAll(){
 function renderMonthTabs(months,acct,activeMonth){
   const active=activeMonth||getActiveMonth();
   const cur=curMonthKey();
-  const all=[...new Set([...months])].sort().reverse();
+  const all=[...new Set([...months])].sort();
   if(!all.length)all.push(cur);
   document.getElementById('month-tabs').innerHTML=all.map(m=>{
     const [y,mo]=m.split('-');
