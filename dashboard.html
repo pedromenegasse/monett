@@ -587,18 +587,21 @@ async function importData(){
     if(match){
       const ok=await showConflictModal(row.name,match);
       if(ok){
-        // check if target name already exists on same day - if so, sum values
-        const dayRows=(data2[month]&&data2[month][dt])||[];
+        // fetch fresh data to get current state
+        invalidateCache(acct.id);
+        const freshData=await loadData(acct.id);
+        const dayRows=(freshData[month]&&freshData[month][dt])||[];
         const existing=dayRows.find(r=>r.name===match);
-        if(existing){
+        const toDelete=dayRows.find(r=>r.name===row.name);
+        if(existing&&toDelete){
           // sum with existing
-          const merged={...existing,inv:existing.inv+row.inv,venda:existing.venda+row.venda};
+          const merged={name:match,inv:existing.inv+toDelete.inv,venda:existing.venda+toDelete.venda};
           await deleteRowDB(acct.id,dt,row.name);
           await saveRows(acct.id,dt,[merged]);
-        } else {
+        } else if(toDelete){
           // just rename
           await deleteRowDB(acct.id,dt,row.name);
-          await saveRows(acct.id,dt,[{...row,name:match}]);
+          await saveRows(acct.id,dt,[{...toDelete,name:match}]);
         }
         invalidateCache(acct.id);
         await renderAll();
