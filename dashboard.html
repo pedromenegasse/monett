@@ -606,12 +606,14 @@ async function renderAll(){
   }
   const data=await loadData(acct.id);
   const months=Object.keys(data).sort().reverse();
-  renderMonthTabs(months,acct);
-  renderMonth(data,getActiveMonth());
+  // always open on most recent month with data
+  const activeMonth=months.length?months[0]:curMonthKey();
+  renderMonthTabs(months,acct,activeMonth);
+  renderMonth(data,activeMonth);
 }
 
-function renderMonthTabs(months,acct){
-  const active=getActiveMonth();
+function renderMonthTabs(months,acct,activeMonth){
+  const active=activeMonth||getActiveMonth();
   const cur=curMonthKey();
   const all=[...new Set([...months,cur])].sort().reverse();
   document.getElementById('month-tabs').innerHTML=all.map(m=>{
@@ -627,11 +629,10 @@ function renderMonthTabs(months,acct){
       .toLocaleString('pt-BR',{month:'long',year:'numeric'});
 }
 
-function switchMonth(m){
+async function switchMonth(m){
   document.querySelectorAll('#month-tabs .tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.month===m));
-    new Date(+m.split('-')[0],+m.split('-')[1]-1,1).toLocaleString('pt-BR',{month:'long',year:'numeric'});
   const acct=getActiveAcct();
-  if(acct)renderMonth(loadData(acct.id),m);
+  if(acct){const data=await loadData(acct.id);renderMonth(data,m);}
 }
 
 function renderMonth(data,month){
