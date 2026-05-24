@@ -566,6 +566,7 @@ async function importData(){
   }
 
   // check for case-insensitive duplicates across all days of the month
+  invalidateCache(acct.id);
   const data=await loadData(acct.id);
   const month=dt.slice(0,7);
   const monthData=data[month]||{};
@@ -585,9 +586,12 @@ async function importData(){
         finalRows.push({...row,name:match});
       } else {
         finalRows.push(row);
+        // add the new name so subsequent rows with same spelling don't ask again
+        if(!allSubIds.includes(row.name))allSubIds.push(row.name);
       }
     } else {
       finalRows.push(row);
+      if(!allSubIds.find(s=>s.toLowerCase()===row.name.toLowerCase()))allSubIds.push(row.name);
     }
   }
 
