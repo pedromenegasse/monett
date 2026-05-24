@@ -186,7 +186,7 @@ let currentUser=null;
 
 <header>
   <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-    <img src="header.png" alt="Monett" style="height:52px;object-fit:contain;mix-blend-mode:lighten">
+    <img src="header.png" alt="Monett" style="height:52px;object-fit:contain;mix-blend-mode:lighten;filter:brightness(1.8)">
   </div>
   <div class="header-right">
     <button class="btn-outline" onclick="exportData()">⬇ Exportar</button>
@@ -1161,10 +1161,19 @@ function sortRankModal(col){
   if(!_accounts.length){
     const acct = await createAccount('Conta Principal','#c6f135');
     if(acct){_accounts=[acct];setActiveAcct(acct.id);}
-  } else if(!localStorage.getItem(SK_ACTIVE)){
-    setActiveAcct(_accounts[0].id);
+  } else {
+    // Ensure active account is set BEFORE reading ISS
+    if(!localStorage.getItem(SK_ACTIVE)){
+      setActiveAcct(_accounts[0].id);
+    }
+    // Verify active account exists in loaded accounts
+    const activeId=localStorage.getItem(SK_ACTIVE);
+    if(!_accounts.find(a=>a.id===activeId)){
+      setActiveAcct(_accounts[0].id);
+    }
   }
 
+  // Set ISS after accounts AND active account are confirmed
   const iss=getISS();
   document.getElementById('iss-inp').value=parseFloat(iss).toFixed(2).replace('.',',');
   document.getElementById('iss-display').textContent=fmtPct(iss);
