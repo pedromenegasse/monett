@@ -475,12 +475,6 @@ async function switchAccount(id){
 }
 
 /* ── ISS ── */
-function getISS(){
-  const acct=getActiveAcct();
-  const key=acct?'trafego_iss_'+acct.id:SK_ISS;
-  const v=parseFloat(localStorage.getItem(key));
-  return isNaN(v)?6:v;
-}
 function stepISS(delta){
   const inp=document.getElementById('iss-inp');
   const current=parseFloat(inp.value.replace(',','.'))||0;
@@ -1176,6 +1170,7 @@ function sortRankModal(col){
 
   // Set ISS after accounts AND active account are confirmed
   const iss=getISS();
+  console.log('Active acct:', getActiveAcct()?.name, 'ISS:', iss);
   document.getElementById('iss-inp').value=parseFloat(iss).toFixed(2).replace('.',',');
   document.getElementById('iss-display').textContent=fmtPct(iss);
   document.getElementById('inp-date').value=new Date().toISOString().slice(0,10);
