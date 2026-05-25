@@ -62,7 +62,13 @@ let currentUser=null;
   .tab-btn:hover{border-color:var(--accent);color:var(--accent)}
   .tab-btn.active{background:var(--accent);color:#0d0f14;border-color:var(--accent);font-weight:500}
 
-  /* SUMMARY */
+  #bd-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px}
+  #bd-section h2{font-family:'Syne',sans-serif;font-size:15px;margin-bottom:0}
+  .bd-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+  .bd-row:last-child{border-bottom:none}
+  .bd-badge{font-size:10px;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace;text-transform:uppercase}
+  .bd-badge-bonus{background:rgba(59,240,160,.1);color:var(--accent2)}
+  .bd-badge-despesa{background:rgba(255,77,109,.1);color:var(--red)}
   #summary{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:22px}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
   .card-label{font-size:10px;color:var(--yellow);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;font-family:'DM Mono',monospace}
@@ -216,6 +222,37 @@ let currentUser=null;
   <span class="iss-meta">Taxa Meta (investimento): <b>13,85% fixo</b> &nbsp;|&nbsp; ISS (deduzido da venda): <b id="iss-display">9,79%</b></span>
 </div>
 
+<!-- BONUS E DESPESAS -->
+<div id="bd-section">
+  <h2 onclick="toggleBD()" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px">
+    <span id="bd-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Bônus e Despesas
+  </h2>
+  <div id="bd-body" style="margin-top:12px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <button id="bd-btn-bonus" onclick="setBDTipo('bonus')" style="height:36px;padding:0 16px;background:rgba(59,240,160,.08);border:none;color:var(--accent2);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;border-right:1px solid var(--border)">Bônus</button>
+        <button id="bd-btn-desp" onclick="setBDTipo('despesa')" style="height:36px;padding:0 16px;background:transparent;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Despesa</button>
+      </div>
+      <input type="text" id="bd-desc" placeholder="Descrição" style="height:36px;flex:1;min-width:120px">
+      <input type="text" id="bd-valor" placeholder="Valor" inputmode="decimal" style="height:36px;width:110px">
+      <button class="btn-import" onclick="addBD()" style="height:36px;padding:0 20px">Adicionar</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em">Lançamentos do mês</span>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">
+        Separar no saldo
+        <div class="toggle-wrap" onclick="toggleBDSeparar()">
+          <div class="toggle-track" id="bd-separar-track">
+            <div class="toggle-thumb" id="bd-separar-thumb"></div>
+          </div>
+        </div>
+      </label>
+    </div>
+    <div id="bd-list"></div>
+    <div id="bd-total" style="border-top:1px solid var(--border);margin-top:8px;padding-top:10px;display:flex;justify-content:flex-end;gap:8px;align-items:center;display:none"></div>
+  </div>
+</div>
+
 <!-- MONTH TABS -->
 <div id="month-tabs"></div>
 
@@ -239,7 +276,9 @@ let currentUser=null;
   </div>
   <div class="card" style="text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center">
     <div class="card-label">Saldo Mês</div>
-    <div class="card-value cv-green" id="s-saldo">R$ 0,00</div>
+    <div class="card-value cv-green" id="s-saldo" data-raw="0">R$ 0,00</div>
+    <hr id="s-saldo-hr" style="border:none;border-top:1px solid var(--border);margin:6px 0;width:100%;display:none">
+    <div class="card-value cv-green" id="s-saldo-bot" style="display:none;font-size:18px"></div>
   </div>
 </div>
 
@@ -393,6 +432,28 @@ async function deleteRowDB(acctId,date,subId){
 async function deleteDayDB(acctId,date){
   await sb.from('daily_data').delete().eq('account_id',acctId).eq('date',date);
   invalidateCache(acctId);
+}
+
+/* ── BONUS/DESPESAS (Supabase) ── */
+let _bd={};
+async function loadBD(acctId,month){
+  const key=acctId+'_'+month;
+  if(_bd[key])return _bd[key];
+  const{data}=await sb.from('bonus_despesas').select('*').eq('account_id',acctId).eq('month',month);
+  _bd[key]=data||[];
+  return _bd[key];
+}
+function invalidateBD(acctId,month){delete _bd[acctId+'_'+month];}
+async function saveBD(acctId,month,tipo,descricao,valor){
+  const{data}=await sb.from('bonus_despesas').insert({
+    account_id:acctId,user_id:currentUser.id,month,tipo,descricao,valor
+  }).select().single();
+  invalidateBD(acctId,month);
+  return data;
+}
+async function deleteBD(id,acctId,month){
+  await sb.from('bonus_despesas').delete().eq('id',id);
+  invalidateBD(acctId,month);
 }
 
 /* ── ADD ACCOUNT MODAL ── */
@@ -696,6 +757,7 @@ async function switchMonth(m){
   document.querySelectorAll('#month-tabs .tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.month===m));
   const acct=getActiveAcct();
   if(acct){const data=await loadData(acct.id);renderMonth(data,m);}
+  await renderBD();
 }
 
 function renderMonth(data,month){
@@ -714,10 +776,12 @@ function renderMonth(data,month){
   document.getElementById('s-venda').textContent=fmt(totMenosISS);
   const sc=document.getElementById('s-saldo');
   sc.textContent=fmt(totSaldo);sc.className='card-value '+(totSaldo>=0?'cv-green':'cv-red');
+  sc.dataset.raw=totSaldo;
   const sr=document.getElementById('s-roi');
   sr.textContent=totROAS!==null?totROAS.toFixed(2):'—';
   sr.className='card-value '+(totROAS===null?'cv-muted':totROAS>=1?'cv-green':'cv-red');
   document.getElementById('tbl-subtitle').textContent=days.length?days.length+' dia(s)':'';
+  renderBD();
 
   const container=document.getElementById('days-container');
   if(!days.length){container.innerHTML='<div class="empty">Nenhum dado para este mês ainda.</div>';return;}
@@ -1218,6 +1282,126 @@ function sortRankModal(col){
     });
   }
   trs.forEach(tr=>tbody.appendChild(tr));
+}
+
+/* ── BONUS/DESPESAS UI ── */
+let _bdTipo='bonus';
+let _bdSeparar=false;
+
+function toggleBD(){
+  const body=document.getElementById('bd-body');
+  const icon=document.getElementById('bd-toggle-icon');
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  icon.textContent=open?'+':'−';
+}
+
+function setBDTipo(t){
+  _bdTipo=t;
+  const bb=document.getElementById('bd-btn-bonus');
+  const bd=document.getElementById('bd-btn-desp');
+  if(t==='bonus'){
+    bb.style.background='rgba(59,240,160,.08)';bb.style.color='var(--accent2)';
+    bd.style.background='transparent';bd.style.color='var(--muted)';
+  } else {
+    bd.style.background='rgba(255,77,109,.08)';bd.style.color='var(--red)';
+    bb.style.background='transparent';bb.style.color='var(--muted)';
+  }
+}
+
+function toggleBDSeparar(){
+  _bdSeparar=!_bdSeparar;
+  const track=document.getElementById('bd-separar-track');
+  const thumb=document.getElementById('bd-separar-thumb');
+  if(_bdSeparar){track.style.background='var(--accent2)';thumb.style.transform='translateX(20px)';}
+  else{track.style.background='';thumb.style.transform='';}
+  renderBDSaldo();
+}
+
+async function addBD(){
+  const acct=getActiveAcct();if(!acct)return;
+  const desc=document.getElementById('bd-desc').value.trim();
+  const raw=document.getElementById('bd-valor').value.replace(',','.');
+  const valor=parseFloat(raw);
+  if(!desc){alert('Digite uma descrição!');return;}
+  if(isNaN(valor)||valor<=0){alert('Valor inválido!');return;}
+  const month=getActiveMonth();
+  await saveBD(acct.id,month,_bdTipo,desc,valor);
+  document.getElementById('bd-desc').value='';
+  document.getElementById('bd-valor').value='';
+  await renderBD();
+}
+
+async function removeBD(id){
+  const acct=getActiveAcct();if(!acct)return;
+  const month=getActiveMonth();
+  await deleteBD(id,acct.id,month);
+  await renderBD();
+}
+
+async function renderBD(){
+  const acct=getActiveAcct();if(!acct)return;
+  const month=getActiveMonth();
+  const items=await loadBD(acct.id,month);
+  const list=document.getElementById('bd-list');
+  const total=document.getElementById('bd-total');
+  if(!items.length){
+    list.innerHTML='<div style="font-family:\'DM Mono\',monospace;font-size:12px;color:var(--muted);padding:8px 0">Nenhum lançamento neste mês.</div>';
+    total.style.display='none';
+    renderBDSaldo();
+    return;
+  }
+  list.innerHTML=items.map(i=>{
+    const isBonus=i.tipo==='bonus';
+    const sinal=isBonus?'+':'−';
+    const cor=isBonus?'var(--accent2)':'var(--red)';
+    return`<div class="bd-row">
+      <div style="display:flex;gap:10px;align-items:center">
+        <span class="bd-badge ${isBonus?'bd-badge-bonus':'bd-badge-despesa'}">${i.tipo}</span>
+        <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text)">${i.descricao}</span>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <span style="font-family:'DM Mono',monospace;font-size:14px;color:${cor}">${sinal} ${fmt(i.valor)}</span>
+        <span onclick="removeBD('${i.id}')" style="color:var(--red);font-size:14px;cursor:pointer;opacity:.6;transition:opacity .15s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6">✕</span>
+      </div>
+    </div>`;
+  }).join('');
+  // total
+  const sum=items.reduce((s,i)=>s+(i.tipo==='bonus'?i.valor:-i.valor),0);
+  const cor=sum>=0?'var(--accent2)':'var(--red)';
+  const sinal=sum>=0?'+':'';
+  total.style.display='flex';
+  total.innerHTML=`<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Saldo bônus/despesas</span>
+    <span style="font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:${cor}">${sinal} ${fmt(Math.abs(sum))}</span>`;
+  renderBDSaldo();
+}
+
+async function renderBDSaldo(){
+  const acct=getActiveAcct();if(!acct)return;
+  const month=getActiveMonth();
+  const items=await loadBD(acct.id,month);
+  const bdSum=items.reduce((s,i)=>s+(i.tipo==='bonus'?i.valor:-i.valor),0);
+  // get trafego saldo from summary
+  const trafegoSaldo=parseFloat(document.getElementById('s-saldo').dataset.raw||0);
+  const saldoEl=document.getElementById('s-saldo');
+  const saldoBot=document.getElementById('s-saldo-bot');
+  const saldoHr=document.getElementById('s-saldo-hr');
+  if(_bdSeparar&&items.length){
+    saldoEl.textContent=fmt(trafegoSaldo);
+    saldoEl.className='card-value '+(trafegoSaldo>=0?'cv-green':'cv-red');
+    if(saldoHr)saldoHr.style.display='block';
+    if(saldoBot){
+      saldoBot.style.display='block';
+      saldoBot.textContent=(bdSum>=0?'+ ':'')+fmt(bdSum);
+      saldoBot.className='card-value '+(bdSum>=0?'cv-green':'cv-red');
+    }
+  } else {
+    const final=trafegoSaldo+bdSum;
+    saldoEl.textContent=fmt(final);
+    saldoEl.className='card-value '+(final>=0?'cv-green':'cv-red');
+    if(saldoHr)saldoHr.style.display='none';
+    if(saldoBot)saldoBot.style.display='none';
+  }
 }
 
 /* ── INIT ── */
