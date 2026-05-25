@@ -69,7 +69,7 @@ let currentUser=null;
   .toggle-track.on .toggle-thumb{transform:translateX(16px);background:#fff}
   #bd-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px}
   #bd-section h2{font-family:'Syne',sans-serif;font-size:15px;margin-bottom:0}
-  #bd-desc,#bd-valor{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:0 12px;outline:none;transition:border .15s}
+  #bd-desc,#bd-valor{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:0 12px;outline:none;transition:border .15s;-webkit-appearance:none}
   #bd-desc:focus,#bd-valor:focus{border-color:var(--accent)}
   .bd-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
   .bd-row:last-child{border-bottom:none}
@@ -87,6 +87,8 @@ let currentUser=null;
   #import-section h2{font-family:'Syne',sans-serif;font-size:15px;margin-bottom:0}
   .field{display:flex;flex-direction:column;gap:5px}
   .field label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em}
+  input[type="text"],input[type="email"],input[type="password"],input[type="number"]{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:8px 12px;outline:none;transition:border .15s;box-sizing:border-box;-webkit-appearance:none}
+  input[type="text"]:focus,input[type="email"]:focus,input[type="password"]:focus,input[type="number"]:focus{border-color:var(--accent)}
   input[type="date"]{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:8px 12px;outline:none;transition:border .15s;box-sizing:border-box;line-height:normal;height:auto}
   input[type="date"]:focus{border-color:var(--accent)}
   .btn-import{background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:8px 20px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;box-sizing:border-box;line-height:normal}
