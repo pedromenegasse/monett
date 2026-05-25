@@ -63,14 +63,15 @@ let currentUser=null;
   .tab-btn.active{background:var(--accent);color:#0d0f14;border-color:var(--accent);font-weight:500}
 
   .toggle-wrap{cursor:pointer}
-  .toggle-track{width:36px;height:20px;background:#1e2025;border-radius:10px;position:relative;transition:background .2s;border:1px solid #2a2a35}
-  .toggle-thumb{position:absolute;top:3px;left:3px;width:12px;height:12px;background:var(--muted);border-radius:50%;transition:transform .2s,background .2s}
+  .toggle-track{width:42px;height:24px;background:#1e2025;border-radius:12px;position:relative;transition:background .2s;border:1px solid #2a2a35}
+  .toggle-thumb{position:absolute;top:4px;left:4px;width:14px;height:14px;background:var(--muted);border-radius:50%;transition:transform .2s,background .2s}
   .toggle-track.on{background:var(--accent2)}
-  .toggle-track.on .toggle-thumb{transform:translateX(16px);background:#fff}
+  .toggle-track.on .toggle-thumb{transform:translateX(18px);background:#fff}
   #bd-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px}
   #bd-section h2{font-family:'Syne',sans-serif;font-size:15px;margin-bottom:0}
   #bd-desc,#bd-valor{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:0 12px;outline:none;transition:border .15s;-webkit-appearance:none}
   #bd-desc:focus,#bd-valor:focus{border-color:var(--accent)}
+  #bd-desc::placeholder,#bd-valor::placeholder{color:var(--muted)}
   .bd-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
   .bd-row:last-child{border-bottom:none}
   .bd-badge{font-size:10px;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace;text-transform:uppercase}
@@ -89,6 +90,7 @@ let currentUser=null;
   .field label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em}
   input[type="text"],input[type="email"],input[type="password"],input[type="number"]{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:8px 12px;outline:none;transition:border .15s;box-sizing:border-box;-webkit-appearance:none}
   input[type="text"]:focus,input[type="email"]:focus,input[type="password"]:focus,input[type="number"]:focus{border-color:var(--accent)}
+  input[type="text"]::placeholder,input[type="email"]::placeholder,input[type="password"]::placeholder{color:var(--muted)}
   input[type="date"]{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:8px 12px;outline:none;transition:border .15s;box-sizing:border-box;line-height:normal;height:auto}
   input[type="date"]:focus{border-color:var(--accent)}
   .btn-import{background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:8px 20px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;box-sizing:border-box;line-height:normal}
@@ -308,8 +310,8 @@ let currentUser=null;
         <button id="bd-btn-bonus" onclick="setBDTipo('bonus')" style="height:36px;padding:0 16px;background:rgba(59,240,160,.08);border:none;color:var(--accent2);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;border-right:1px solid var(--border)">Bônus</button>
         <button id="bd-btn-desp" onclick="setBDTipo('despesa')" style="height:36px;padding:0 16px;background:transparent;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Despesa</button>
       </div>
-      <input type="text" id="bd-desc" placeholder="Descrição" style="height:36px;flex:1;min-width:120px">
-      <input type="text" id="bd-valor" placeholder="Valor" inputmode="decimal" style="height:36px;width:110px">
+      <input type="text" id="bd-desc" placeholder="Descrição" style="height:36px;flex:2;min-width:100px">
+      <input type="text" id="bd-valor" placeholder="Valor" inputmode="decimal" style="height:36px;flex:1;min-width:80px">
       <button class="btn-import" onclick="addBD()" style="height:36px;padding:0 20px">Adicionar</button>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
