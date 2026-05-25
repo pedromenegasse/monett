@@ -74,7 +74,7 @@ let currentUser=null;
   #bd-desc::placeholder,#bd-valor::placeholder{color:var(--muted)}
   .bd-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
   .bd-row:last-child{border-bottom:none}
-  .bd-badge{font-size:10px;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace;text-transform:uppercase;display:inline-block;width:60px;text-align:center}
+  .bd-badge{font-size:10px;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace;text-transform:uppercase;display:inline-block;width:90px;text-align:center}
   .bd-badge-bonus{background:rgba(59,240,160,.1);color:var(--accent2)}
   .bd-badge-despesa{background:rgba(255,77,109,.1);color:var(--red)}
   #summary{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:22px}
@@ -262,10 +262,41 @@ let currentUser=null;
   </div>
 </div>
 
+<!-- BONUS E DESPESAS -->
+<div id="bd-section">
+  <h2 onclick="toggleBD()" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px">
+    <span id="bd-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Bônus e Despesas
+  </h2>
+  <div id="bd-body" style="margin-top:12px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <button id="bd-btn-bonus" onclick="setBDTipo('bonus')" style="height:36px;padding:0 16px;background:rgba(59,240,160,.08);border:none;color:var(--accent2);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;border-right:1px solid var(--border)">Bônus</button>
+        <button id="bd-btn-desp" onclick="setBDTipo('despesa')" style="height:36px;padding:0 16px;background:transparent;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Despesa</button>
+      </div>
+      <input type="text" id="bd-desc" placeholder="Descrição" style="height:36px;width:160px">
+      <input type="text" id="bd-valor" placeholder="Valor" inputmode="decimal" style="height:36px;width:80px">
+      <button class="btn-import" onclick="addBD()" style="height:36px;padding:0 20px">Adicionar</button>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em">Separar no saldo</span>
+        <div class="toggle-wrap" onclick="toggleBDSeparar()">
+          <div class="toggle-track" id="bd-separar-track">
+            <div class="toggle-thumb" id="bd-separar-thumb"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:10px">
+      <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em">Lançamentos do mês</span>
+    </div>
+    <div id="bd-list"></div>
+    <div id="bd-total" style="border-top:1px solid var(--border);margin-top:8px;padding-top:10px;display:flex;justify-content:flex-end;gap:8px;align-items:center"></div>
+  </div>
+</div>
+
 <!-- IMPORT -->
 <div id="import-section">
   <h2 onclick="toggleImport()" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px">
-    <span id="import-toggle-icon" style="color:var(--yellow);font-size:16px;transition:transform .2s;display:inline-block">−</span> Lançar Dados / Dia
+    <span id="import-toggle-icon" style="color:var(--yellow);font-size:16px;transition:transform .2s;display:inline-block">−</span> Dados Diários
   </h2>
   <div id="import-body" style="margin-top:12px">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
@@ -274,7 +305,7 @@ let currentUser=null;
       <button class="mode-btn" id="mode-btn-1col" onclick="setMode('1col')" style="height:36px">1×</button>
     </div>
     <input type="date" id="inp-date" style="height:36px;padding:0 12px">
-    <button class="btn-import" onclick="importData()" style="height:36px;padding:0 20px">Importar</button>
+    <button class="btn-import" onclick="importData()" style="height:36px;padding:0 20px">Adicionar</button>
   </div>
   <!-- 3 colunas -->
   <div id="mode-3col" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
@@ -296,37 +327,6 @@ let currentUser=null;
     <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID | Investimento | Venda</label>
     <textarea id="inp-paste" placeholder="" style="min-height:90px"></textarea>
   </div>
-  </div>
-</div>
-
-<!-- BONUS E DESPESAS -->
-<div id="bd-section">
-  <h2 onclick="toggleBD()" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px">
-    <span id="bd-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Bônus e Despesas
-  </h2>
-  <div id="bd-body" style="margin-top:12px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-      <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden">
-        <button id="bd-btn-bonus" onclick="setBDTipo('bonus')" style="height:36px;padding:0 16px;background:rgba(59,240,160,.08);border:none;color:var(--accent2);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;border-right:1px solid var(--border)">Bônus</button>
-        <button id="bd-btn-desp" onclick="setBDTipo('despesa')" style="height:36px;padding:0 16px;background:transparent;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Despesa</button>
-      </div>
-      <input type="text" id="bd-desc" placeholder="Descrição" style="height:36px;width:160px">
-      <input type="text" id="bd-valor" placeholder="Valor" inputmode="decimal" style="height:36px;width:100px">
-      <button class="btn-import" onclick="addBD()" style="height:36px;padding:0 20px">Adicionar</button>
-      <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-        <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em">Separar no saldo</span>
-        <div class="toggle-wrap" onclick="toggleBDSeparar()">
-          <div class="toggle-track" id="bd-separar-track">
-            <div class="toggle-thumb" id="bd-separar-thumb"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div style="margin-bottom:10px">
-      <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em">Lançamentos do mês</span>
-    </div>
-    <div id="bd-list"></div>
-    <div id="bd-total" style="border-top:1px solid var(--border);margin-top:8px;padding-top:10px;display:flex;justify-content:flex-end;gap:8px;align-items:center"></div>
   </div>
 </div>
 
