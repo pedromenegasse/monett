@@ -222,37 +222,6 @@ let currentUser=null;
   <span class="iss-meta">Taxa Meta (investimento): <b>13,85% fixo</b> &nbsp;|&nbsp; ISS (deduzido da venda): <b id="iss-display">9,79%</b></span>
 </div>
 
-<!-- BONUS E DESPESAS -->
-<div id="bd-section">
-  <h2 onclick="toggleBD()" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px">
-    <span id="bd-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Bônus e Despesas
-  </h2>
-  <div id="bd-body" style="margin-top:12px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-      <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden">
-        <button id="bd-btn-bonus" onclick="setBDTipo('bonus')" style="height:36px;padding:0 16px;background:rgba(59,240,160,.08);border:none;color:var(--accent2);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;border-right:1px solid var(--border)">Bônus</button>
-        <button id="bd-btn-desp" onclick="setBDTipo('despesa')" style="height:36px;padding:0 16px;background:transparent;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Despesa</button>
-      </div>
-      <input type="text" id="bd-desc" placeholder="Descrição" style="height:36px;flex:1;min-width:120px">
-      <input type="text" id="bd-valor" placeholder="Valor" inputmode="decimal" style="height:36px;width:110px">
-      <button class="btn-import" onclick="addBD()" style="height:36px;padding:0 20px">Adicionar</button>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em">Lançamentos do mês</span>
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">
-        Separar no saldo
-        <div class="toggle-wrap" onclick="toggleBDSeparar()">
-          <div class="toggle-track" id="bd-separar-track">
-            <div class="toggle-thumb" id="bd-separar-thumb"></div>
-          </div>
-        </div>
-      </label>
-    </div>
-    <div id="bd-list"></div>
-    <div id="bd-total" style="border-top:1px solid var(--border);margin-top:8px;padding-top:10px;display:flex;justify-content:flex-end;gap:8px;align-items:center;display:none"></div>
-  </div>
-</div>
-
 <!-- MONTH TABS -->
 <div id="month-tabs"></div>
 
@@ -316,6 +285,37 @@ let currentUser=null;
     <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID | Investimento | Venda</label>
     <textarea id="inp-paste" placeholder="" style="min-height:90px"></textarea>
   </div>
+  </div>
+</div>
+
+<!-- BONUS E DESPESAS -->
+<div id="bd-section">
+  <h2 onclick="toggleBD()" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px">
+    <span id="bd-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Bônus e Despesas
+  </h2>
+  <div id="bd-body" style="margin-top:12px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <button id="bd-btn-bonus" onclick="setBDTipo('bonus')" style="height:36px;padding:0 16px;background:rgba(59,240,160,.08);border:none;color:var(--accent2);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;border-right:1px solid var(--border)">Bônus</button>
+        <button id="bd-btn-desp" onclick="setBDTipo('despesa')" style="height:36px;padding:0 16px;background:transparent;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Despesa</button>
+      </div>
+      <input type="text" id="bd-desc" placeholder="Descrição" style="height:36px;flex:1;min-width:120px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:0 12px;outline:none">
+      <input type="text" id="bd-valor" placeholder="Valor" inputmode="decimal" style="height:36px;width:110px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:0 12px;outline:none">
+      <button class="btn-import" onclick="addBD()" style="height:36px;padding:0 20px">Adicionar</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em">Lançamentos do mês</span>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">
+        Separar no saldo
+        <div class="toggle-wrap" onclick="toggleBDSeparar()">
+          <div class="toggle-track" id="bd-separar-track">
+            <div class="toggle-thumb" id="bd-separar-thumb"></div>
+          </div>
+        </div>
+      </label>
+    </div>
+    <div id="bd-list"></div>
+    <div id="bd-total" style="border-top:1px solid var(--border);margin-top:8px;padding-top:10px;display:flex;justify-content:flex-end;gap:8px;align-items:center"></div>
   </div>
 </div>
 
