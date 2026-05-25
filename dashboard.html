@@ -572,18 +572,21 @@ async function importData(){
   showToast('✓ Importado!');
   await renderAll();
 
-  // then check for case-insensitive conflicts and ask to rename
+  // normalize: remove accents, lowercase for comparison
+  function normalize(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+
+  // then check for case-insensitive + accent-insensitive conflicts and ask to rename
   const data2=await loadData(acct.id);
   const month=dt.slice(0,7);
   const monthData=data2[month]||{};
   const allSubIds=[];
   for(const day of Object.keys(monthData)){
     for(const r of monthData[day]){
-      if(!allSubIds.find(s=>s.toLowerCase()===r.name.toLowerCase()))allSubIds.push(r.name);
+      if(!allSubIds.find(s=>normalize(s)===normalize(r.name)))allSubIds.push(r.name);
     }
   }
   for(const row of rows){
-    const match=allSubIds.find(s=>s.toLowerCase()===row.name.toLowerCase()&&s!==row.name);
+    const match=allSubIds.find(s=>normalize(s)===normalize(row.name)&&s!==row.name);
     if(match){
       const ok=await showConflictModal(row.name,match);
       if(ok){
