@@ -91,6 +91,8 @@ let currentUser=null;
   input[type="text"],input[type="email"],input[type="password"],input[type="number"]{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:8px 12px;outline:none;transition:border .15s;-webkit-appearance:none}
   input[type="text"]:focus,input[type="email"]:focus,input[type="password"]:focus,input[type="number"]:focus{border-color:var(--accent)}
   input[type="text"]::placeholder,input[type="email"]::placeholder,input[type="password"]::placeholder{color:var(--muted)}
+  #bd-desc{width:240px!important;min-width:0!important;max-width:240px!important;flex:none!important}
+  #bd-valor{width:100px!important;min-width:0!important;max-width:100px!important;flex:none!important}
   input[type="date"]{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:8px 12px;outline:none;transition:border .15s;box-sizing:border-box;line-height:normal;height:auto}
   input[type="date"]:focus{border-color:var(--accent)}
   .btn-import{background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:8px 20px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;box-sizing:border-box;line-height:normal}
@@ -273,8 +275,8 @@ let currentUser=null;
         <button id="bd-btn-bonus" onclick="setBDTipo('bonus')" style="height:36px;padding:0 16px;background:rgba(59,240,160,.08);border:none;color:var(--accent2);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;border-right:1px solid var(--border)">Bônus</button>
         <button id="bd-btn-desp" onclick="setBDTipo('despesa')" style="height:36px;padding:0 16px;background:transparent;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Despesa</button>
       </div>
-      <input type="text" id="bd-desc" placeholder="Descrição" style="height:36px;width:240px!important">
-      <input type="text" id="bd-valor" placeholder="Valor" inputmode="decimal" style="height:36px;width:100px!important">
+      <input type="text" id="bd-desc" placeholder="Descrição" style="height:36px">
+      <input type="text" id="bd-valor" placeholder="Valor" inputmode="decimal" style="height:36px">
       <button class="btn-import" onclick="addBD()" style="height:36px;padding:0 20px">Adicionar</button>
       <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
         <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em">Separar no saldo</span>
