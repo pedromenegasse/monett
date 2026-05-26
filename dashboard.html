@@ -274,10 +274,13 @@ let currentUser=null;
 
 <!-- BONUS E DESPESAS -->
 <div id="bd-section">
-  <h2 onclick="toggleBD()" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px">
-    <span id="bd-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Bônus e Despesas
+  <h2 onclick="toggleBD()" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;gap:6px">
+    <span style="display:flex;align-items:center;gap:6px">
+      <span id="bd-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">+</span> Bônus e Despesas
+    </span>
+    <span id="bd-header-summary" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:400;display:none"></span>
   </h2>
-  <div id="bd-body" style="margin-top:12px">
+  <div id="bd-body" style="margin-top:12px;display:none">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
       <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden">
         <button id="bd-btn-bonus" onclick="setBDTipo('bonus')" style="height:36px;padding:0 16px;background:rgba(59,240,160,.08);border:none;color:var(--accent2);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;border-right:1px solid var(--border)">Bônus</button>
@@ -1533,9 +1536,11 @@ let _bdSeparar=false;
 function toggleBD(){
   const body=document.getElementById('bd-body');
   const icon=document.getElementById('bd-toggle-icon');
+  const summary=document.getElementById('bd-header-summary');
   const open=body.style.display!=='none';
   body.style.display=open?'none':'block';
   icon.textContent=open?'+':'−';
+  if(summary)summary.style.display=open?'':'none';
 }
 
 function setBDTipo(t){
@@ -1612,8 +1617,17 @@ async function renderBD(){
   const cor=sum>=0?'var(--accent2)':'var(--red)';
   const sinal=sum>=0?'+':'';
   total.style.display='flex';
-  total.innerHTML=`<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Saldo</span>
-    <span style="font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:${cor}">${sinal} ${fmt(Math.abs(sum))}</span>`;
+  total.innerHTML=`<div style="display:inline-flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid rgba(232,201,122,0.18);border-radius:8px;padding:6px 14px">
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Saldo</span>
+    <span style="font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:${cor}">${sinal} ${fmt(Math.abs(sum))}</span>
+  </div>`;
+  const summary=document.getElementById('bd-header-summary');
+  const bodyOpen=document.getElementById('bd-body').style.display!=='none';
+  if(summary){
+    summary.textContent=`${sinal} ${fmt(Math.abs(sum))}`;
+    summary.style.color=cor;
+    summary.style.display=bodyOpen?'none':'';
+  }
   renderBDSaldo();
 }
 
