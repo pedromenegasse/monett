@@ -99,9 +99,9 @@ let currentUser=null;
   .btn-import:hover{background:var(--accent);color:#0d0f14}
   textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:10px 12px;outline:none;resize:vertical;width:100%;transition:border .15s}
   .ta-grow{resize:none!important;overflow:hidden!important;min-height:90px;line-height:1.8em;padding-top:10px;padding-bottom:10px}
-  .ce-col{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;min-height:90px;padding:0;overflow:hidden;cursor:text;transition:border .15s;box-sizing:border-box}
+  .ce-col{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;outline:none;min-height:90px;padding:0;overflow:hidden;cursor:text;transition:border .15s;box-sizing:border-box}
   .ce-col:focus{border-color:var(--accent)}
-  .ce-col .ce-line{display:block;padding:0 12px;height:30px;line-height:30px;white-space:pre;position:relative}
+  .ce-col .ce-line{display:block;padding:0 12px;height:34px;line-height:34px;white-space:pre;position:relative}
   .ce-col .ce-line+.ce-line{border-top:1px solid rgba(232,201,122,0.18)}
   .ce-col:empty::before,.ce-col .ce-line:only-child:empty::before{content:attr(data-ph);color:var(--muted);pointer-events:none}
   textarea:focus{border-color:var(--accent)}
@@ -343,18 +343,20 @@ let currentUser=null;
         <span id="inp-2x1-status" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted)"></span>
       </div>
     </div>
-    <div id="grid-2x1" style="display:none;grid-template-columns:1fr 1fr 1fr;gap:10px">
+    <div id="grid-2x1" style="display:none;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:start">
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID</label>
         <div id="inp-2x1-names" class="ce-col" style="color:var(--muted);cursor:default;pointer-events:none"></div>
       </div>
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Investimento</label>
-        <textarea id="inp-2x1-inv" placeholder="" style="min-height:90px;border-color:var(--accent)"></textarea>
+        <div id="inp-2x1-inv" class="ce-col" contenteditable="true" spellcheck="false" style="border-color:var(--accent)"></div>
       </div>
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Venda</label>
         <div id="inp-2x1-venda" class="ce-col" style="color:var(--muted);cursor:default;pointer-events:none"></div>
+      </div>
+      <div id="inp-2x1-del-col" style="display:flex;flex-direction:column;padding-top:24px;gap:0">
       </div>
     </div>
   </div>
@@ -712,37 +714,31 @@ function ce_input(src,field){
   }
 }
 
+function remove2x1Row(idx){
+  const ids=['inp-2x1-names','inp-2x1-inv','inp-2x1-venda'];
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const lines=ce_getLines(el);
+    lines.splice(idx,1);
+    ce_setLines(el,lines.length?lines:['']);
+    draw2x1Lines(el,lines.length||1);
+  });
+  const delCol=document.getElementById('inp-2x1-del-col');
+  if(delCol){
+    const btns=Array.from(delCol.children);
+    if(btns[idx])btns[idx].remove();
+    Array.from(delCol.children).forEach((btn,i)=>{btn.onclick=()=>remove2x1Row(i);});
+  }
+}
+
 function draw2x1Lines(el,lineCount){
-  const LINE=30;
+  const LINE=34;
   Array.from(el.querySelectorAll('.ce-line')).forEach((d,i)=>{
     d.style.borderTop=i===0?'none':'1px solid rgba(232,201,122,0.18)';
   });
 }
 
-function sync2x1InvHeight(lineCount){
-  const LINE=30;
-  const PT=6;
-  const invEl=document.getElementById('inp-2x1-inv');
-  if(!invEl)return;
-  const h=Math.max(90,PT*2+lineCount*LINE);
-  invEl.style.height=h+'px';
-  invEl.style.resize='none';
-  invEl.style.overflow='hidden';
-  invEl.style.lineHeight=LINE+'px';
-  invEl.style.paddingTop=PT+'px';
-  invEl.style.paddingBottom=PT+'px';
-  invEl.style.fontSize='12px';
-  if(lineCount>1){
-    const stops=[];
-    for(let i=1;i<lineCount;i++){
-      const y=PT+i*LINE;
-      stops.push(`transparent ${y-1}px`,`rgba(232,201,122,0.18) ${y-1}px`,`rgba(232,201,122,0.18) ${y}px`,`transparent ${y}px`);
-    }
-    invEl.style.backgroundImage=`linear-gradient(${stops.join(',')})`;
-  } else {
-    invEl.style.backgroundImage='none';
-  }
-}
 
 function load2x1File(input){
   const file=input.files[0];
@@ -794,18 +790,31 @@ function parse2x1(rawInput){
     const val=parseNum(cols[vendaIdx]||'0');
     map.set(sub,(map.get(sub)||0)+val);
   }
-  const subs=[...map.keys()];
-  const vendas=subs.map(s=>map.get(s).toFixed(2));
+  const entries=[...map.entries()].sort((a,b)=>b[1]-a[1]);
+  const subs=entries.map(e=>e[0]);
+  const vendas=entries.map(e=>e[1].toFixed(2));
   const namesEl=document.getElementById('inp-2x1-names');
   const vendaEl=document.getElementById('inp-2x1-venda');
+  const invEl=document.getElementById('inp-2x1-inv');
+  const delCol=document.getElementById('inp-2x1-del-col');
   ce_setLines(namesEl,subs);
   ce_setLines(vendaEl,vendas);
+  ce_setLines(invEl,subs.map(()=>''));
   draw2x1Lines(namesEl,subs.length);
   draw2x1Lines(vendaEl,subs.length);
-  const invEl=document.getElementById('inp-2x1-inv');
-  const invLines=[];while(invLines.length<subs.length)invLines.push('');
-  invEl.value=invLines.join('\n');
-  sync2x1InvHeight(subs.length);
+  draw2x1Lines(invEl,subs.length);
+  if(delCol){
+    delCol.innerHTML='';
+    subs.forEach((_,i)=>{
+      const btn=document.createElement('span');
+      btn.textContent='✕';
+      btn.style.cssText='display:flex;align-items:center;justify-content:center;height:34px;width:28px;color:var(--red);font-size:13px;cursor:pointer;opacity:.5;transition:opacity .15s;font-family:DM Mono,monospace';
+      btn.onmouseover=()=>btn.style.opacity=1;
+      btn.onmouseout=()=>btn.style.opacity=.5;
+      btn.onclick=()=>remove2x1Row(i);
+      delCol.appendChild(btn);
+    });
+  }
   const grid=document.getElementById('grid-2x1');
   if(grid)grid.style.display='grid';
   const st=document.getElementById('inp-2x1-status');
@@ -832,7 +841,7 @@ async function importData(){
     rows=names.map((name,i)=>({name,inv:parseNum(invs[i]),venda:parseNum(vendas[i])}));
   } else if(mode==='2x1'){
     const names=ce_getLines(document.getElementById('inp-2x1-names')).map(s=>s.trim()).filter(Boolean);
-    const invs=document.getElementById('inp-2x1-inv').value.trim().split('\n').map(s=>s.trim()).filter(Boolean);
+    const invs=ce_getLines(document.getElementById('inp-2x1-inv')).map(s=>s.trim()).filter(Boolean);
     const vendas=ce_getLines(document.getElementById('inp-2x1-venda')).map(s=>s.trim()).filter(Boolean);
     if(!names.length){alert('Cole a tabela externa primeiro!');return;}
     if(!invs.length){alert('Preencha o Investimento!');return;}
@@ -855,8 +864,9 @@ async function importData(){
   await saveRows(acct.id,dt,rows);
   invalidateCache(acct.id);
   ['inp-names','inp-inv','inp-venda'].forEach(id=>{const el=document.getElementById(id);if(el){el.innerHTML='';const d=document.createElement('div');d.className='ce-line';d.textContent='';el.appendChild(d);}});
-  ['inp-paste','inp-2x1-inv'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  ['inp-2x1-names','inp-2x1-venda'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  ['inp-paste'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['inp-2x1-names','inp-2x1-inv','inp-2x1-venda'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  const delCol=document.getElementById('inp-2x1-del-col');if(delCol)delCol.innerHTML='';
   const grid2x1=document.getElementById('grid-2x1');if(grid2x1)grid2x1.style.display='none';
   const f2x1=document.getElementById('inp-2x1-file');if(f2x1)f2x1.value='';
   const fn=document.getElementById('inp-2x1-filename');if(fn)fn.textContent='Selecionar arquivo CSV';
