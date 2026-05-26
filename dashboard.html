@@ -1422,9 +1422,7 @@ function sortSubModal(col){
   const prev=_subSortState;
   let dir;
   if(col==='date'){
-    if(prev.col!==col||prev.dir===0){dir=1;}  // oldest first
-    else if(prev.dir===1){dir=-1;}             // newest first (default)
-    else{dir=0;}                               // reset to default (newest first = dir -1)
+    dir=(prev.col===col&&prev.dir===1)?-1:1;  // toggle: oldest↔newest
   } else {
     if(prev.col!==col){dir=1;}
     else if(prev.dir===1){dir=-1;}
