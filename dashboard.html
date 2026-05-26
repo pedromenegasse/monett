@@ -203,7 +203,7 @@ let currentUser=null;
   .sub-modal-scroll{overflow-y:auto;flex:1}
   .sub-modal table{width:100%;border-collapse:collapse;font-size:13px}
   .sub-modal th{position:sticky;top:0;background:var(--surface);z-index:2}
-  .sub-modal th{padding:8px 12px;text-align:center;font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
+  .sub-modal th{padding:8px 12px;text-align:center;font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:2px solid var(--border);white-space:nowrap;background:var(--surface)}
   .sub-modal th:first-child{text-align:left}
   .sub-modal td{padding:9px 12px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap}
   .sub-modal td:first-child{text-align:left;font-family:'DM Sans',sans-serif}
@@ -1403,8 +1403,7 @@ async function openSubModal(name){
     <div class="card" style="text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center"><div class="card-label">ROAS Médio</div><div class="card-value ${totRc}" style="text-align:center">${totC.roi!==null?totC.roi.toFixed(2):'—'}</div></div>`;
   const thS='cursor:pointer;user-select:none;transition:color .15s';
   const thH='onmouseover="this.style.color=\'#e8ecf4\'" onmouseout="this.style.color=\'\'"';
-  document.getElementById('sub-modal-table').innerHTML=`
-    <thead><tr>
+  document.getElementById('sub-modal-thead').innerHTML=`<tr>
       <th style="${thS}" ${thH} onclick="sortSubModal('date')">Data <span class="sort-ind" id="sms-date"></span></th>
       <th style="${thS}" ${thH} onclick="sortSubModal('inv')">Investimento <span class="sort-ind" id="sms-inv"></span></th>
       <th style="${thS}" ${thH} onclick="sortSubModal('meta')">+Meta <span class="sort-ind" id="sms-meta"></span></th>
@@ -1412,8 +1411,8 @@ async function openSubModal(name){
       <th style="${thS}" ${thH} onclick="sortSubModal('iss')">−ISS <span class="sort-ind" id="sms-iss"></span></th>
       <th style="${thS}" ${thH} onclick="sortSubModal('saldo')">Saldo/Dia <span class="sort-ind" id="sms-saldo"></span></th>
       <th style="${thS}" ${thH} onclick="sortSubModal('roas')">ROAS <span class="sort-ind" id="sms-roas"></span></th>
-    </tr></thead>
-    <tbody>${rows}</tbody>`;
+    </tr>`;
+  document.getElementById('sub-modal-tbody').innerHTML=rows;
   document.getElementById('sub-modal-bg').style.display='flex';
 }
 function closeSubModal(){document.getElementById('sub-modal-bg').style.display='none';}
@@ -1431,7 +1430,7 @@ function sortSubModal(col){
     else{dir=1;}
   }
   _subSortState.col=col;_subSortState.dir=dir;
-  const tbody=document.querySelector('#sub-modal-table tbody');
+  const tbody=document.getElementById('sub-modal-tbody');
   if(!tbody)return;
   const trs=[...tbody.querySelectorAll('tr')];
   // update indicators
@@ -1761,7 +1760,7 @@ async function renderBDSaldo(){
       <button class="sub-modal-close" onclick="closeSubModal()">✕ Fechar</button>
     </div>
     <div class="sub-modal-cards" id="sub-modal-cards"></div>
-    <div style="overflow-x:auto"><div class="sub-modal-scroll"><table id="sub-modal-table"></table></div></div>
+    <div style="overflow-x:auto;display:flex;flex-direction:column;flex:1;min-height:0"><table id="sub-modal-table" style="width:100%;border-collapse:collapse;font-size:13px"><thead id="sub-modal-thead"></thead></table><div class="sub-modal-scroll"><table style="width:100%;border-collapse:collapse;font-size:13px"><tbody id="sub-modal-tbody"></tbody></table></div></div>
   </div>
 </div>
 
