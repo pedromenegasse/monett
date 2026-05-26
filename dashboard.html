@@ -98,6 +98,7 @@ let currentUser=null;
   .btn-import{background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:8px 20px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;box-sizing:border-box;line-height:normal}
   .btn-import:hover{background:var(--accent);color:#0d0f14}
   textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:10px 12px;outline:none;resize:vertical;width:100%;transition:border .15s}
+  .ta-grow{resize:none!important;overflow:hidden!important;min-height:90px;line-height:1.8em;padding-top:10px;padding-bottom:10px;background-image:repeating-linear-gradient(transparent,transparent calc(1.8em - 1px),rgba(232,201,122,0.15) calc(1.8em - 1px),rgba(232,201,122,0.15) 1.8em);background-position:0 10px;background-size:100% 1.8em}
   textarea:focus{border-color:var(--accent)}
   textarea::placeholder{color:var(--muted)}
   .btn{background:var(--accent);color:#0d0f14;border:none;border-radius:8px;padding:9px 20px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;white-space:nowrap}
@@ -314,15 +315,15 @@ let currentUser=null;
   <div id="mode-3col" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
     <div>
       <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID</label>
-      <textarea id="inp-names" placeholder="" style="min-height:90px" oninput="sync3col(this,'names')"></textarea>
+      <textarea id="inp-names" placeholder="" class="ta-grow" oninput="sync3col(this,'names')"></textarea>
     </div>
     <div>
       <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Investimento</label>
-      <textarea id="inp-inv" placeholder="" style="min-height:90px" oninput="sync3col(this,'inv')"></textarea>
+      <textarea id="inp-inv" placeholder="" class="ta-grow" oninput="sync3col(this,'inv')"></textarea>
     </div>
     <div>
-      <label style="font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Venda</label>
-      <textarea id="inp-venda" placeholder="" style="min-height:90px" oninput="sync3col(this,'venda')"></textarea>
+      <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Venda</label>
+      <textarea id="inp-venda" placeholder="" class="ta-grow" oninput="sync3col(this,'venda')"></textarea>
     </div>
   </div>
   <!-- 2x1: colar tabela externa -->
@@ -636,13 +637,16 @@ function setMode(m){
 
 function sync3col(src,field){
   const lineCount=src.value.split('\n').length;
-  const others={names:'inp-names',inv:'inp-inv',venda:'inp-venda'};
-  for(const [k,id] of Object.entries(others)){
-    if(k===field)continue;
+  const ids={names:'inp-names',inv:'inp-inv',venda:'inp-venda'};
+  for(const [k,id] of Object.entries(ids)){
     const el=document.getElementById(id);
-    const lines=el.value.split('\n');
-    while(lines.length<lineCount)lines.push('');
-    el.value=lines.join('\n');
+    if(k!==field){
+      const lines=el.value.split('\n');
+      while(lines.length<lineCount)lines.push('');
+      el.value=lines.join('\n');
+    }
+    el.style.height='auto';
+    el.style.height=Math.max(90,el.scrollHeight)+'px';
   }
 }
 
