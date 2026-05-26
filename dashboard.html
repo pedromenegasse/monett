@@ -278,7 +278,7 @@ let currentUser=null;
     <span style="display:flex;align-items:center;gap:6px">
       <span id="bd-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">+</span> Bônus e Despesas
     </span>
-    <span id="bd-header-summary" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:400;display:none;width:calc(25% - 8px);text-align:center"></span>
+    <span id="bd-header-summary" style="font-family:'DM Mono',monospace;font-size:20px;font-weight:500;display:none;width:calc(25% - 8px);text-align:center"></span>
   </h2>
   <div id="bd-body" style="margin-top:12px;display:none">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
@@ -1620,7 +1620,7 @@ async function renderBD(){
   total.style.display='flex';
   total.innerHTML=`<div style="display:inline-flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid rgba(232,201,122,0.18);border-radius:8px;padding:6px 14px">
     <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Saldo</span>
-    <span style="font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:${cor}">${valorFmt}</span>
+    <span style="font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:${cor}">${valorFmt}</span>
   </div>`;
   const summary=document.getElementById('bd-header-summary');
   const bodyOpen=document.getElementById('bd-body').style.display!=='none';
@@ -1645,12 +1645,8 @@ async function renderBDSaldo(){
   if(_bdSeparar&&items.length){
     saldoEl.textContent=fmt(trafegoSaldo);
     saldoEl.className='card-value '+(trafegoSaldo>=0?'cv-green':'cv-red');
-    if(saldoHr)saldoHr.style.display='block';
-    if(saldoBot){
-      saldoBot.style.display='block';
-      saldoBot.textContent=(bdSum>=0?'+ ':'')+fmt(bdSum);
-      saldoBot.className='card-value '+(bdSum>=0?'cv-green':'cv-red');
-    }
+    if(saldoHr)saldoHr.style.display='none';
+    if(saldoBot)saldoBot.style.display='none';
   } else {
     const final=trafegoSaldo+bdSum;
     saldoEl.textContent=fmt(final);
