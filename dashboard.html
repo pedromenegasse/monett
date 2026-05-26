@@ -72,7 +72,7 @@ let currentUser=null;
   #bd-desc,#bd-valor{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:0 12px;outline:none;transition:border .15s;-webkit-appearance:none}
   #bd-desc:focus,#bd-valor:focus{border-color:var(--accent)}
   #bd-desc::placeholder,#bd-valor::placeholder{color:var(--muted)}
-  .bd-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+  .bd-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(232,201,122,0.18)}
   .bd-row:last-child{border-bottom:none}
   .bd-badge{font-size:11px;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace;text-transform:uppercase;display:inline-block;width:90px;text-align:center}
   .bd-badge-bonus{background:rgba(59,240,160,.1);color:var(--accent2)}
@@ -358,7 +358,7 @@ let currentUser=null;
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Venda</label>
         <div id="inp-2x1-venda" class="ce-col" contenteditable="true" spellcheck="false"></div>
       </div>
-      <div id="inp-2x1-del-col" style="display:flex;flex-direction:column;padding-top:24px;gap:3px">
+      <div id="inp-2x1-del-col" style="display:flex;flex-direction:column;margin-top:24px;gap:0">
       </div>
     </div>
   </div>
@@ -811,6 +811,7 @@ function parse2x1(rawInput){
       const btn=document.createElement('span');
       btn.textContent='✕';
       btn.className='btn-x';
+      btn.style.cssText='width:28px;height:34px;border-radius:8px;margin:0';
       btn.onclick=()=>remove2x1Row(i);
       delCol.appendChild(btn);
     });
