@@ -1616,16 +1616,16 @@ async function renderBD(){
   // total
   const sum=items.reduce((s,i)=>s+(i.tipo==='bonus'?i.valor:-i.valor),0);
   const cor=sum>=0?'var(--accent2)':'var(--red)';
-  const sinal=sum>=0?'+':'';
+  const valorFmt=fmt(sum);
   total.style.display='flex';
   total.innerHTML=`<div style="display:inline-flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid rgba(232,201,122,0.18);border-radius:8px;padding:6px 14px">
     <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Saldo</span>
-    <span style="font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:${cor}">${sinal} ${fmt(Math.abs(sum))}</span>
+    <span style="font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:${cor}">${valorFmt}</span>
   </div>`;
   const summary=document.getElementById('bd-header-summary');
   const bodyOpen=document.getElementById('bd-body').style.display!=='none';
   if(summary){
-    summary.textContent=`${sinal} ${fmt(Math.abs(sum))}`;
+    summary.textContent=valorFmt;
     summary.style.color=cor;
     summary.style.display=bodyOpen?'none':'';
   }
