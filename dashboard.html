@@ -74,7 +74,7 @@ let currentUser=null;
   #bd-desc::placeholder,#bd-valor::placeholder{color:var(--muted)}
   .bd-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
   .bd-row:last-child{border-bottom:none}
-  .bd-badge{font-size:10px;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace;text-transform:uppercase;display:inline-block;width:90px;text-align:center}
+  .bd-badge{font-size:11px;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace;text-transform:uppercase;display:inline-block;width:90px;text-align:center}
   .bd-badge-bonus{background:rgba(59,240,160,.1);color:var(--accent2)}
   .bd-badge-despesa{background:rgba(255,77,109,.1);color:var(--red)}
   #summary{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:22px}
@@ -110,6 +110,8 @@ let currentUser=null;
   .btn:hover{opacity:.85}
   .btn-danger{background:transparent;color:var(--red);border:1px solid var(--red);border-radius:6px;padding:4px 10px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;transition:all .15s}
   .btn-danger:hover{background:var(--red);color:#fff}
+  .btn-x{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:rgba(255,77,109,0.12);border:1px solid rgba(255,77,109,0.35);border-radius:8px;color:var(--red);font-size:12px;cursor:pointer;transition:all .15s;flex-shrink:0;font-family:'DM Mono',monospace}
+  .btn-x:hover{background:rgba(255,77,109,0.25);border-color:var(--red)}
   .paste-hint{font-size:11px;color:var(--muted);margin-top:5px;font-family:'DM Mono',monospace}
 
   /* LEGEND */
@@ -130,9 +132,9 @@ let currentUser=null;
   tr.totals-row td:nth-child(2){text-align:left;padding-left:4px}
   tr.totals-row td:first-child{width:54px;padding:11px 0;text-align:center;box-sizing:border-box}
   .day-date{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--accent)}
-  .day-totals{display:flex;gap:16px;font-family:'DM Mono',monospace;font-size:12px;flex-wrap:wrap}
+  .day-totals{display:flex;gap:16px;font-family:'DM Mono',monospace;font-size:14px;flex-wrap:wrap}
   .day-totals span{color:var(--muted)}.day-totals b{color:var(--text)}
-  .day-saldo{font-family:'DM Mono',monospace;font-size:13px;font-weight:500}
+  .day-saldo{font-family:'DM Mono',monospace;font-size:14px;font-weight:500}
   .chevron{transition:transform .2s;display:inline-block;font-size:12px}
   .collapsed .chevron{transform:rotate(-90deg)}
   .day-table-wrap{overflow-x:auto}
@@ -140,9 +142,9 @@ let currentUser=null;
   th{padding:9px 13px;text-align:center;font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
   th:first-child{text-align:center;width:54px}
   th:nth-child(2){text-align:left}
-  td{padding:10px 13px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap}
+  td{padding:10px 13px;text-align:center;font-family:'DM Mono',monospace;font-size:14px;border-bottom:1px solid var(--border);white-space:nowrap}
   td:first-child{text-align:center;width:54px}
-  td:nth-child(2){text-align:left;font-family:'DM Sans',sans-serif;font-size:13px}
+  td:nth-child(2){text-align:left;font-family:'DM Sans',sans-serif;font-size:14px}
   tr:last-child td{border-bottom:none}
   tr.roi-gold td{background:var(--gold-bg)}
   tr.roi-gold{outline:1px solid var(--gold-border);outline-offset:-1px}
@@ -346,7 +348,7 @@ let currentUser=null;
     <div id="grid-2x1" style="display:none;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:start">
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID</label>
-        <div id="inp-2x1-names" class="ce-col" style="color:var(--muted);cursor:default;pointer-events:none"></div>
+        <div id="inp-2x1-names" class="ce-col" contenteditable="true" spellcheck="false"></div>
       </div>
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Investimento</label>
@@ -354,9 +356,9 @@ let currentUser=null;
       </div>
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Venda</label>
-        <div id="inp-2x1-venda" class="ce-col" style="color:var(--muted);cursor:default;pointer-events:none"></div>
+        <div id="inp-2x1-venda" class="ce-col" contenteditable="true" spellcheck="false"></div>
       </div>
-      <div id="inp-2x1-del-col" style="display:flex;flex-direction:column;padding-top:24px;gap:0">
+      <div id="inp-2x1-del-col" style="display:flex;flex-direction:column;padding-top:24px;gap:3px">
       </div>
     </div>
   </div>
@@ -808,9 +810,7 @@ function parse2x1(rawInput){
     subs.forEach((_,i)=>{
       const btn=document.createElement('span');
       btn.textContent='✕';
-      btn.style.cssText='display:flex;align-items:center;justify-content:center;height:34px;width:28px;color:var(--red);font-size:13px;cursor:pointer;opacity:.5;transition:opacity .15s;font-family:DM Mono,monospace';
-      btn.onmouseover=()=>btn.style.opacity=1;
-      btn.onmouseout=()=>btn.style.opacity=.5;
+      btn.className='btn-x';
       btn.onclick=()=>remove2x1Row(i);
       delCol.appendChild(btn);
     });
@@ -1101,7 +1101,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest){
       else if(c.roi<=0.5)rowClass='roi-bord';
     }
     const missingStyle=isMissing?'opacity:0.35':'';
-    const deleteBtn=isMissing?'':` <button class="btn-danger" onclick="deleteRow('${day}','${r.name.replace(/'/g,"\\'")}')">×</button>`;
+    const deleteBtn=isMissing?'':` <button class="btn-x" onclick="deleteRow('${day}','${r.name.replace(/'/g,"\\'")}')">✕</button>`;
     return`<tr class="${rowClass}" style="${missingStyle}" data-missing="${isMissing}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roi="${c.roi??-999}" data-acum="${acum}" data-name="${r.name}">
       <td>${rankCell}</td>
       <td onclick="openSubModal('${r.name.replace(/'/g,"\\'")}');event.stopPropagation()" style="cursor:pointer;${isMissing?'opacity:0.35':''}">${r.name}</td>
@@ -1137,7 +1137,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest){
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <span class="day-saldo ${sc}">Saldo ${fmt(dayCalc.saldo)}</span>
-        <button class="btn-danger" onclick="event.stopPropagation();deleteDay('${day}')">Remover dia</button>
+        <button class="btn-x" onclick="event.stopPropagation();deleteDay('${day}')">✕</button>
       </div>
     </div>
     <div class="day-table-wrap" style="${tableDisplay}">
@@ -1153,7 +1153,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest){
           <td class="${sc}">${fmt(dayCalc.saldo)}</td>
           <td class="${roasClass}">${dayRoas}</td>
           <td class="${totMesClass}" style="font-weight:700">${fmt(totMesSaldo)}</td>
-          <td><button class="btn-danger" onclick="event.stopPropagation();deleteDay('${day}')">Remover dia</button></td>
+          <td><button class="btn-x" onclick="event.stopPropagation();deleteDay('${day}')">✕</button></td>
         </tr>
         <tr>
           <th style="cursor:pointer;user-select:none;transition:color .15s" onmouseover="this.style.color='#e8ecf4'" onmouseout="this.style.color=''" onclick="openRankModal()">Rank 🏆</th>
@@ -1598,11 +1598,11 @@ async function renderBD(){
     return`<div class="bd-row">
       <div style="display:flex;gap:10px;align-items:center">
         <span class="bd-badge ${isBonus?'bd-badge-bonus':'bd-badge-despesa'}">${i.tipo}</span>
-        <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text)">${i.descricao}</span>
+        <span style="font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text)">${i.descricao}</span>
       </div>
       <div style="display:flex;gap:12px;align-items:center">
         <span style="font-family:'DM Mono',monospace;font-size:14px;color:${cor}">${sinal} ${fmt(i.valor)}</span>
-        <span onclick="removeBD('${i.id}')" style="color:var(--red);font-size:14px;cursor:pointer;opacity:.6;transition:opacity .15s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6">✕</span>
+        <button class="btn-x" onclick="removeBD('${i.id}')">✕</button>
       </div>
     </div>`;
   }).join('');
