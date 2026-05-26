@@ -343,18 +343,18 @@ let currentUser=null;
         <span id="inp-2x1-status" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted)"></span>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+    <div id="grid-2x1" style="display:none;grid-template-columns:1fr 1fr 1fr;gap:10px">
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID</label>
-        <textarea id="inp-2x1-names" readonly placeholder="" style="min-height:90px;color:var(--muted);cursor:default"></textarea>
+        <div id="inp-2x1-names" class="ce-col" style="color:var(--muted);cursor:default;pointer-events:none"></div>
       </div>
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Investimento</label>
-        <textarea id="inp-2x1-inv" placeholder="uma linha por sub id" style="min-height:90px;border-color:var(--accent)"></textarea>
+        <textarea id="inp-2x1-inv" placeholder="" style="min-height:90px;border-color:var(--accent)"></textarea>
       </div>
       <div>
-        <label style="font-size:11px;color:var(--accent2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Venda (soma)</label>
-        <textarea id="inp-2x1-venda" readonly placeholder="" style="min-height:90px;color:var(--muted);cursor:default"></textarea>
+        <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Venda</label>
+        <div id="inp-2x1-venda" class="ce-col" style="color:var(--muted);cursor:default;pointer-events:none"></div>
       </div>
     </div>
   </div>
@@ -712,6 +712,38 @@ function ce_input(src,field){
   }
 }
 
+function draw2x1Lines(el,lineCount){
+  const LINE=30;
+  Array.from(el.querySelectorAll('.ce-line')).forEach((d,i)=>{
+    d.style.borderTop=i===0?'none':'1px solid rgba(232,201,122,0.18)';
+  });
+}
+
+function sync2x1InvHeight(lineCount){
+  const LINE=30;
+  const PT=6;
+  const invEl=document.getElementById('inp-2x1-inv');
+  if(!invEl)return;
+  const h=Math.max(90,PT*2+lineCount*LINE);
+  invEl.style.height=h+'px';
+  invEl.style.resize='none';
+  invEl.style.overflow='hidden';
+  invEl.style.lineHeight=LINE+'px';
+  invEl.style.paddingTop=PT+'px';
+  invEl.style.paddingBottom=PT+'px';
+  invEl.style.fontSize='12px';
+  if(lineCount>1){
+    const stops=[];
+    for(let i=1;i<lineCount;i++){
+      const y=PT+i*LINE;
+      stops.push(`transparent ${y-1}px`,`rgba(232,201,122,0.18) ${y-1}px`,`rgba(232,201,122,0.18) ${y}px`,`transparent ${y}px`);
+    }
+    invEl.style.backgroundImage=`linear-gradient(${stops.join(',')})`;
+  } else {
+    invEl.style.backgroundImage='none';
+  }
+}
+
 function load2x1File(input){
   const file=input.files[0];
   if(!file)return;
@@ -764,8 +796,18 @@ function parse2x1(rawInput){
   }
   const subs=[...map.keys()];
   const vendas=subs.map(s=>map.get(s).toFixed(2));
-  document.getElementById('inp-2x1-names').value=subs.join('\n');
-  document.getElementById('inp-2x1-venda').value=vendas.join('\n');
+  const namesEl=document.getElementById('inp-2x1-names');
+  const vendaEl=document.getElementById('inp-2x1-venda');
+  ce_setLines(namesEl,subs);
+  ce_setLines(vendaEl,vendas);
+  draw2x1Lines(namesEl,subs.length);
+  draw2x1Lines(vendaEl,subs.length);
+  const invEl=document.getElementById('inp-2x1-inv');
+  const invLines=[];while(invLines.length<subs.length)invLines.push('');
+  invEl.value=invLines.join('\n');
+  sync2x1InvHeight(subs.length);
+  const grid=document.getElementById('grid-2x1');
+  if(grid)grid.style.display='grid';
   const st=document.getElementById('inp-2x1-status');
   if(st)st.textContent=`✓ ${subs.length} sub id${subs.length!==1?'s':''} encontrado${subs.length!==1?'s':''}`;
 }
@@ -789,9 +831,9 @@ async function importData(){
     }
     rows=names.map((name,i)=>({name,inv:parseNum(invs[i]),venda:parseNum(vendas[i])}));
   } else if(mode==='2x1'){
-    const names=document.getElementById('inp-2x1-names').value.trim().split('\n').map(s=>s.trim()).filter(Boolean);
+    const names=ce_getLines(document.getElementById('inp-2x1-names')).map(s=>s.trim()).filter(Boolean);
     const invs=document.getElementById('inp-2x1-inv').value.trim().split('\n').map(s=>s.trim()).filter(Boolean);
-    const vendas=document.getElementById('inp-2x1-venda').value.trim().split('\n').map(s=>s.trim()).filter(Boolean);
+    const vendas=ce_getLines(document.getElementById('inp-2x1-venda')).map(s=>s.trim()).filter(Boolean);
     if(!names.length){alert('Cole a tabela externa primeiro!');return;}
     if(!invs.length){alert('Preencha o Investimento!');return;}
     if(names.length!==invs.length){
@@ -813,7 +855,9 @@ async function importData(){
   await saveRows(acct.id,dt,rows);
   invalidateCache(acct.id);
   ['inp-names','inp-inv','inp-venda'].forEach(id=>{const el=document.getElementById(id);if(el){el.innerHTML='';const d=document.createElement('div');d.className='ce-line';d.textContent='';el.appendChild(d);}});
-  ['inp-paste','inp-2x1-names','inp-2x1-inv','inp-2x1-venda'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['inp-paste','inp-2x1-inv'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['inp-2x1-names','inp-2x1-venda'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  const grid2x1=document.getElementById('grid-2x1');if(grid2x1)grid2x1.style.display='none';
   const f2x1=document.getElementById('inp-2x1-file');if(f2x1)f2x1.value='';
   const fn=document.getElementById('inp-2x1-filename');if(fn)fn.textContent='Selecionar arquivo CSV';
   const st=document.getElementById('inp-2x1-status');if(st)st.textContent='';
