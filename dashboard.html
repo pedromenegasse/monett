@@ -304,6 +304,7 @@ let currentUser=null;
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
     <div class="mode-toggle" style="margin-bottom:0;height:36px">
       <button class="mode-btn active" id="mode-btn-3col" onclick="setMode('3col')" style="height:36px">3×</button>
+      <button class="mode-btn" id="mode-btn-2x1" onclick="setMode('2x1')" style="height:36px">2×1</button>
       <button class="mode-btn" id="mode-btn-1col" onclick="setMode('1col')" style="height:36px">1×</button>
     </div>
     <input type="date" id="inp-date" style="height:36px;padding:0 12px">
@@ -313,15 +314,36 @@ let currentUser=null;
   <div id="mode-3col" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
     <div>
       <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID</label>
-      <textarea id="inp-names" placeholder="" style="min-height:90px"></textarea>
+      <textarea id="inp-names" placeholder="" style="min-height:90px" oninput="sync3col(this,'names')"></textarea>
     </div>
     <div>
       <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Investimento</label>
-      <textarea id="inp-inv" placeholder="" style="min-height:90px"></textarea>
+      <textarea id="inp-inv" placeholder="" style="min-height:90px" oninput="sync3col(this,'inv')"></textarea>
     </div>
     <div>
       <label style="font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Venda</label>
-      <textarea id="inp-venda" placeholder="" style="min-height:90px"></textarea>
+      <textarea id="inp-venda" placeholder="" style="min-height:90px" oninput="sync3col(this,'venda')"></textarea>
+    </div>
+  </div>
+  <!-- 2x1: colar tabela externa -->
+  <div id="mode-2x1" style="display:none">
+    <div style="margin-bottom:10px">
+      <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Colar tabela externa</label>
+      <textarea id="inp-2x1-paste" placeholder="Cole aqui a tabela (com cabeçalho). Colunas Sub ID e Venda detectadas automaticamente." style="min-height:70px" oninput="parse2x1()"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div>
+        <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID</label>
+        <textarea id="inp-2x1-names" readonly placeholder="" style="min-height:90px;color:var(--muted);cursor:default"></textarea>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Investimento</label>
+        <textarea id="inp-2x1-inv" placeholder="uma linha por sub id" style="min-height:90px;border-color:var(--accent)"></textarea>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--accent2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Venda (soma)</label>
+        <textarea id="inp-2x1-venda" readonly placeholder="" style="min-height:90px;color:var(--muted);cursor:default"></textarea>
+      </div>
     </div>
   </div>
   <!-- 1 caixa -->
@@ -604,10 +626,49 @@ function calc(inv,venda){
 /* ── IMPORT MODE ── */
 function setMode(m){
   document.getElementById('mode-3col').style.display=m==='3col'?'grid':'none';
+  document.getElementById('mode-2x1').style.display=m==='2x1'?'block':'none';
   document.getElementById('mode-1col').style.display=m==='1col'?'block':'none';
   document.getElementById('mode-btn-3col').classList.toggle('active',m==='3col');
+  document.getElementById('mode-btn-2x1').classList.toggle('active',m==='2x1');
   document.getElementById('mode-btn-1col').classList.toggle('active',m==='1col');
   localStorage.setItem('tp_import_mode',m);
+}
+
+function sync3col(src,field){
+  const lineCount=src.value.split('\n').length;
+  const others={names:'inp-names',inv:'inp-inv',venda:'inp-venda'};
+  for(const [k,id] of Object.entries(others)){
+    if(k===field)continue;
+    const el=document.getElementById(id);
+    const lines=el.value.split('\n');
+    while(lines.length<lineCount)lines.push('');
+    el.value=lines.join('\n');
+  }
+}
+
+function parse2x1(){
+  const raw=document.getElementById('inp-2x1-paste').value.trim();
+  if(!raw)return;
+  const lines=raw.split('\n').filter(l=>l.trim());
+  if(lines.length<2)return;
+  const sep=lines[0].includes('\t')?'\t':lines[0].includes(';')?';':'|';
+  const headers=lines[0].split(sep).map(h=>h.trim().toLowerCase());
+  const norm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[\s_-]/g,'');
+  const subIdx=headers.findIndex(h=>norm(h).includes('subid')||norm(h).includes('sub'));
+  const vendaIdx=headers.findIndex(h=>norm(h).includes('venda')||norm(h).includes('sale')||norm(h).includes('receita'));
+  if(subIdx<0||vendaIdx<0)return;
+  const map=new Map();
+  for(let i=1;i<lines.length;i++){
+    const cols=lines[i].split(sep).map(c=>c.trim());
+    const sub=cols[subIdx];
+    if(!sub)continue;
+    const val=parseNum(cols[vendaIdx]||'0');
+    map.set(sub,(map.get(sub)||0)+val);
+  }
+  const subs=[...map.keys()];
+  const vendas=subs.map(s=>map.get(s).toFixed(2));
+  document.getElementById('inp-2x1-names').value=subs.join('\n');
+  document.getElementById('inp-2x1-venda').value=vendas.join('\n');
 }
 
 /* ── IMPORT DAY ── */
@@ -628,6 +689,16 @@ async function importData(){
       alert(`Número de linhas diferente:\nSub ID: ${names.length}\nInvestimento: ${invs.length}\nVenda: ${vendas.length}`);return;
     }
     rows=names.map((name,i)=>({name,inv:parseNum(invs[i]),venda:parseNum(vendas[i])}));
+  } else if(mode==='2x1'){
+    const names=document.getElementById('inp-2x1-names').value.trim().split('\n').map(s=>s.trim()).filter(Boolean);
+    const invs=document.getElementById('inp-2x1-inv').value.trim().split('\n').map(s=>s.trim()).filter(Boolean);
+    const vendas=document.getElementById('inp-2x1-venda').value.trim().split('\n').map(s=>s.trim()).filter(Boolean);
+    if(!names.length){alert('Cole a tabela externa primeiro!');return;}
+    if(!invs.length){alert('Preencha o Investimento!');return;}
+    if(names.length!==invs.length){
+      alert(`Número de linhas diferente:\nSub ID: ${names.length}\nInvestimento: ${invs.length}`);return;
+    }
+    rows=names.map((name,i)=>({name,inv:parseNum(invs[i]),venda:parseNum(vendas[i]||'0')}));
   } else {
     const txt=document.getElementById('inp-paste').value;
     if(!txt.trim()){alert('Cole os dados!');return;}
@@ -642,7 +713,7 @@ async function importData(){
   // save all rows first with original names
   await saveRows(acct.id,dt,rows);
   invalidateCache(acct.id);
-  ['inp-names','inp-inv','inp-venda','inp-paste'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['inp-names','inp-inv','inp-venda','inp-paste','inp-2x1-paste','inp-2x1-names','inp-2x1-inv','inp-2x1-venda'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   showToast('✓ Importado!');
   await renderAll();
 
