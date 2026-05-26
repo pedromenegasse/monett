@@ -599,6 +599,13 @@ async function switchAccount(id){
   const iss=getISS();
   document.getElementById('iss-inp').value=parseFloat(iss).toFixed(2).replace('.',',');
   document.getElementById('iss-display').textContent=fmtPct(iss);
+  // reset summary cards before loading new account data
+  const sc=document.getElementById('s-saldo');
+  sc.textContent='R$ 0,00';sc.className='card-value cv-green';sc.dataset.raw='0';
+  ['s-inv','s-invmeta','s-vendabruta','s-venda'].forEach(id=>document.getElementById(id).textContent='R$ 0,00');
+  document.getElementById('s-roi').textContent='—';
+  const saldoBot=document.getElementById('s-saldo-bot');if(saldoBot)saldoBot.style.display='none';
+  const saldoHr=document.getElementById('s-saldo-hr');if(saldoHr)saldoHr.style.display='none';
   await renderAll();
 }
 
