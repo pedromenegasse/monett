@@ -326,15 +326,15 @@ let currentUser=null;
   <div id="mode-3col" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
     <div>
       <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID</label>
-      <div id="inp-names" class="ce-col" contenteditable="true" spellcheck="false" data-field="names" onkeydown="ce_keydown(event,this)" oninput="ce_input(this,'names')"></div>
+      <div id="inp-names" class="ce-col" contenteditable="true" spellcheck="false" data-field="names" onkeydown="ce_keydown(event,this)" oninput="ce_input(this,'names')" onpaste="ce_paste(event,this)"></div>
     </div>
     <div>
       <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Investimento</label>
-      <div id="inp-inv" class="ce-col" contenteditable="true" spellcheck="false" data-field="inv" onkeydown="ce_keydown(event,this)" oninput="ce_input(this,'inv')"></div>
+      <div id="inp-inv" class="ce-col" contenteditable="true" spellcheck="false" data-field="inv" onkeydown="ce_keydown(event,this)" oninput="ce_input(this,'inv')" onpaste="ce_paste(event,this)"></div>
     </div>
     <div>
       <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Venda</label>
-      <div id="inp-venda" class="ce-col" contenteditable="true" spellcheck="false" data-field="venda" onkeydown="ce_keydown(event,this)" oninput="ce_input(this,'venda')"></div>
+      <div id="inp-venda" class="ce-col" contenteditable="true" spellcheck="false" data-field="venda" onkeydown="ce_keydown(event,this)" oninput="ce_input(this,'venda')" onpaste="ce_paste(event,this)"></div>
     </div>
   </div>
   <!-- 2x1: colar tabela externa -->
@@ -352,15 +352,15 @@ let currentUser=null;
     <div id="grid-2x1" style="display:none;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:start">
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID</label>
-        <div id="inp-2x1-names" class="ce-col" contenteditable="true" spellcheck="false"></div>
+        <div id="inp-2x1-names" class="ce-col" contenteditable="true" spellcheck="false" onpaste="ce_paste(event,this)"></div>
       </div>
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Investimento</label>
-        <div id="inp-2x1-inv" class="ce-col" contenteditable="true" spellcheck="false" style="border-color:var(--accent)"></div>
+        <div id="inp-2x1-inv" class="ce-col" contenteditable="true" spellcheck="false" style="border-color:var(--accent)" onpaste="ce_paste(event,this)"></div>
       </div>
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Venda</label>
-        <div id="inp-2x1-venda" class="ce-col" contenteditable="true" spellcheck="false"></div>
+        <div id="inp-2x1-venda" class="ce-col" contenteditable="true" spellcheck="false" onpaste="ce_paste(event,this)"></div>
       </div>
       <div id="inp-2x1-del-col" style="display:flex;flex-direction:column;margin-top:24px;gap:0">
       </div>
@@ -679,6 +679,31 @@ function ce_setLines(el,lines){
     d.textContent=txt;
     el.appendChild(d);
   });
+}
+
+function ce_paste(e,el){
+  e.preventDefault();
+  const text=(e.clipboardData||window.clipboardData).getData('text/plain');
+  const lines=text.split('\n');
+  const sel=window.getSelection();
+  if(!sel.rangeCount)return;
+  const range=sel.getRangeAt(0);
+  const lineDiv=range.startContainer.nodeType===3?range.startContainer.parentElement:range.startContainer;
+  if(lines.length===1){
+    // insert inline
+    document.execCommand('insertText',false,lines[0]);
+  } else {
+    // insert first line into current line, rest as new ce-lines
+    document.execCommand('insertText',false,lines[0]);
+    lines.slice(1).forEach(txt=>{
+      const d=document.createElement('div');
+      d.className='ce-line';
+      d.textContent=txt;
+      lineDiv.after(d);
+      lineDiv.parentElement&&lineDiv.parentElement.insertBefore(d,lineDiv.nextSibling);
+    });
+  }
+  ce_input(el,el.dataset.field||'');
 }
 
 function ce_keydown(e,el){
