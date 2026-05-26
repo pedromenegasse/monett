@@ -654,22 +654,22 @@ function sync3col(src,field){
 }
 
 function draw3colLines(ta,lineCount){
-  const lh=1.8;
-  const pt=10;
   if(lineCount<=1||ta.value.trim()===''){
     ta.style.backgroundImage='none';
     return;
   }
+  const fs=12;
+  const lh=Math.round(fs*1.8);
+  const pt=10;
   const stops=[];
   for(let i=1;i<lineCount;i++){
     const y=pt+i*lh;
-    stops.push(`transparent calc(${y}em - 1px)`);
-    stops.push(`rgba(232,201,122,0.18) calc(${y}em - 1px)`);
-    stops.push(`rgba(232,201,122,0.18) ${y}em`);
-    stops.push(`transparent ${y}em`);
+    stops.push(`transparent ${y-1}px`);
+    stops.push(`rgba(232,201,122,0.18) ${y-1}px`);
+    stops.push(`rgba(232,201,122,0.18) ${y}px`);
+    stops.push(`transparent ${y}px`);
   }
   ta.style.backgroundImage=`linear-gradient(${stops.join(',')})`;
-  ta.style.fontSize='12px';
 }
 
 function parse2x1(){
