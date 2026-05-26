@@ -202,7 +202,8 @@ let currentUser=null;
   .sub-modal-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
   .sub-modal-scroll{overflow-y:auto;flex:1}
   .sub-modal table{width:100%;border-collapse:collapse;font-size:13px}
-  .sub-modal th{padding:8px 12px;text-align:center;font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;background:var(--surface);z-index:1}
+  .sub-modal th{position:sticky;top:0;background:var(--surface);z-index:2}
+  .sub-modal th{padding:8px 12px;text-align:center;font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
   .sub-modal th:first-child{text-align:left}
   .sub-modal td{padding:9px 12px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap}
   .sub-modal td:first-child{text-align:left;font-family:'DM Sans',sans-serif}
@@ -1422,7 +1423,7 @@ function sortSubModal(col){
   const prev=_subSortState;
   let dir;
   if(col==='date'){
-    dir=(prev.col===col&&prev.dir===1)?-1:1;  // toggle: oldest↔newest
+    dir=(prev.col===col&&prev.dir===-1)?1:-1;  // default newest(-1), click→oldest(1)
   } else {
     if(prev.col!==col){dir=1;}
     else if(prev.dir===1){dir=-1;}
@@ -1433,7 +1434,7 @@ function sortSubModal(col){
   // update indicators
   ['date','inv','meta','venda','iss','saldo','roas'].forEach(c=>{
     const el=document.getElementById('sms-'+c);
-    if(el)el.textContent=(c===col&&dir===1&&col!=='date')?'↓':(c===col&&dir===-1&&col!=='date')?'↑':(c===col&&col==='date'&&dir===1)?'↑':'';
+    if(el)el.textContent=(c===col&&col==='date'&&dir===1)?'↓':(c===col&&col!=='date'&&dir===1)?'↓':(c===col&&col!=='date'&&dir===-1)?'↑':'';
   });
   const tbody=document.querySelector('#sub-modal-table tbody');
   if(!tbody)return;
