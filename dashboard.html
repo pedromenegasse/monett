@@ -1433,7 +1433,7 @@ function sortSubModal(col){
   // update indicators
   ['date','inv','meta','venda','iss','saldo','roas'].forEach(c=>{
     const el=document.getElementById('sms-'+c);
-    if(el)el.textContent=(c===col&&dir===1)?'↓':(c===col&&dir===-1)?'↑':'';
+    if(el)el.textContent=(c===col&&dir===1&&col!=='date')?'↓':(c===col&&dir===-1&&col!=='date')?'↑':(c===col&&col==='date'&&dir===1)?'↑':'';
   });
   const tbody=document.querySelector('#sub-modal-table tbody');
   if(!tbody)return;
