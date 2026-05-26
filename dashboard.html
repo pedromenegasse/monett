@@ -1554,19 +1554,30 @@ const _rankSortState={col:null,dir:0};
 function sortRankModal(col){
   const prev=_rankSortState;
   let dir;
-  if(prev.col!==col){dir=1;}
-  else if(prev.dir===1){dir=-1;}
-  else if(prev.dir===-1){dir=0;}
-  else{dir=1;}
+  if(col==='saldo'){
+    dir=(prev.col===col&&prev.dir===1)?-1:1;  // 1st click→lowest(1), 2nd click→highest(-1)/default
+  } else {
+    if(prev.col!==col){dir=1;}
+    else if(prev.dir===1){dir=-1;}
+    else if(prev.dir===-1){dir=0;}
+    else{dir=1;}
+  }
   _rankSortState.col=col;_rankSortState.dir=dir;
   ['rank','inv','meta','venda','iss','roi','saldo','name'].forEach(c=>{
     const el=document.getElementById('rms-'+c);
-    if(el)el.textContent=(c===col&&dir===1)?'↓':(c===col&&dir===-1)?'↑':'';
+    if(c==='saldo') el&&(el.textContent=(col==='saldo'&&dir===1)?'↓':'');
+    else el&&(el.textContent=(c===col&&dir===1)?'↓':(c===col&&dir===-1)?'↑':'');
   });
   const tbody=document.querySelector('#rank-modal-table tbody');
   if(!tbody)return;
   const trs=[...tbody.querySelectorAll('tr')];
-  if(dir===0){
+  if(col==='saldo'&&dir===-1){
+    // default: highest first
+    trs.sort((a,b)=>parseFloat(b.dataset.saldo||0)-parseFloat(a.dataset.saldo||0));
+  } else if(col==='saldo'&&dir===1){
+    // lowest first
+    trs.sort((a,b)=>parseFloat(a.dataset.saldo||0)-parseFloat(b.dataset.saldo||0));
+  } else if(dir===0){
     trs.sort((a,b)=>parseInt(a.dataset.rank)-parseInt(b.dataset.rank));
   } else {
     trs.sort((a,b)=>{
