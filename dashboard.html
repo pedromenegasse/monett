@@ -375,7 +375,12 @@ let currentUser=null;
 
 <!-- TABLE -->
 <div id="table-section">
-  <h2>Histórico <small id="tbl-subtitle"></small></h2>
+  <h2 onclick="toggleHistorico()" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;gap:6px">
+    <span style="display:flex;align-items:center;gap:6px">
+      <span id="hist-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Histórico <small id="tbl-subtitle"></small>
+    </span>
+  </h2>
+  <div id="hist-body">
   <div id="rank-legend">
     <span><span class="chip chip-gold"></span>ROAS ≥ 1,5 no dia</span>
     <span><span class="chip chip-bord"></span>ROAS ≤ 0,5 no dia</span>
@@ -387,6 +392,7 @@ let currentUser=null;
     <span style="font-size:10px;color:var(--muted)">Ranking = saldo acumulado no mês</span>
   </div>
   <div id="days-container"><div class="empty">Nenhum dado ainda. Lance o primeiro dia acima ☝️</div></div>
+  </div>
 </div>
 
 <!-- MODAL nova conta -->
@@ -939,6 +945,15 @@ function showConflictModal(rowName, matchName){
     d.querySelector('#cfm-no').onclick=()=>{document.body.removeChild(d);resolve(false);};
   });
 }
+function toggleHistorico(){
+  const body=document.getElementById('hist-body');
+  const icon=document.getElementById('hist-toggle-icon');
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  icon.textContent=open?'+':'−';
+  localStorage.setItem('tp_hist_open',open?'0':'1');
+}
+
 function toggleImport(){
   const body=document.getElementById('import-body');
   const icon=document.getElementById('import-toggle-icon');
@@ -1643,14 +1658,16 @@ async function renderBDSaldo(){
   const saldoBot=document.getElementById('s-saldo-bot');
   const saldoHr=document.getElementById('s-saldo-hr');
   if(_bdSeparar&&items.length){
-    saldoEl.textContent=fmt(trafegoSaldo);
-    saldoEl.className='card-value '+(trafegoSaldo>=0?'cv-green':'cv-red');
-    if(saldoHr)saldoHr.style.display='none';
-    if(saldoBot)saldoBot.style.display='none';
-  } else {
+    // ON: adicionar ao saldo — mostrar total combinado
     const final=trafegoSaldo+bdSum;
     saldoEl.textContent=fmt(final);
     saldoEl.className='card-value '+(final>=0?'cv-green':'cv-red');
+    if(saldoHr)saldoHr.style.display='none';
+    if(saldoBot)saldoBot.style.display='none';
+  } else {
+    // OFF: separar — mostrar só tráfego
+    saldoEl.textContent=fmt(trafegoSaldo);
+    saldoEl.className='card-value '+(trafegoSaldo>=0?'cv-green':'cv-red');
     if(saldoHr)saldoHr.style.display='none';
     if(saldoBot)saldoBot.style.display='none';
   }
@@ -1690,6 +1707,7 @@ async function renderBDSaldo(){
   document.getElementById('inp-date').value=new Date().toISOString().slice(0,10);
   const savedMode=localStorage.getItem('tp_import_mode')||'3col';
   if(_bdSeparar){const t=document.getElementById('bd-separar-track');if(t)t.classList.add('on');}
+  if(localStorage.getItem('tp_hist_open')==='0'){const b=document.getElementById('hist-body');const i=document.getElementById('hist-toggle-icon');if(b){b.style.display='none';i.textContent='+';}}
   setMode(savedMode);
   ['inp-names','inp-inv','inp-venda'].forEach(id=>{
     const el=document.getElementById(id);
