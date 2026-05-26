@@ -123,7 +123,7 @@ let currentUser=null;
   #table-section h2{font-family:'Syne',sans-serif;font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
   #table-section h2 small{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);font-weight:400}
   .day-block{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden}
-  .day-header{display:flex;align-items:center;justify-content:space-between;padding:11px 0 11px 0;background:var(--surface2);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;gap:8px;flex-wrap:wrap}
+  .day-header{display:flex;align-items:center;justify-content:space-between;padding:11px 14px 11px 0;background:var(--surface2);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;gap:8px;flex-wrap:wrap}
   .day-header-left{display:flex;align-items:center;gap:0;flex-wrap:wrap;flex:1}
   .day-header-left>.chevron{width:54px;text-align:center;margin:0;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center}
   .day-header-left>.day-date{padding:0 13px 0 4px;flex-shrink:0}
@@ -264,10 +264,11 @@ let currentUser=null;
     <div class="card-label">ROAS Médio</div>
     <div class="card-value cv-green" id="s-roi">—</div>
   </div>
-  <div class="card" style="text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center">
+  <div class="card" style="text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px">
     <div class="card-label">Saldo Mês</div>
     <div class="card-value cv-green" id="s-saldo" data-raw="0">R$ 0,00</div>
     <hr id="s-saldo-hr" style="border:none;border-top:1px solid var(--border);margin:6px 0;width:100%;display:none">
+    <div class="card-label" id="s-saldo-bot-label" style="display:none">Bônus/Despesas</div>
     <div class="card-value cv-green" id="s-saldo-bot" style="display:none"></div>
   </div>
 </div>
@@ -814,7 +815,7 @@ function parse2x1(rawInput){
       const btn=document.createElement('span');
       btn.textContent='✕';
       btn.className='btn-x';
-      btn.style.cssText='width:28px;height:34px;border-radius:8px;margin:0';
+      btn.style.cssText='width:34px;height:34px;border-radius:8px;margin:0';
       btn.onclick=()=>remove2x1Row(i);
       delCol.appendChild(btn);
     });
@@ -1648,7 +1649,8 @@ async function renderBDSaldo(){
     if(saldoHr)saldoHr.style.display='block';
     if(saldoBot){
       saldoBot.style.display='block';
-      saldoBot.textContent=(bdSum>=0?'+ ':'')+fmt(bdSum);
+      const saldoBotLabel=document.getElementById('s-saldo-bot-label');if(saldoBotLabel)saldoBotLabel.style.display='block';
+      saldoBot.textContent=(bdSum>=0?'+ ':'− ')+fmt(Math.abs(bdSum));
       saldoBot.className='card-value '+(bdSum>=0?'cv-green':'cv-red');
     }
   } else {
@@ -1657,6 +1659,7 @@ async function renderBDSaldo(){
     saldoEl.className='card-value '+(final>=0?'cv-green':'cv-red');
     if(saldoHr)saldoHr.style.display='none';
     if(saldoBot)saldoBot.style.display='none';
+    const saldoBotLabel=document.getElementById('s-saldo-bot-label');if(saldoBotLabel)saldoBotLabel.style.display='none';
   }
 }
 
