@@ -1431,23 +1431,25 @@ function sortSubModal(col){
     else{dir=1;}
   }
   _subSortState.col=col;_subSortState.dir=dir;
-  // update indicators
-  ['date','inv','meta','venda','iss','saldo','roas'].forEach(c=>{
-    const el=document.getElementById('sms-'+c);
-    if(el)el.textContent=(c===col&&col==='date'&&dir===1)?'↓':(c===col&&col!=='date'&&dir===1)?'↓':(c===col&&col!=='date'&&dir===-1)?'↑':'';
-  });
   const tbody=document.querySelector('#sub-modal-table tbody');
   if(!tbody)return;
   const trs=[...tbody.querySelectorAll('tr')];
-  if(dir===0){
+  // update indicators
+  ['date','inv','meta','venda','iss','saldo','roas'].forEach(c=>{
+    const el=document.getElementById('sms-'+c);
+    if(c==='date') el&&(el.textContent=dir===1?'↓':'');
+    else el&&(el.textContent=(c===col&&dir===1)?'↓':(c===col&&dir===-1)?'↑':'');
+  });
+  if(col==='date'&&dir===-1){
+    // default: newest first — sort by date descending
+    trs.sort((a,b)=>(a.dataset.date>b.dataset.date?-1:a.dataset.date<b.dataset.date?1:0));
+  } else if(col==='date'&&dir===1){
+    // oldest first
+    trs.sort((a,b)=>(a.dataset.date<b.dataset.date?-1:a.dataset.date>b.dataset.date?1:0));
+  } else if(dir===0){
     trs.sort((a,b)=>a.dataset.idx-b.dataset.idx);
   } else {
     trs.sort((a,b)=>{
-      if(col==='date'){
-        const av=a.dataset.date||'';
-        const bv=b.dataset.date||'';
-        return dir*(av<bv?1:av>bv?-1:0);
-      }
       const av=parseFloat(a.dataset[col]||0);
       const bv=parseFloat(b.dataset[col]||0);
       return dir*(bv-av);
