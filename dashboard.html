@@ -196,12 +196,13 @@ let currentUser=null;
   .color-pick.selected{border-color:var(--text)}
   /* SUB ID MODAL */
   .sub-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px}
-  .sub-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:700px;max-height:85vh;overflow-y:auto}
+  .sub-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:700px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
   .sub-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
   .sub-modal-header h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent);margin:0}
   .sub-modal-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+  .sub-modal-scroll{overflow-y:auto;flex:1}
   .sub-modal table{width:100%;border-collapse:collapse;font-size:13px}
-  .sub-modal th{padding:8px 12px;text-align:center;font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
+  .sub-modal th{padding:8px 12px;text-align:center;font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;background:var(--surface);z-index:1}
   .sub-modal th:first-child{text-align:left}
   .sub-modal td{padding:9px 12px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap}
   .sub-modal td:first-child{text-align:left;font-family:'DM Sans',sans-serif}
@@ -1361,13 +1362,11 @@ async function openSubModal(name){
   const days=Object.keys(md).sort();
   if(!days.length)return;
   let totInv=0,totVenda=0,totSaldo=0,totMeta=0,totISS=0,count=0;
-  const rows=days.map((day,idx)=>{
+  const rows=[...days].reverse().map((day,idx)=>{
     const r=md[day].find(x=>x.name===name);
+    if(!r)return'';
     const [y,m,d]=day.split('-');
     const lbl=`${d}/${m}`;
-    if(!r){
-      return`<tr data-idx="${idx}" data-date="${day}" data-inv="0" data-meta="0" data-venda="0" data-iss="0" data-saldo="0" data-roas="-999" style="opacity:.3"><td>${lbl}</td><td>—</td><td>—</td><td>—</td><td>—</td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">—</td></tr>`;
-    }
     const c=calc(r.inv,r.venda);
     totInv+=r.inv;totVenda+=r.venda;totSaldo+=c.saldo;count++;
     const sc=c.saldo>=0?'color:var(--accent2)':'color:var(--red)';
@@ -1423,8 +1422,9 @@ function sortSubModal(col){
   const prev=_subSortState;
   let dir;
   if(col==='date'){
-    if(prev.col!==col||prev.dir===0){dir=1;}
-    else{dir=prev.dir===1?-1:1;}
+    if(prev.col!==col||prev.dir===0){dir=1;}  // oldest first
+    else if(prev.dir===1){dir=-1;}             // newest first (default)
+    else{dir=0;}                               // reset to default (newest first = dir -1)
   } else {
     if(prev.col!==col){dir=1;}
     else if(prev.dir===1){dir=-1;}
@@ -1760,7 +1760,7 @@ async function renderBDSaldo(){
       <button class="sub-modal-close" onclick="closeSubModal()">✕ Fechar</button>
     </div>
     <div class="sub-modal-cards" id="sub-modal-cards"></div>
-    <div style="overflow-x:auto"><table id="sub-modal-table"></table></div>
+    <div style="overflow-x:auto"><div class="sub-modal-scroll"><table id="sub-modal-table"></table></div></div>
   </div>
 </div>
 
