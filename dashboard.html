@@ -1160,7 +1160,8 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest){
     }
     const missingStyle=isMissing?'opacity:0.35':'';
     const deleteBtn=isMissing?'':` <button class="btn-x" onclick="deleteRow('${day}','${r.name.replace(/'/g,"\\'")}')">✕</button>`;
-    return`<tr class="${rowClass}" style="${missingStyle}" data-missing="${isMissing}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roi="${c.roi??-999}" data-acum="${acum}" data-name="${r.name}">
+    const isZeroInv=!isMissing&&r.inv===0;
+    return`<tr class="${rowClass}" style="${missingStyle}" data-missing="${isMissing}" data-zero-inv="${isZeroInv}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roi="${c.roi??-999}" data-acum="${acum}" data-name="${r.name}">
       <td>${rankCell}</td>
       <td onclick="openSubModal('${r.name.replace(/'/g,"\\'")}');event.stopPropagation()" style="cursor:pointer;${isMissing?'opacity:0.35':''}">${r.name}</td>
       <td>${fmt(r.inv)}</td><td>${fmt(c.comMeta)}</td>
@@ -1253,7 +1254,12 @@ function toggleAtivos(dayId,onlyActive){
   if(!tbl)return;
   tbl.querySelectorAll('tbody tr').forEach(tr=>{
     const missing=tr.dataset.missing==='true';
-    tr.style.display=(!onlyActive||!missing)?'':'none';
+    const zeroInv=tr.dataset.zeroInv==='true';
+    if(!onlyActive){
+      tr.style.display='';
+    } else {
+      tr.style.display=(missing||zeroInv)?'none':'';
+    }
   });
 }
 /* ── SORT ── */
