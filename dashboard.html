@@ -264,11 +264,10 @@ let currentUser=null;
     <div class="card-label">ROAS Médio</div>
     <div class="card-value cv-green" id="s-roi">—</div>
   </div>
-  <div class="card" style="text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px">
+  <div class="card" style="text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center">
     <div class="card-label">Saldo Mês</div>
     <div class="card-value cv-green" id="s-saldo" data-raw="0">R$ 0,00</div>
     <hr id="s-saldo-hr" style="border:none;border-top:1px solid var(--border);margin:6px 0;width:100%;display:none">
-    <div class="card-label" id="s-saldo-bot-label" style="display:none">Bônus/Despesas</div>
     <div class="card-value cv-green" id="s-saldo-bot" style="display:none"></div>
   </div>
 </div>
@@ -1649,8 +1648,7 @@ async function renderBDSaldo(){
     if(saldoHr)saldoHr.style.display='block';
     if(saldoBot){
       saldoBot.style.display='block';
-      const saldoBotLabel=document.getElementById('s-saldo-bot-label');if(saldoBotLabel)saldoBotLabel.style.display='block';
-      saldoBot.textContent=(bdSum>=0?'+ ':'− ')+fmt(Math.abs(bdSum));
+      saldoBot.textContent=(bdSum>=0?'+ ':'')+fmt(bdSum);
       saldoBot.className='card-value '+(bdSum>=0?'cv-green':'cv-red');
     }
   } else {
@@ -1659,7 +1657,6 @@ async function renderBDSaldo(){
     saldoEl.className='card-value '+(final>=0?'cv-green':'cv-red');
     if(saldoHr)saldoHr.style.display='none';
     if(saldoBot)saldoBot.style.display='none';
-    const saldoBotLabel=document.getElementById('s-saldo-bot-label');if(saldoBotLabel)saldoBotLabel.style.display='none';
   }
 }
 
