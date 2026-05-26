@@ -1437,7 +1437,7 @@ function sortSubModal(col){
   // update indicators
   ['date','inv','meta','venda','iss','saldo','roas'].forEach(c=>{
     const el=document.getElementById('sms-'+c);
-    if(c==='date') el&&(el.textContent=dir===1?'↓':'');
+    if(c==='date') el&&(el.textContent=(col==='date'&&dir===1)?'↓':'');
     else el&&(el.textContent=(c===col&&dir===1)?'↓':(c===col&&dir===-1)?'↑':'');
   });
   if(col==='date'&&dir===-1){
