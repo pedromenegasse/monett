@@ -334,8 +334,14 @@ let currentUser=null;
   <!-- 2x1: colar tabela externa -->
   <div id="mode-2x1" style="display:none">
     <div style="margin-bottom:10px">
-      <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Colar tabela externa</label>
-      <textarea id="inp-2x1-paste" placeholder="Cole aqui a tabela (com cabeçalho). Colunas Sub ID e Venda detectadas automaticamente." style="min-height:70px" oninput="parse2x1()"></textarea>
+      <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Relatório externo (CSV)</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <label id="inp-2x1-label" style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+          <span style="font-size:14px">↑</span> <span id="inp-2x1-filename">Selecionar arquivo CSV</span>
+          <input type="file" id="inp-2x1-file" accept=".csv" style="display:none" onchange="load2x1File(this)">
+        </label>
+        <span id="inp-2x1-status" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted)"></span>
+      </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
       <div>
@@ -706,22 +712,53 @@ function ce_input(src,field){
   }
 }
 
-function parse2x1(){
-  const raw=document.getElementById('inp-2x1-paste').value.trim();
+function load2x1File(input){
+  const file=input.files[0];
+  if(!file)return;
+  document.getElementById('inp-2x1-filename').textContent=file.name;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    parse2x1(e.target.result);
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+function parseCSVLine(line){
+  const result=[];let cur='';let inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else{inQ=!inQ;}}
+    else if(c===','&&!inQ){result.push(cur.trim());cur='';}
+    else{cur+=c;}
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function parse2x1(rawInput){
+  const raw=(rawInput||'').trim().replace(/^\uFEFF/,'');
   if(!raw)return;
   const lines=raw.split('\n').filter(l=>l.trim());
   if(lines.length<2)return;
-  const sep=lines[0].includes('\t')?'\t':lines[0].includes(';')?';':'|';
-  const headers=lines[0].split(sep).map(h=>h.trim().toLowerCase());
+  const headers=parseCSVLine(lines[0]).map(h=>h.trim());
   const norm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[\s_-]/g,'');
-  const subIdx=headers.findIndex(h=>norm(h).includes('subid')||norm(h).includes('sub'));
-  const vendaIdx=headers.findIndex(h=>norm(h).includes('venda')||norm(h).includes('sale')||norm(h).includes('receita'));
-  if(subIdx<0||vendaIdx<0)return;
+  const hNorm=headers.map(norm);
+  const subIdx=hNorm.findIndex(h=>h==='sub_id1'||h.includes('subid1')||h.includes('sub_id1'));
+  const vendaIdx=headers.findIndex(h=>h==='Comissão total do pedido(R$)');
+  const pedidoIdx=hNorm.findIndex(h=>h.includes('idpedido')||h.includes('dopedido')||h==='iddopedido');
+  if(subIdx<0||vendaIdx<0){
+    alert('Colunas Sub_id1 ou Comissão total do pedido(R$) não encontradas.');return;
+  }
+  const seen=new Set();
   const map=new Map();
   for(let i=1;i<lines.length;i++){
-    const cols=lines[i].split(sep).map(c=>c.trim());
-    const sub=cols[subIdx];
+    const cols=parseCSVLine(lines[i]);
+    const sub=(cols[subIdx]||'').trim();
     if(!sub)continue;
+    const pedido=pedidoIdx>=0?(cols[pedidoIdx]||'').trim():'';
+    const dedupeKey=pedido?`${sub}||${pedido}`:null;
+    if(dedupeKey&&seen.has(dedupeKey))continue;
+    if(dedupeKey)seen.add(dedupeKey);
     const val=parseNum(cols[vendaIdx]||'0');
     map.set(sub,(map.get(sub)||0)+val);
   }
@@ -729,6 +766,8 @@ function parse2x1(){
   const vendas=subs.map(s=>map.get(s).toFixed(2));
   document.getElementById('inp-2x1-names').value=subs.join('\n');
   document.getElementById('inp-2x1-venda').value=vendas.join('\n');
+  const st=document.getElementById('inp-2x1-status');
+  if(st)st.textContent=`✓ ${subs.length} sub id${subs.length!==1?'s':''} encontrado${subs.length!==1?'s':''}`;
 }
 
 /* ── IMPORT DAY ── */
@@ -774,7 +813,10 @@ async function importData(){
   await saveRows(acct.id,dt,rows);
   invalidateCache(acct.id);
   ['inp-names','inp-inv','inp-venda'].forEach(id=>{const el=document.getElementById(id);if(el){el.innerHTML='';const d=document.createElement('div');d.className='ce-line';d.textContent='';el.appendChild(d);}});
-  ['inp-paste','inp-2x1-paste','inp-2x1-names','inp-2x1-inv','inp-2x1-venda'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['inp-paste','inp-2x1-names','inp-2x1-inv','inp-2x1-venda'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const f2x1=document.getElementById('inp-2x1-file');if(f2x1)f2x1.value='';
+  const fn=document.getElementById('inp-2x1-filename');if(fn)fn.textContent='Selecionar arquivo CSV';
+  const st=document.getElementById('inp-2x1-status');if(st)st.textContent='';
   showToast('✓ Importado!');
   await renderAll();
 
