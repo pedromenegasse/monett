@@ -1032,6 +1032,7 @@ async function renderAll(){
   const activeMonth=(months.includes(currentActive)?currentActive:(months.length?months[0]:curMonthKey()));
   renderMonthTabs(months,acct,activeMonth);
   renderMonth(data,activeMonth);
+  await renderBD();
 }
 
 function renderMonthTabs(months,acct,activeMonth){
