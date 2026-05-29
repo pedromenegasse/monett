@@ -217,12 +217,11 @@ let currentUser=null;
   .sub-modal .card-label{text-align:center}
   @media(max-width:600px){
     #bd-header-summary{font-size:14px!important;width:auto!important}
-    .sub-modal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .sub-modal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pinch-zoom}
     #sub-modal-table{min-width:unset!important;font-size:9px}
     .sub-modal th{padding:5px 6px!important;font-size:8px!important}
     .sub-modal td{padding:5px 6px!important;font-size:9px!important}
-    .sub-modal-zoom{display:flex;gap:6px;justify-content:flex-end;margin-bottom:6px}
-    .sub-modal-zoom button{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:12px;padding:3px 10px;cursor:pointer;font-family:'DM Mono',monospace}
+
     .sub-modal{padding:14px;border-radius:12px}
     .sub-modal h3{font-size:16px}
     .iss-meta{display:flex;flex-direction:column;gap:2px}
@@ -1513,7 +1512,6 @@ async function openSubModal(name){
   document.getElementById('sub-modal-tbody').innerHTML=rows;
   document.getElementById('sub-modal-bg').style.display='flex';
   setTimeout(()=>{const sms=document.querySelector('.sub-modal-scroll');if(sms){sms._scrollLocked=false;lockScrollDir(sms);}},100);
-  const zb=document.getElementById('sub-modal-zoom-btns');if(zb)zb.style.display=isMobile()?'flex':'none';
 }
 function closeSubModal(){document.getElementById('sub-modal-bg').style.display='none';}
 
@@ -1865,13 +1863,6 @@ async function renderBDSaldo(){
   await renderAll();
 })();
 
-function isMobile(){return window.innerWidth<=600||('ontouchstart' in window&&window.innerWidth<=900);}
-function subModalZoom(d){
-  const tbl=document.getElementById('sub-modal-table');
-  if(!tbl)return;
-  const cur=parseFloat(tbl.style.fontSize)||13;
-  tbl.style.fontSize=Math.min(14,Math.max(8,cur+d))+'px';
-}
 </script>
 <!-- SUB ID MODAL -->
 <div class="sub-modal-bg" id="sub-modal-bg" style="display:none" onclick="closeSubModal()">
@@ -1881,7 +1872,6 @@ function subModalZoom(d){
       <button class="sub-modal-close" onclick="closeSubModal()">✕ Fechar</button>
     </div>
     <div class="sub-modal-cards" id="sub-modal-cards"></div>
-    <div class="sub-modal-zoom" id="sub-modal-zoom-btns" style="display:none"><button onclick="subModalZoom(-1)">A−</button><button onclick="subModalZoom(1)">A+</button></div>
     <div class="sub-modal-scroll" style="flex:1;min-height:0"><table id="sub-modal-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:520px"><thead id="sub-modal-thead"></thead><tbody id="sub-modal-tbody"></tbody></table></div>
   </div>
 </div>
