@@ -224,8 +224,9 @@ let currentUser=null;
     .card-value{font-size:18px}
     .card-label{font-size:10px}
     #import-section,#bd-section,#table-section{padding:14px;border-radius:12px;margin-bottom:16px}
-    #mode-3col{grid-template-columns:1fr!important}
-    #grid-2x1{grid-template-columns:1fr!important}
+    #mode-3col{min-width:480px}
+    #grid-2x1{min-width:480px}
+    .import-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
     .acct-tabs{flex-wrap:wrap;gap:6px}
     .acct-tab{font-size:12px;padding:5px 10px}
     .day-header{flex-wrap:wrap;gap:4px;font-size:11px}
@@ -350,6 +351,7 @@ let currentUser=null;
     <input type="date" id="inp-date" style="height:36px;padding:0 12px">
     <button class="btn-import" onclick="importData()" style="height:36px;padding:0 20px">Adicionar</button>
   </div>
+  <div class="import-scroll">
   <!-- 3 colunas -->
   <div id="mode-3col" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
     <div>
@@ -399,6 +401,7 @@ let currentUser=null;
   <div id="mode-1col" style="display:none">
     <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID | Investimento | Venda</label>
     <textarea id="inp-paste" placeholder="" style="min-height:90px"></textarea>
+  </div>
   </div>
   </div>
 </div>
