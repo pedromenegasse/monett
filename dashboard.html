@@ -733,7 +733,8 @@ function ce_keydown(e,el){
     const r=document.createRange();
     r.setStart(newLine,0);r.collapse(true);
     sel.removeAllRanges();sel.addRange(r);
-    ce_input(el,el.dataset.field);
+    if(['2x1-names','2x1-inv','2x1-venda'].includes(el.dataset.field)) ce_input_2x1(el,el.dataset.field.replace('2x1-',''));
+    else ce_input(el,el.dataset.field);
   }
   if(e.key==='Backspace'){
     const lines=el.querySelectorAll('.ce-line');
@@ -752,7 +753,8 @@ function ce_keydown(e,el){
         r.setStart(txt.nodeType===3?txt:prev,off);r.collapse(true);
         sel.removeAllRanges();sel.addRange(r);
       }
-      ce_input(el,el.dataset.field);
+      if(['2x1-names','2x1-inv','2x1-venda'].includes(el.dataset.field)) ce_input_2x1(el,el.dataset.field.replace('2x1-',''));
+      else ce_input(el,el.dataset.field);
     }
   }
 }
