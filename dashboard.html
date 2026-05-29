@@ -216,6 +216,28 @@ let currentUser=null;
   .sub-modal-close:hover{border-color:var(--red);color:var(--red)}
   .sub-modal .card-value{text-align:center}
   .sub-modal .card-label{text-align:center}
+  @media(max-width:600px){
+    #bd-header-summary{font-size:14px!important;width:auto!important}
+    body{padding:12px}
+    #summary{grid-template-columns:1fr 1fr;gap:8px}
+    .card{padding:12px}
+    .card-value{font-size:18px}
+    .card-label{font-size:10px}
+    #import-section,#bd-section,#table-section{padding:14px;border-radius:12px;margin-bottom:16px}
+    #mode-3col{grid-template-columns:1fr!important}
+    #grid-2x1{grid-template-columns:1fr!important}
+    .acct-tabs{flex-wrap:wrap;gap:6px}
+    .acct-tab{font-size:12px;padding:5px 10px}
+    .day-header{flex-wrap:wrap;gap:4px;font-size:11px}
+    .day-totals{font-size:11px;gap:8px}
+    td,th{padding:6px 8px;font-size:11px}
+    .sub-modal{padding:14px;max-height:90vh}
+    .sub-modal-cards{grid-template-columns:1fr 1fr!important}
+    #rank-legend{font-size:10px;gap:8px}
+    #bd-desc{width:100%!important;max-width:100%!important}
+    #bd-valor{width:100%!important;max-width:100%!important}
+    .bd-row{flex-wrap:wrap;gap:4px}
+  }
 </style>
 </head>
 <body>
