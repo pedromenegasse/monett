@@ -134,8 +134,8 @@ let currentUser=null;
   tr.totals-row td:nth-child(2){text-align:left;padding-left:4px}
   tr.totals-row td:first-child{width:54px;padding:11px 0;text-align:center;box-sizing:border-box}
   .day-date{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--accent)}
-  .day-totals{display:flex;flex-direction:column;gap:4px;font-family:'DM Mono',monospace;font-size:14px}
-  .day-totals-row{display:flex;gap:16px;flex-wrap:wrap}
+  .day-totals{display:flex;gap:16px;font-family:'DM Mono',monospace;font-size:14px;flex-wrap:wrap}
+  .day-totals-row{display:contents}
   .day-totals span{color:var(--muted)}.day-totals b{color:var(--text)}
   .day-saldo{font-family:'DM Mono',monospace;font-size:14px;font-weight:500}
   .chevron{transition:transform .2s;display:inline-block;font-size:12px}
@@ -240,9 +240,8 @@ let currentUser=null;
     .acct-tabs{flex-wrap:wrap;gap:6px}
     .acct-tab{font-size:12px;padding:5px 10px}
     .day-header{font-size:11px}
-    .day-totals{font-size:11px;gap:8px;flex-direction:column;gap:4px}
+    .day-totals{font-size:11px;flex-direction:column;gap:4px}
     .day-totals-row{display:flex;gap:12px}
-    .day-header-left{flex-wrap:nowrap}
     td,th{padding:6px 8px;font-size:11px}
     .sub-modal{padding:14px;max-height:90vh}
     .sub-modal-cards{grid-template-columns:1fr 1fr!important}
