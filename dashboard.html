@@ -359,15 +359,15 @@ let currentUser=null;
     <div id="grid-2x1" style="display:none;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:start">
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID</label>
-        <div id="inp-2x1-names" class="ce-col" contenteditable="true" spellcheck="false" onpaste="ce_paste(event,this)"></div>
+        <div id="inp-2x1-names" class="ce-col" contenteditable="true" spellcheck="false" data-field="2x1-names" onkeydown="ce_keydown(event,this)" oninput="ce_input_2x1(this,'names')" onpaste="ce_paste(event,this)"></div>
       </div>
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Investimento</label>
-        <div id="inp-2x1-inv" class="ce-col" contenteditable="true" spellcheck="false" style="border-color:var(--accent)" onpaste="ce_paste(event,this)"></div>
+        <div id="inp-2x1-inv" class="ce-col" contenteditable="true" spellcheck="false" style="border-color:var(--accent)" data-field="2x1-inv" onkeydown="ce_keydown(event,this)" oninput="ce_input_2x1(this,'inv')" onpaste="ce_paste(event,this)"></div>
       </div>
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Venda</label>
-        <div id="inp-2x1-venda" class="ce-col" contenteditable="true" spellcheck="false" onpaste="ce_paste(event,this)"></div>
+        <div id="inp-2x1-venda" class="ce-col" contenteditable="true" spellcheck="false" data-field="2x1-venda" onkeydown="ce_keydown(event,this)" oninput="ce_input_2x1(this,'venda')" onpaste="ce_paste(event,this)"></div>
       </div>
       <div id="inp-2x1-del-col" style="display:flex;flex-direction:column;margin-top:24px;gap:0">
       </div>
@@ -757,6 +757,40 @@ function ce_keydown(e,el){
   }
 }
 
+function ce_input_2x1(src,field){
+  const ids={names:'inp-2x1-names',inv:'inp-2x1-inv',venda:'inp-2x1-venda'};
+  let lines=ce_getLines(src);
+  if(lines.length===0)lines=[''];
+  const lineCount=lines.length;
+  for(const [k,id] of Object.entries(ids)){
+    if(k===field)continue;
+    const el=document.getElementById(id);
+    const cur=ce_getLines(el);
+    while(cur.length<lineCount)cur.push('');
+    while(cur.length>lineCount)cur.pop();
+    ce_setLines(el,cur);
+    draw2x1Lines(el,cur.length);
+  }
+  draw2x1Lines(src,lineCount);
+  // sync X buttons
+  const delCol=document.getElementById('inp-2x1-del-col');
+  if(delCol){
+    const btnCount=delCol.children.length;
+    if(lineCount>btnCount){
+      for(let i=btnCount;i<lineCount;i++){
+        const btn=document.createElement('button');
+        btn.textContent='✕';btn.className='btn-x';
+        btn.style.cssText='width:34px;height:34px;border-radius:8px;margin:0';
+        const idx=i;btn.onclick=()=>remove2x1Row(idx);
+        delCol.appendChild(btn);
+      }
+    } else if(lineCount<btnCount){
+      while(delCol.children.length>lineCount)delCol.lastChild.remove();
+    }
+    Array.from(delCol.children).forEach((btn,i)=>{btn.onclick=()=>remove2x1Row(i);});
+  }
+}
+
 function ce_input(src,field){
   const ids={names:'inp-names',inv:'inp-inv',venda:'inp-venda'};
   let lines=ce_getLines(src);
@@ -907,15 +941,11 @@ async function importData(){
     }
     rows=names.map((name,i)=>({name,inv:parseNum(invs[i]),venda:parseNum(vendas[i])}));
   } else if(mode==='2x1'){
-    const names=ce_getLines(document.getElementById('inp-2x1-names')).map(s=>s.trim()).filter(Boolean);
-    const invs=ce_getLines(document.getElementById('inp-2x1-inv')).map(s=>s.trim()).filter(Boolean);
-    const vendas=ce_getLines(document.getElementById('inp-2x1-venda')).map(s=>s.trim()).filter(Boolean);
-    if(!names.length){alert('Cole a tabela externa primeiro!');return;}
-    if(!invs.length){alert('Preencha o Investimento!');return;}
-    if(names.length!==invs.length){
-      alert(`Número de linhas diferente:\nSub ID: ${names.length}\nInvestimento: ${invs.length}`);return;
-    }
-    rows=names.map((name,i)=>({name,inv:parseNum(invs[i]),venda:parseNum(vendas[i]||'0')}));
+    const names=ce_getLines(document.getElementById('inp-2x1-names')).map(s=>s.trim());
+    const invs=ce_getLines(document.getElementById('inp-2x1-inv')).map(s=>s.trim());
+    const vendas=ce_getLines(document.getElementById('inp-2x1-venda')).map(s=>s.trim());
+    if(!names.filter(Boolean).length){alert('Cole a tabela externa primeiro!');return;}
+    rows=names.map((name,i)=>({name,inv:parseNum(invs[i]||'0'),venda:parseNum(vendas[i]||'0')})).filter(r=>r.name);
   } else {
     const txt=document.getElementById('inp-paste').value;
     if(!txt.trim()){alert('Cole os dados!');return;}
