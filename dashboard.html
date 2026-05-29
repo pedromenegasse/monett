@@ -1508,7 +1508,7 @@ async function openSubModal(name){
     </tr>`;
   document.getElementById('sub-modal-tbody').innerHTML=rows;
   document.getElementById('sub-modal-bg').style.display='flex';
-  const sms=document.querySelector('.sub-modal-scroll');if(sms)lockScrollDir(sms);
+  setTimeout(()=>{const sms=document.querySelector('.sub-modal-scroll');if(sms){sms._scrollLocked=false;lockScrollDir(sms);}},100);
 }
 function closeSubModal(){document.getElementById('sub-modal-bg').style.display='none';}
 
