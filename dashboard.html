@@ -200,7 +200,7 @@ let currentUser=null;
   .sub-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
   .sub-modal-header h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent);margin:0}
   .sub-modal-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
-  .sub-modal-scroll{overflow-y:auto;flex:1;scrollbar-color:var(--border) transparent;touch-action:pan-x}
+  .sub-modal-scroll{overflow-y:auto;flex:1;scrollbar-color:var(--border) transparent}
   .sub-modal-scroll::-webkit-scrollbar{width:6px}
   .sub-modal-scroll::-webkit-scrollbar-track{background:transparent}
   .sub-modal-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -218,7 +218,11 @@ let currentUser=null;
   @media(max-width:600px){
     #bd-header-summary{font-size:14px!important;width:auto!important}
     .sub-modal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-    #sub-modal-table{min-width:520px!important}
+    #sub-modal-table{min-width:unset!important;font-size:9px}
+    .sub-modal th{padding:5px 6px!important;font-size:8px!important}
+    .sub-modal td{padding:5px 6px!important;font-size:9px!important}
+    .sub-modal-zoom{display:flex;gap:6px;justify-content:flex-end;margin-bottom:6px}
+    .sub-modal-zoom button{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:12px;padding:3px 10px;cursor:pointer;font-family:'DM Mono',monospace}
     .sub-modal{padding:14px;border-radius:12px}
     .sub-modal h3{font-size:16px}
     .iss-meta{display:flex;flex-direction:column;gap:2px}
@@ -231,7 +235,7 @@ let currentUser=null;
     #import-section,#bd-section,#table-section{padding:14px;border-radius:12px;margin-bottom:16px}
     #mode-3col{min-width:480px}
     #grid-2x1{min-width:480px}
-    .import-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x}
+    .import-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
     .acct-tabs{flex-wrap:wrap;gap:6px}
     .acct-tab{font-size:12px;padding:5px 10px}
     .day-header{flex-wrap:wrap;gap:4px;font-size:11px}
@@ -1509,6 +1513,7 @@ async function openSubModal(name){
   document.getElementById('sub-modal-tbody').innerHTML=rows;
   document.getElementById('sub-modal-bg').style.display='flex';
   setTimeout(()=>{const sms=document.querySelector('.sub-modal-scroll');if(sms){sms._scrollLocked=false;lockScrollDir(sms);}},100);
+  const zb=document.getElementById('sub-modal-zoom-btns');if(zb)zb.style.display=isMobile()?'flex':'none';
 }
 function closeSubModal(){document.getElementById('sub-modal-bg').style.display='none';}
 
@@ -1868,6 +1873,7 @@ async function renderBDSaldo(){
       <button class="sub-modal-close" onclick="closeSubModal()">✕ Fechar</button>
     </div>
     <div class="sub-modal-cards" id="sub-modal-cards"></div>
+    <div class="sub-modal-zoom" id="sub-modal-zoom-btns" style="display:none"><button onclick="subModalZoom(-1)">A−</button><button onclick="subModalZoom(1)">A+</button></div>
     <div class="sub-modal-scroll" style="flex:1;min-height:0"><table id="sub-modal-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:520px"><thead id="sub-modal-thead"></thead><tbody id="sub-modal-tbody"></tbody></table></div>
   </div>
 </div>
