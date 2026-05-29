@@ -613,6 +613,13 @@ async function switchAccount(id){
   document.getElementById('s-roi').textContent='—';
   const saldoBot=document.getElementById('s-saldo-bot');if(saldoBot)saldoBot.style.display='none';
   const saldoHr=document.getElementById('s-saldo-hr');if(saldoHr)saldoHr.style.display='none';
+  // reset BD summary immediately before async load
+  const bdSum=document.getElementById('bd-header-summary');
+  if(bdSum){bdSum.textContent='';bdSum.style.display='none';}
+  const bdTotal=document.getElementById('bd-total');
+  if(bdTotal)bdTotal.style.display='none';
+  const bdList=document.getElementById('bd-list');
+  if(bdList)bdList.innerHTML='';
   await renderAll();
 }
 
