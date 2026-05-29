@@ -218,6 +218,8 @@ let currentUser=null;
   .sub-modal .card-label{text-align:center}
   @media(max-width:600px){
     #bd-header-summary{font-size:14px!important;width:auto!important}
+    .iss-meta{display:flex;flex-direction:column;gap:2px}
+    .iss-pipe{display:none}
     body{padding:12px}
     #summary{grid-template-columns:1fr 1fr;gap:8px}
     .card{padding:12px}
@@ -256,8 +258,7 @@ let currentUser=null;
 
 <!-- ACCOUNT TABS -->
 <div id="account-bar">
-  <div id="acct-tabs" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-  <button class="acct-add" onclick="openAddAccount()">+ Nova conta</button>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><div id="acct-tabs" style="display:contents"></div><button class="acct-add" onclick="openAddAccount()">+ Nova conta</button></div>
 </div>
 
 <!-- ISS BAR -->
@@ -270,7 +271,7 @@ let currentUser=null;
   </div>
   <span class="iss-pct">%</span>
   <button class="btn-sm" onclick="saveISS()">Salvar</button>
-  <span class="iss-meta">Taxa Meta (investimento): <b>13,85% fixo</b> &nbsp;|&nbsp; ISS (deduzido da venda): <b id="iss-display">9,79%</b></span>
+  <span class="iss-meta"><span>Taxa Meta (investimento): <b>13,85% fixo</b></span><span><span class="iss-pipe">&nbsp;|&nbsp;</span>ISS (deduzido da venda): <b id="iss-display">9,79%</b></span></span>
 </div>
 
 <!-- MONTH TABS -->
