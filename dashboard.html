@@ -111,7 +111,8 @@ let currentUser=null;
   .btn-danger{background:transparent;color:var(--red);border:1px solid var(--red);border-radius:6px;padding:4px 10px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;transition:all .15s}
   .btn-danger:hover{background:var(--red);color:#fff}
   .btn-x{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:rgba(255,77,109,0.12);border:1px solid rgba(255,77,109,0.35);border-radius:8px;color:var(--red);font-size:12px;cursor:pointer;transition:all .15s;flex-shrink:0;font-family:'DM Mono',monospace}
-  .btn-x:hover{background:rgba(255,77,109,0.25);border-color:var(--red)}
+  .btn-x:hover{background:var(--red);border-color:var(--red);color:#fff}
+  .btn-x:active{background:var(--red);border-color:var(--red);color:#fff}
   .paste-hint{font-size:11px;color:var(--muted);margin-top:5px;font-family:'DM Mono',monospace}
 
   /* LEGEND */
@@ -133,7 +134,8 @@ let currentUser=null;
   tr.totals-row td:nth-child(2){text-align:left;padding-left:4px}
   tr.totals-row td:first-child{width:54px;padding:11px 0;text-align:center;box-sizing:border-box}
   .day-date{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--accent)}
-  .day-totals{display:flex;gap:16px;font-family:'DM Mono',monospace;font-size:14px;flex-wrap:wrap}
+  .day-totals{display:flex;flex-direction:column;gap:4px;font-family:'DM Mono',monospace;font-size:14px}
+  .day-totals-row{display:flex;gap:16px;flex-wrap:wrap}
   .day-totals span{color:var(--muted)}.day-totals b{color:var(--text)}
   .day-saldo{font-family:'DM Mono',monospace;font-size:14px;font-weight:500}
   .chevron{transition:transform .2s;display:inline-block;font-size:12px}
@@ -237,8 +239,10 @@ let currentUser=null;
     .import-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
     .acct-tabs{flex-wrap:wrap;gap:6px}
     .acct-tab{font-size:12px;padding:5px 10px}
-    .day-header{flex-wrap:wrap;gap:4px;font-size:11px}
-    .day-totals{font-size:11px;gap:8px}
+    .day-header{font-size:11px}
+    .day-totals{font-size:11px;gap:8px;flex-direction:column;gap:4px}
+    .day-totals-row{display:flex;gap:12px}
+    .day-header-left{flex-wrap:nowrap}
     td,th{padding:6px 8px;font-size:11px}
     .sub-modal{padding:14px;max-height:90vh}
     .sub-modal-cards{grid-template-columns:1fr 1fr!important}
@@ -1265,15 +1269,15 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest){
         <span class="chevron">▾</span>
         <span class="day-date">${dateLabel}</span>
         <div class="day-totals">
-          <span>Invest. <b>${fmt(dayInv)}</b></span>
-          <span>+Meta <b>${fmt(dayCalc.comMeta)}</b></span>
-          <span>Venda <b>${fmt(dayVenda)}</b></span>
-          <span>−ISS <b>${fmt(dayCalc.menosISS)}</b></span>
-          <span>ROAS <b class="${roasClass}">${dayRoas}</b></span>
+          <div class="day-totals-row"><span>Invest. <b>${fmt(dayInv)}</b></span><span>Venda <b>${fmt(dayVenda)}</b></span><span>ROAS <b class="${roasClass}">${dayRoas}</b></span></div>
+          <div class="day-totals-row"><span>+Meta <b>${fmt(dayCalc.comMeta)}</b></span><span>−ISS <b>${fmt(dayCalc.menosISS)}</b></span></div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span class="day-saldo ${sc}">Saldo ${fmt(dayCalc.saldo)}</span>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <div style="display:flex;flex-direction:column;align-items:flex-end">
+          <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Saldo</span>
+          <span class="day-saldo ${sc}">${fmt(dayCalc.saldo)}</span>
+        </div>
         <button class="btn-x" onclick="event.stopPropagation();deleteDay('${day}')">✕</button>
       </div>
     </div>
