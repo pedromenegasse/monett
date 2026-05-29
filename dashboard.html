@@ -256,7 +256,9 @@ let currentUser=null;
     td,th{padding:6px 8px;font-size:11px}
     .sub-modal{padding:14px;max-height:90vh}
     .sub-modal-cards{grid-template-columns:1fr 1fr!important}
-    #rank-legend{font-size:10px;gap:8px}
+    #rank-legend{font-size:10px;gap:6px}
+    .legend-break{flex-basis:100%;height:0}
+    #days-container{padding:4px 6px 6px!important}
     #bd-desc{width:100%!important;max-width:100%!important}
     #bd-valor{width:100%!important;max-width:100%!important}
     .bd-row{flex-wrap:wrap;gap:4px}
@@ -439,9 +441,10 @@ let currentUser=null;
     <span><span class="chip chip-gold"></span>ROAS ≥ 1,5 no dia</span>
     <span><span class="chip chip-bord"></span>ROAS ≤ 0,5 no dia</span>
     <span><span class="chip chip-bord" style="animation:blink-purple 1s infinite"></span>ROAS &lt; 0,1 (pisca)</span>
-    <span><span class="arrow-up">▲</span> subiu no ranking</span>
-    <span><span class="arrow-down">▼</span> desceu</span>
     <span><span class="arrow-new">NEW</span> estreia</span>
+    <span class="legend-break"></span>
+    <span><span class="arrow-up">▲</span> subiu</span>
+    <span><span class="arrow-down">▼</span> desceu</span>
     <span><span class="arrow-same">—</span> igual</span>
     <span style="font-size:10px;color:var(--muted)">Ranking = saldo acumulado no mês</span>
   </div>
