@@ -1315,7 +1315,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest){
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0">
           <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Saldo</span>
-          <span class="${sc}" style="font-size:18px;font-weight:500">R$ ${Math.round(dayCalc.saldo)}</span>
+          <span class="${sc}" style="font-size:18px;font-weight:500">${fmt(dayCalc.saldo)}</span>
         </div>
       </div>
     </div>
