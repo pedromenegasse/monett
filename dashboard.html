@@ -774,22 +774,17 @@ function ce_input_2x1(src,field){
     draw2x1Lines(el,cur.length);
   }
   draw2x1Lines(src,lineCount);
-  // sync X buttons
+  // sync X buttons — rebuild only when count changes
   const delCol=document.getElementById('inp-2x1-del-col');
-  if(delCol){
-    const btnCount=delCol.children.length;
-    if(lineCount>btnCount){
-      for(let i=btnCount;i<lineCount;i++){
-        const btn=document.createElement('button');
-        btn.textContent='✕';btn.className='btn-x';
-        btn.style.cssText='width:34px;height:34px;border-radius:8px;margin:0';
-        const idx=i;btn.onclick=()=>remove2x1Row(idx);
-        delCol.appendChild(btn);
-      }
-    } else if(lineCount<btnCount){
-      while(delCol.children.length>lineCount)delCol.lastChild.remove();
+  if(delCol&&delCol.children.length!==lineCount){
+    delCol.innerHTML='';
+    for(let i=0;i<lineCount;i++){
+      const btn=document.createElement('button');
+      btn.textContent='✕';btn.className='btn-x';
+      btn.style.cssText='width:34px;height:34px;border-radius:8px;margin:0';
+      const idx=i;btn.onclick=()=>remove2x1Row(idx);
+      delCol.appendChild(btn);
     }
-    Array.from(delCol.children).forEach((btn,i)=>{btn.onclick=()=>remove2x1Row(i);});
   }
 }
 
