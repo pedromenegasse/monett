@@ -819,6 +819,7 @@ function ce_keydown(e,el){
     const lineDiv=node.nodeType===3?node.parentElement:node;
     if(lineDiv.classList.contains('ce-line')&&range.startOffset===0&&lineDiv.textContent===''){
       e.preventDefault();
+      const removeIdx=Array.from(el.querySelectorAll('.ce-line')).indexOf(lineDiv);
       const prev=lineDiv.previousElementSibling;
       lineDiv.remove();
       if(prev){
@@ -834,9 +835,7 @@ function ce_keydown(e,el){
           if('2x1-'+k===el.dataset.field)continue;
           const other=document.getElementById(id);
           const otherLines=other.querySelectorAll('.ce-line');
-          // remove the same index that was removed in src
-          const srcCount=el.querySelectorAll('.ce-line').length;
-          if(otherLines.length>srcCount && otherLines[srcCount]) otherLines[srcCount].remove();
+          if(removeIdx>=0&&otherLines[removeIdx]) otherLines[removeIdx].remove();
           draw2x1Lines(other,other.querySelectorAll('.ce-line').length);
         }
         const lc2=el.querySelectorAll('.ce-line').length;
