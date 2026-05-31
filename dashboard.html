@@ -1045,15 +1045,12 @@ async function importData(){
         const dayRows=(freshData[month]&&freshData[month][dt])||[];
         const existing=dayRows.find(r=>r.name===match);
         const toDelete=dayRows.find(r=>r.name===row.name);
-        if(existing&&toDelete){
-          // sum with existing
-          const merged={name:match,inv:existing.inv+toDelete.inv,venda:existing.venda+toDelete.venda};
-          await deleteRowDB(acct.id,dt,row.name);
+        if(toDelete){
+          // rename new entry to match existing name (replace, don't sum)
+          await deleteRowDB(acct.id,dt,toDelete.name);
+          const merged={name:match,inv:toDelete.inv,venda:toDelete.venda};
+          await deleteRowDB(acct.id,dt,match);
           await saveRows(acct.id,dt,[merged]);
-        } else if(toDelete){
-          // just rename
-          await deleteRowDB(acct.id,dt,row.name);
-          await saveRows(acct.id,dt,[{...toDelete,name:match}]);
         }
         invalidateCache(acct.id);
         await renderAll();
