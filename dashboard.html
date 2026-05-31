@@ -786,8 +786,30 @@ function ce_keydown(e,el){
     const r=document.createRange();
     r.setStart(newLine,0);r.collapse(true);
     sel.removeAllRanges();sel.addRange(r);
-    if(['2x1-names','2x1-inv','2x1-venda'].includes(el.dataset.field)) ce_input_2x1(el,el.dataset.field.replace('2x1-',''));
-    else ce_input(el,el.dataset.field);
+    if(['2x1-names','2x1-inv','2x1-venda'].includes(el.dataset.field)){
+      // Find index of newly inserted line
+      const srcLines=Array.from(el.querySelectorAll('.ce-line'));
+      const insertIdx=srcLines.indexOf(newLine);
+      const field2x1=el.dataset.field.replace('2x1-','');
+      const ids={names:'inp-2x1-names',inv:'inp-2x1-inv',venda:'inp-2x1-venda'};
+      for(const [k,id] of Object.entries(ids)){
+        if('2x1-'+k===el.dataset.field)continue;
+        const other=document.getElementById(id);
+        const otherLines=Array.from(other.querySelectorAll('.ce-line'));
+        const d=document.createElement('div');d.className='ce-line';d.textContent='';
+        if(insertIdx<0||insertIdx>=otherLines.length) other.appendChild(d);
+        else other.insertBefore(d,otherLines[insertIdx]);
+        draw2x1Lines(other,other.querySelectorAll('.ce-line').length);
+      }
+      // sync X buttons
+      const lc=el.querySelectorAll('.ce-line').length;
+      const delCol=document.getElementById('inp-2x1-del-col');
+      if(delCol&&delCol.children.length!==lc){
+        delCol.innerHTML='';
+        for(let i=0;i<lc;i++){const btn=document.createElement('button');btn.textContent='✕';btn.className='btn-x';btn.style.cssText='width:34px;height:34px;border-radius:8px;margin:0';const idx2=i;btn.onclick=()=>remove2x1Row(idx2);delCol.appendChild(btn);}
+      }
+      draw2x1Lines(el,lc);
+    } else ce_input(el,el.dataset.field);
   }
   if(e.key==='Backspace'){
     const lines=el.querySelectorAll('.ce-line');
@@ -806,27 +828,38 @@ function ce_keydown(e,el){
         r.setStart(txt.nodeType===3?txt:prev,off);r.collapse(true);
         sel.removeAllRanges();sel.addRange(r);
       }
-      if(['2x1-names','2x1-inv','2x1-venda'].includes(el.dataset.field)) ce_input_2x1(el,el.dataset.field.replace('2x1-',''));
-      else ce_input(el,el.dataset.field);
+      if(['2x1-names','2x1-inv','2x1-venda'].includes(el.dataset.field)){
+        const ids2={names:'inp-2x1-names',inv:'inp-2x1-inv',venda:'inp-2x1-venda'};
+        for(const [k,id] of Object.entries(ids2)){
+          if('2x1-'+k===el.dataset.field)continue;
+          const other=document.getElementById(id);
+          const otherLines=other.querySelectorAll('.ce-line');
+          // remove the same index that was removed in src
+          const srcCount=el.querySelectorAll('.ce-line').length;
+          if(otherLines.length>srcCount && otherLines[srcCount]) otherLines[srcCount].remove();
+          draw2x1Lines(other,other.querySelectorAll('.ce-line').length);
+        }
+        const lc2=el.querySelectorAll('.ce-line').length;
+        const delCol2=document.getElementById('inp-2x1-del-col');
+        if(delCol2&&delCol2.children.length!==lc2){delCol2.innerHTML='';for(let i=0;i<lc2;i++){const btn=document.createElement('button');btn.textContent='✕';btn.className='btn-x';btn.style.cssText='width:34px;height:34px;border-radius:8px;margin:0';const idx3=i;btn.onclick=()=>remove2x1Row(idx3);delCol2.appendChild(btn);}}
+        draw2x1Lines(el,lc2);
+      } else ce_input(el,el.dataset.field);
     }
   }
 }
 
-function ce_sync_lines(el, lineCount){
-  // Add or remove ce-line divs without touching existing content
-  const existing=el.querySelectorAll('.ce-line');
-  const diff=lineCount-existing.length;
-  if(diff>0){
-    for(let i=0;i<diff;i++){
-      const d=document.createElement('div');
-      d.className='ce-line';d.textContent='';
-      el.appendChild(d);
-    }
-  } else if(diff<0){
-    const all=el.querySelectorAll('.ce-line');
-    for(let i=all.length-1;i>=lineCount;i--) all[i].remove();
+function ce_sync_lines_at(el, idx, action){
+  // action: 'insert' or 'remove' at specific index
+  const lines=el.querySelectorAll('.ce-line');
+  if(action==='insert'){
+    const d=document.createElement('div');
+    d.className='ce-line';d.textContent='';
+    if(idx>=lines.length) el.appendChild(d);
+    else el.insertBefore(d,lines[idx]);
+  } else if(action==='remove'){
+    if(lines[idx]) lines[idx].remove();
   }
-  draw2x1Lines(el,lineCount);
+  draw2x1Lines(el,el.querySelectorAll('.ce-line').length);
 }
 
 function ce_input_2x1(src,field){
@@ -836,7 +869,16 @@ function ce_input_2x1(src,field){
   for(const [k,id] of Object.entries(ids)){
     if(k===field)continue;
     const el=document.getElementById(id);
-    ce_sync_lines(el,lineCount);
+    const cur=el.querySelectorAll('.ce-line').length;
+    if(cur<lineCount){
+      // find which index was inserted in src
+      const srcLines=src.querySelectorAll('.ce-line');
+      const newIdx=Array.from(srcLines).findIndex(l=>l.textContent===''&&l===srcLines[srcLines.length-1]||l.textContent==='');
+      const insertAt=Math.max(0,lineCount-1);
+      ce_sync_lines_at(el,insertAt,'insert');
+    } else if(cur>lineCount){
+      ce_sync_lines_at(el,cur-1,'remove');
+    }
   }
   draw2x1Lines(src,lineCount);
   // sync X buttons — rebuild only when count changes
