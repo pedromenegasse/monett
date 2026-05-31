@@ -812,19 +812,31 @@ function ce_keydown(e,el){
   }
 }
 
+function ce_sync_lines(el, lineCount){
+  // Add or remove ce-line divs without touching existing content
+  const existing=el.querySelectorAll('.ce-line');
+  const diff=lineCount-existing.length;
+  if(diff>0){
+    for(let i=0;i<diff;i++){
+      const d=document.createElement('div');
+      d.className='ce-line';d.textContent='';
+      el.appendChild(d);
+    }
+  } else if(diff<0){
+    const all=el.querySelectorAll('.ce-line');
+    for(let i=all.length-1;i>=lineCount;i--) all[i].remove();
+  }
+  draw2x1Lines(el,lineCount);
+}
+
 function ce_input_2x1(src,field){
   const ids={names:'inp-2x1-names',inv:'inp-2x1-inv',venda:'inp-2x1-venda'};
-  let lines=ce_getLines(src);
-  if(lines.length===0)lines=[''];
-  const lineCount=lines.length;
+  let lineCount=src.querySelectorAll('.ce-line').length;
+  if(lineCount===0)lineCount=1;
   for(const [k,id] of Object.entries(ids)){
     if(k===field)continue;
     const el=document.getElementById(id);
-    const cur=ce_getLines(el);
-    while(cur.length<lineCount)cur.push('');
-    while(cur.length>lineCount)cur.pop();
-    ce_setLines(el,cur);
-    draw2x1Lines(el,cur.length);
+    ce_sync_lines(el,lineCount);
   }
   draw2x1Lines(src,lineCount);
   // sync X buttons — rebuild only when count changes
