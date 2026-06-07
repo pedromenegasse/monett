@@ -377,21 +377,24 @@ let currentUser=null;
     </div>
     <input type="date" id="inp-date" style="height:36px;padding:0 12px">
     <button class="btn-import" onclick="importData()" style="height:36px;padding:0 20px">Adicionar</button>
-    <div id="inp-2x1-totais" style="display:none;align-items:center;gap:14px;margin-left:4px">
-      <div style="width:1px;height:28px;background:var(--border)"></div>
-      <div style="display:flex;flex-direction:column;gap:1px">
-        <span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Pedidos</span>
-        <span id="tot-pedidos" style="font-size:13px;color:var(--text);font-weight:500;font-family:'DM Mono',monospace">0</span>
+    <div id="inp-2x1-totais" style="display:none;flex-wrap:wrap;gap:8px;margin-top:10px;width:100%">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;display:flex;flex-direction:column;gap:4px;min-width:170px">
+        <span style="font-size:9px;color:rgba(232,201,122,0.5);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace">Totais</span>
+        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Pedidos</span><span id="tot-pedidos" style="font-size:12px;color:var(--text);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
+        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Vendas</span><span id="tot-vendas" style="font-size:12px;color:var(--accent2);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
+        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Comissão</span><span id="tot-com" style="font-size:12px;color:var(--yellow);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
       </div>
-      <div style="width:1px;height:28px;background:var(--border)"></div>
-      <div style="display:flex;flex-direction:column;gap:1px">
-        <span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Vendas</span>
-        <span id="tot-vendas" style="font-size:13px;color:var(--accent2);font-weight:500;font-family:'DM Mono',monospace">—</span>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;display:flex;flex-direction:column;gap:4px;min-width:170px">
+        <span style="font-size:9px;color:rgba(232,201,122,0.5);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace">Diretos</span>
+        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Pedidos</span><span id="tot-dir-pedidos" style="font-size:12px;color:var(--text);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
+        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Vendas</span><span id="tot-dir-vendas" style="font-size:12px;color:var(--accent2);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
+        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Comissão</span><span id="tot-dir-com" style="font-size:12px;color:var(--yellow);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
       </div>
-      <div style="width:1px;height:28px;background:var(--border)"></div>
-      <div style="display:flex;flex-direction:column;gap:1px">
-        <span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Comissão</span>
-        <span id="tot-com" style="font-size:13px;color:var(--yellow);font-weight:500;font-family:'DM Mono',monospace">—</span>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;display:flex;flex-direction:column;gap:4px;min-width:170px">
+        <span style="font-size:9px;color:rgba(232,201,122,0.5);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace">Indiretos</span>
+        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Pedidos</span><span id="tot-ind-pedidos" style="font-size:12px;color:var(--text);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
+        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Vendas</span><span id="tot-ind-vendas" style="font-size:12px;color:var(--accent2);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
+        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Comissão</span><span id="tot-ind-com" style="font-size:12px;color:var(--yellow);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
       </div>
     </div>
   </div>
@@ -1006,6 +1009,7 @@ function parse2x1(rawInput){
   const pedidoIdx=hNorm.findIndex(h=>h.includes('idpedido')||h.includes('dopedido')||h==='iddopedido');
   const comissaoIdx=headers.findIndex(h=>h.includes('líquida')||h.includes('liquida')||h.includes('líquido')||h.includes('Comissão líquida'));
   const compraIdx=headers.findIndex(h=>h.includes('Valor de Compra'));
+  const atribIdx=headers.findIndex(h=>h.includes('atribuição')||h.includes('atribuicao'));
   if(subIdx<0||vendaIdx<0){
     alert('Colunas Sub_id1 ou Comissão total do pedido(R$) não encontradas.');return;
   }
@@ -1016,6 +1020,9 @@ function parse2x1(rawInput){
   const totalSeenPedidos=new Set();
   let totalBruto=0;
   let totalComissao=0;
+  const dirPedidos=new Set();
+  const indPedidos=new Set();
+  let dirVendas=0,indVendas=0,dirCom=0,indCom=0;
   for(let i=1;i<lines.length;i++){
     const cols=parseCSVLine(lines[i]);
     const sub=(cols[subIdx]||'').trim();
@@ -1027,7 +1034,15 @@ function parse2x1(rawInput){
       totalComissao+=comissaoIdx>=0?parseNum(cols[comissaoIdx]||'0'):0;
     }
     // sum Valor de Compra for ALL rows (each row = one item)
-    totalBruto+=parseNum(cols[compraIdx>=0?compraIdx:vendaIdx]||'0');
+    const compraVal=parseNum(cols[compraIdx>=0?compraIdx:vendaIdx]||'0');
+    totalBruto+=compraVal;
+    const atrib=atribIdx>=0?(cols[atribIdx]||'').trim():'';
+    const isDirect=atrib==='Pedido na mesma loja';
+    if(isDirect){dirVendas+=compraVal;}else{indVendas+=compraVal;}
+    if(pedido&&!totalSeenPedidos.has(pedido)){
+      if(isDirect){dirPedidos.add(pedido);dirCom+=comissaoIdx>=0?parseNum(cols[comissaoIdx]||'0'):0;}
+      else{indPedidos.add(pedido);indCom+=comissaoIdx>=0?parseNum(cols[comissaoIdx]||'0'):0;}
+    }
     if(!sub)continue;
     const dedupeKey=pedido?`${sub}||${pedido}`:null;
     if(dedupeKey&&seen.has(dedupeKey))continue;
@@ -1072,6 +1087,12 @@ function parse2x1(rawInput){
     document.getElementById('tot-pedidos').textContent=totalSeenPedidos.size;
     document.getElementById('tot-vendas').textContent=fmt(totalBruto);
     document.getElementById('tot-com').textContent=fmt(totalComissao);
+    document.getElementById('tot-dir-pedidos').textContent=dirPedidos.size;
+    document.getElementById('tot-dir-vendas').textContent=fmt(dirVendas);
+    document.getElementById('tot-dir-com').textContent=fmt(dirCom);
+    document.getElementById('tot-ind-pedidos').textContent=indPedidos.size;
+    document.getElementById('tot-ind-vendas').textContent=fmt(indVendas);
+    document.getElementById('tot-ind-com').textContent=fmt(indCom);
   }
 }
 
