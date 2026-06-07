@@ -1021,11 +1021,13 @@ function parse2x1(rawInput){
     const sub=(cols[subIdx]||'').trim();
     const pedido=pedidoIdx>=0?(cols[pedidoIdx]||'').trim():'';
     // count all unique pedidos for totals (regardless of sub_id)
+    // count unique pedidos
     if(pedido&&!totalSeenPedidos.has(pedido)){
       totalSeenPedidos.add(pedido);
-      totalBruto+=parseNum(cols[compraIdx>=0?compraIdx:vendaIdx]||'0');
       totalComissao+=comissaoIdx>=0?parseNum(cols[comissaoIdx]||'0'):0;
     }
+    // sum Valor de Compra for ALL rows (each row = one item)
+    totalBruto+=parseNum(cols[compraIdx>=0?compraIdx:vendaIdx]||'0');
     if(!sub)continue;
     const dedupeKey=pedido?`${sub}||${pedido}`:null;
     if(dedupeKey&&seen.has(dedupeKey))continue;
