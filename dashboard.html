@@ -1005,6 +1005,7 @@ function parse2x1(rawInput){
   const vendaIdx=headers.findIndex(h=>h==='Comissão total do pedido(R$)');
   const pedidoIdx=hNorm.findIndex(h=>h.includes('idpedido')||h.includes('dopedido')||h==='iddopedido');
   const comissaoIdx=headers.findIndex(h=>h.includes('líquida')||h.includes('liquida')||h.includes('líquido')||h.includes('Comissão líquida'));
+  const compraIdx=headers.findIndex(h=>h.includes('Valor de Compra'));
   if(subIdx<0||vendaIdx<0){
     alert('Colunas Sub_id1 ou Comissão total do pedido(R$) não encontradas.');return;
   }
@@ -1012,11 +1013,20 @@ function parse2x1(rawInput){
   const seenOrders=new Map();
   const map=new Map();
   const comMap=new Map();
+  const totalSeenPedidos=new Set();
+  let totalBruto=0;
+  let totalComissao=0;
   for(let i=1;i<lines.length;i++){
     const cols=parseCSVLine(lines[i]);
     const sub=(cols[subIdx]||'').trim();
-    if(!sub)continue;
     const pedido=pedidoIdx>=0?(cols[pedidoIdx]||'').trim():'';
+    // count all unique pedidos for totals (regardless of sub_id)
+    if(pedido&&!totalSeenPedidos.has(pedido)){
+      totalSeenPedidos.add(pedido);
+      totalBruto+=parseNum(cols[compraIdx>=0?compraIdx:vendaIdx]||'0');
+      totalComissao+=comissaoIdx>=0?parseNum(cols[comissaoIdx]||'0'):0;
+    }
+    if(!sub)continue;
     const dedupeKey=pedido?`${sub}||${pedido}`:null;
     if(dedupeKey&&seen.has(dedupeKey))continue;
     if(dedupeKey){seen.add(dedupeKey);seenOrders.set(sub,(seenOrders.get(sub)||0)+1);}
@@ -1054,15 +1064,12 @@ function parse2x1(rawInput){
   if(grid)grid.style.display='grid';
   const st=document.getElementById('inp-2x1-status');
   if(st)st.textContent=`✓ ${subs.length} sub id${subs.length!==1?'s':''} encontrado${subs.length!==1?'s':''}`;  const clrBtn=document.getElementById('inp-2x1-clear');if(clrBtn)clrBtn.style.display='';
-  const totalPedidos=[...seenOrders.values()].reduce((a,b)=>a+b,0);
-  const totalVendas=[...map.values()].reduce((a,b)=>a+b,0);
-  const totalCom=[...comMap.values()].reduce((a,b)=>a+b,0);
   const totDiv=document.getElementById('inp-2x1-totais');
   if(totDiv){
     totDiv.style.display='flex';
-    document.getElementById('tot-pedidos').textContent=totalPedidos;
-    document.getElementById('tot-vendas').textContent=fmt(totalVendas);
-    document.getElementById('tot-com').textContent=fmt(totalCom);
+    document.getElementById('tot-pedidos').textContent=totalSeenPedidos.size;
+    document.getElementById('tot-vendas').textContent=fmt(totalBruto);
+    document.getElementById('tot-com').textContent=fmt(totalComissao);
   }
 }
 
