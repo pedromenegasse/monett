@@ -377,21 +377,21 @@ let currentUser=null;
     </div>
     <input type="date" id="inp-date" style="height:36px;padding:0 12px">
     <button class="btn-import" onclick="importData()" style="height:36px;padding:0 20px">Adicionar</button>
-    <div id="inp-2x1-totais" style="display:none;flex-wrap:wrap;gap:8px;margin-top:10px;width:100%">
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;display:flex;flex-direction:column;gap:4px;min-width:170px">
-        <span style="font-size:9px;color:rgba(232,201,122,0.5);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace">Totais</span>
+    <div id="inp-2x1-totais" style="display:none;flex-wrap:wrap;gap:8px;align-items:flex-start">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;flex-direction:column;gap:2px;min-width:140px">
+        <span style="font-size:9px;color:rgba(232,201,122,0.5);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace;margin-bottom:2px">Totais</span>
         <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Pedidos</span><span id="tot-pedidos" style="font-size:12px;color:var(--text);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
         <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Vendas</span><span id="tot-vendas" style="font-size:12px;color:var(--accent2);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
         <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Comissão</span><span id="tot-com" style="font-size:12px;color:var(--yellow);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
       </div>
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;display:flex;flex-direction:column;gap:4px;min-width:170px">
-        <span style="font-size:9px;color:rgba(232,201,122,0.5);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace">Diretos</span>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;flex-direction:column;gap:2px;min-width:140px">
+        <span style="font-size:9px;color:rgba(232,201,122,0.5);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace;margin-bottom:2px">Diretos</span>
         <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Pedidos</span><span id="tot-dir-pedidos" style="font-size:12px;color:var(--text);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
         <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Vendas</span><span id="tot-dir-vendas" style="font-size:12px;color:var(--accent2);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
         <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Comissão</span><span id="tot-dir-com" style="font-size:12px;color:var(--yellow);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
       </div>
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;display:flex;flex-direction:column;gap:4px;min-width:170px">
-        <span style="font-size:9px;color:rgba(232,201,122,0.5);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace">Indiretos</span>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;flex-direction:column;gap:2px;min-width:140px">
+        <span style="font-size:9px;color:rgba(232,201,122,0.5);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace;margin-bottom:2px">Indiretos</span>
         <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Pedidos</span><span id="tot-ind-pedidos" style="font-size:12px;color:var(--text);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
         <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Vendas</span><span id="tot-ind-vendas" style="font-size:12px;color:var(--accent2);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
         <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Comissão</span><span id="tot-ind-com" style="font-size:12px;color:var(--yellow);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
