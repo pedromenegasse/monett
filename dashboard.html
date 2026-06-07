@@ -377,6 +377,23 @@ let currentUser=null;
     </div>
     <input type="date" id="inp-date" style="height:36px;padding:0 12px">
     <button class="btn-import" onclick="importData()" style="height:36px;padding:0 20px">Adicionar</button>
+    <div id="inp-2x1-totais" style="display:none;align-items:center;gap:14px;margin-left:4px">
+      <div style="width:1px;height:28px;background:var(--border)"></div>
+      <div style="display:flex;flex-direction:column;gap:1px">
+        <span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Pedidos</span>
+        <span id="tot-pedidos" style="font-size:13px;color:var(--text);font-weight:500;font-family:'DM Mono',monospace">0</span>
+      </div>
+      <div style="width:1px;height:28px;background:var(--border)"></div>
+      <div style="display:flex;flex-direction:column;gap:1px">
+        <span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Vendas</span>
+        <span id="tot-vendas" style="font-size:13px;color:var(--accent2);font-weight:500;font-family:'DM Mono',monospace">—</span>
+      </div>
+      <div style="width:1px;height:28px;background:var(--border)"></div>
+      <div style="display:flex;flex-direction:column;gap:1px">
+        <span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Comissão</span>
+        <span id="tot-com" style="font-size:13px;color:var(--yellow);font-weight:500;font-family:'DM Mono',monospace">—</span>
+      </div>
+    </div>
   </div>
   <div class="import-scroll">
   <!-- 3 colunas -->
@@ -946,6 +963,7 @@ function clear2x1File(){
   const f=document.getElementById('inp-2x1-file');if(f)f.value='';
   const fn=document.getElementById('inp-2x1-filename');if(fn)fn.textContent='Selecionar arquivo CSV';
   const st=document.getElementById('inp-2x1-status');if(st)st.textContent='';
+  const totDiv2=document.getElementById('inp-2x1-totais');if(totDiv2)totDiv2.style.display='none';
   const btn=document.getElementById('inp-2x1-clear');if(btn)btn.style.display='none';
   const grid=document.getElementById('grid-2x1');if(grid)grid.style.display='none';
   ['inp-2x1-names','inp-2x1-inv','inp-2x1-venda'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
@@ -986,12 +1004,14 @@ function parse2x1(rawInput){
   const subIdx=hNorm.findIndex(h=>h==='sub_id1'||h.includes('subid1')||h.includes('sub_id1'));
   const vendaIdx=headers.findIndex(h=>h==='Comissão total do pedido(R$)');
   const pedidoIdx=hNorm.findIndex(h=>h.includes('idpedido')||h.includes('dopedido')||h==='iddopedido');
+  const comissaoIdx=headers.findIndex(h=>h.includes('líquida')||h.includes('liquida')||h.includes('líquido')||h.includes('Comissão líquida'));
   if(subIdx<0||vendaIdx<0){
     alert('Colunas Sub_id1 ou Comissão total do pedido(R$) não encontradas.');return;
   }
   const seen=new Set();
   const seenOrders=new Map();
   const map=new Map();
+  const comMap=new Map();
   for(let i=1;i<lines.length;i++){
     const cols=parseCSVLine(lines[i]);
     const sub=(cols[subIdx]||'').trim();
@@ -1002,6 +1022,8 @@ function parse2x1(rawInput){
     if(dedupeKey){seen.add(dedupeKey);seenOrders.set(sub,(seenOrders.get(sub)||0)+1);}
     const val=parseNum(cols[vendaIdx]||'0');
     map.set(sub,(map.get(sub)||0)+val);
+    const com=comissaoIdx>=0?parseNum(cols[comissaoIdx]||'0'):0;
+    comMap.set(sub,(comMap.get(sub)||0)+com);
   }
   const entries=[...map.entries()].sort((a,b)=>b[1]-a[1]);
   const subs=entries.map(e=>e[0]);
@@ -1032,6 +1054,16 @@ function parse2x1(rawInput){
   if(grid)grid.style.display='grid';
   const st=document.getElementById('inp-2x1-status');
   if(st)st.textContent=`✓ ${subs.length} sub id${subs.length!==1?'s':''} encontrado${subs.length!==1?'s':''}`;  const clrBtn=document.getElementById('inp-2x1-clear');if(clrBtn)clrBtn.style.display='';
+  const totalPedidos=[...seenOrders.values()].reduce((a,b)=>a+b,0);
+  const totalVendas=[...map.values()].reduce((a,b)=>a+b,0);
+  const totalCom=[...comMap.values()].reduce((a,b)=>a+b,0);
+  const totDiv=document.getElementById('inp-2x1-totais');
+  if(totDiv){
+    totDiv.style.display='flex';
+    document.getElementById('tot-pedidos').textContent=totalPedidos;
+    document.getElementById('tot-vendas').textContent=fmt(totalVendas);
+    document.getElementById('tot-com').textContent=fmt(totalCom);
+  }
 }
 
 /* ── IMPORT DAY ── */
@@ -1080,6 +1112,7 @@ async function importData(){
   const f2x1=document.getElementById('inp-2x1-file');if(f2x1)f2x1.value='';
   const fn=document.getElementById('inp-2x1-filename');if(fn)fn.textContent='Selecionar arquivo CSV';
   const st=document.getElementById('inp-2x1-status');if(st)st.textContent='';
+  const totDiv2=document.getElementById('inp-2x1-totais');if(totDiv2)totDiv2.style.display='none';
   showToast('✓ Importado!');
   await renderAll();
 
