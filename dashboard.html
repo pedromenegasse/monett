@@ -377,25 +377,21 @@ let currentUser=null;
     </div>
     <input type="date" id="inp-date" style="height:36px;padding:0 12px">
     <button class="btn-import" onclick="importData()" style="height:36px;padding:0 20px">Adicionar</button>
-    <div id="inp-2x1-totais" style="display:none;flex-wrap:wrap;gap:8px;align-items:flex-start">
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;flex-direction:column;gap:2px;min-width:140px">
-        <span style="font-size:9px;color:rgba(232,201,122,0.5);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace;margin-bottom:2px">Totais</span>
-        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Pedidos</span><span id="tot-pedidos" style="font-size:12px;color:var(--text);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
-        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Vendas</span><span id="tot-vendas" style="font-size:12px;color:var(--accent2);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
-        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Comissão</span><span id="tot-com" style="font-size:12px;color:var(--yellow);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
-      </div>
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;flex-direction:column;gap:2px;min-width:140px">
-        <span style="font-size:9px;color:rgba(232,201,122,0.5);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace;margin-bottom:2px">Diretos</span>
-        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Pedidos</span><span id="tot-dir-pedidos" style="font-size:12px;color:var(--text);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
-        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Vendas</span><span id="tot-dir-vendas" style="font-size:12px;color:var(--accent2);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
-        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Comissão</span><span id="tot-dir-com" style="font-size:12px;color:var(--yellow);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
-      </div>
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;flex-direction:column;gap:2px;min-width:140px">
-        <span style="font-size:9px;color:rgba(232,201,122,0.5);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace;margin-bottom:2px">Indiretos</span>
-        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Pedidos</span><span id="tot-ind-pedidos" style="font-size:12px;color:var(--text);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
-        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Vendas</span><span id="tot-ind-vendas" style="font-size:12px;color:var(--accent2);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
-        <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Comissão</span><span id="tot-ind-com" style="font-size:12px;color:var(--yellow);font-weight:500;font-family:'DM Mono',monospace">—</span></div>
-      </div>
+    <div id="inp-2x1-totais" style="display:none;align-items:center;gap:10px;font-family:'DM Mono',monospace;flex-wrap:wrap">
+      <span style="color:var(--border)">|</span>
+      <div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Pedidos</span><span id="tot-pedidos" style="font-size:13px;color:var(--text);font-weight:500">—</span></div>
+      <span style="color:var(--border)">|</span>
+      <div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Vendas</span><span id="tot-vendas" style="font-size:13px;color:var(--accent2);font-weight:500">—</span></div>
+      <span style="color:var(--border)">|</span>
+      <div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Comissão</span><span id="tot-com" style="font-size:13px;color:var(--yellow);font-weight:500">—</span></div>
+      <span style="color:var(--border)">|</span>
+      <div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Diretos</span><span id="tot-dir-pedidos" style="font-size:13px;color:var(--text);font-weight:500">—</span></div>
+      <div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Vendas dir.</span><span id="tot-dir-vendas" style="font-size:13px;color:var(--accent2);font-weight:500">—</span></div>
+      <div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Com. dir.</span><span id="tot-dir-com" style="font-size:13px;color:var(--yellow);font-weight:500">—</span></div>
+      <span style="color:var(--border)">|</span>
+      <div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Indiretos</span><span id="tot-ind-pedidos" style="font-size:13px;color:var(--text);font-weight:500">—</span></div>
+      <div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Vendas ind.</span><span id="tot-ind-vendas" style="font-size:13px;color:var(--accent2);font-weight:500">—</span></div>
+      <div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Com. ind.</span><span id="tot-ind-com" style="font-size:13px;color:var(--yellow);font-weight:500">—</span></div>
     </div>
   </div>
   <div class="import-scroll">
@@ -1028,11 +1024,6 @@ function parse2x1(rawInput){
     const sub=(cols[subIdx]||'').trim();
     const pedido=pedidoIdx>=0?(cols[pedidoIdx]||'').trim():'';
     // count all unique pedidos for totals (regardless of sub_id)
-    // count unique pedidos
-    if(pedido&&!totalSeenPedidos.has(pedido)){
-      totalSeenPedidos.add(pedido);
-      totalComissao+=comissaoIdx>=0?parseNum(cols[comissaoIdx]||'0'):0;
-    }
     // sum Valor de Compra for ALL rows (each row = one item)
     const compraVal=parseNum(cols[compraIdx>=0?compraIdx:vendaIdx]||'0');
     totalBruto+=compraVal;
@@ -1040,8 +1031,11 @@ function parse2x1(rawInput){
     const isDirect=atrib==='Pedido na mesma loja';
     if(isDirect){dirVendas+=compraVal;}else{indVendas+=compraVal;}
     if(pedido&&!totalSeenPedidos.has(pedido)){
-      if(isDirect){dirPedidos.add(pedido);dirCom+=comissaoIdx>=0?parseNum(cols[comissaoIdx]||'0'):0;}
-      else{indPedidos.add(pedido);indCom+=comissaoIdx>=0?parseNum(cols[comissaoIdx]||'0'):0;}
+      totalSeenPedidos.add(pedido);
+      const comVal=comissaoIdx>=0?parseNum(cols[comissaoIdx]||'0'):0;
+      totalComissao+=comVal;
+      if(isDirect){dirPedidos.add(pedido);dirCom+=comVal;}
+      else{indPedidos.add(pedido);indCom+=comVal;}
     }
     if(!sub)continue;
     const dedupeKey=pedido?`${sub}||${pedido}`:null;
