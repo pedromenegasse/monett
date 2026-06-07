@@ -378,21 +378,21 @@ let currentUser=null;
     <input type="date" id="inp-date" style="height:36px;padding:0 12px">
     <button class="btn-import" onclick="importData()" style="height:36px;padding:0 20px">Adicionar</button>
     <div id="inp-2x1-totais" style="display:none;align-items:center;gap:8px;font-family:'DM Mono',monospace;flex-wrap:wrap">
-      <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 10px;height:36px">
+      <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 10px;height:36px;min-width:280px;justify-content:space-between">
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Pedidos</span><span id="tot-pedidos" style="font-size:12px;color:var(--text);font-weight:500;line-height:1.2">—</span></div>
         <span style="color:var(--border);font-size:13px">|</span>
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Vendas</span><span id="tot-vendas" style="font-size:12px;color:var(--accent2);font-weight:500;line-height:1.2">—</span></div>
         <span style="color:var(--border);font-size:13px">|</span>
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Comissão</span><span id="tot-com" style="font-size:12px;color:var(--yellow);font-weight:500;line-height:1.2">—</span></div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 10px;height:36px">
+      <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 10px;height:36px;min-width:280px;justify-content:space-between">
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Diretos</span><span id="tot-dir-pedidos" style="font-size:12px;color:var(--text);font-weight:500;line-height:1.2">—</span></div>
         <span style="color:var(--border);font-size:13px">|</span>
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Vendas</span><span id="tot-dir-vendas" style="font-size:12px;color:var(--accent2);font-weight:500;line-height:1.2">—</span></div>
         <span style="color:var(--border);font-size:13px">|</span>
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Comissão</span><span id="tot-dir-com" style="font-size:12px;color:var(--yellow);font-weight:500;line-height:1.2">—</span></div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 10px;height:36px">
+      <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 10px;height:36px;min-width:280px;justify-content:space-between">
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Indiretos</span><span id="tot-ind-pedidos" style="font-size:12px;color:var(--text);font-weight:500;line-height:1.2">—</span></div>
         <span style="color:var(--border);font-size:13px">|</span>
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Vendas</span><span id="tot-ind-vendas" style="font-size:12px;color:var(--accent2);font-weight:500;line-height:1.2">—</span></div>
