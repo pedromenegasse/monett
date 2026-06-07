@@ -738,12 +738,19 @@ function ce_getLines(el){
   return Array.from(el.querySelectorAll('.ce-line')).map(d=>d.textContent);
 }
 
-function ce_setLines(el,lines){
+function ce_setLines(el,lines,watermarks){
   el.innerHTML='';
-  lines.forEach(txt=>{
+  lines.forEach((txt,i)=>{
     const d=document.createElement('div');
     d.className='ce-line';
     d.textContent=txt;
+    if(watermarks&&watermarks[i]){
+      d.style.paddingRight='80px';
+      const wm=document.createElement('span');
+      wm.style.cssText='position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:rgba(232,201,122,0.25);pointer-events:none;white-space:nowrap';
+      wm.textContent=watermarks[i]+' pedido'+(watermarks[i]!==1?'s':'');
+      d.appendChild(wm);
+    }
     el.appendChild(d);
   });
 }
@@ -983,6 +990,7 @@ function parse2x1(rawInput){
     alert('Colunas Sub_id1 ou Comissão total do pedido(R$) não encontradas.');return;
   }
   const seen=new Set();
+  const seenOrders=new Map();
   const map=new Map();
   for(let i=1;i<lines.length;i++){
     const cols=parseCSVLine(lines[i]);
@@ -991,19 +999,20 @@ function parse2x1(rawInput){
     const pedido=pedidoIdx>=0?(cols[pedidoIdx]||'').trim():'';
     const dedupeKey=pedido?`${sub}||${pedido}`:null;
     if(dedupeKey&&seen.has(dedupeKey))continue;
-    if(dedupeKey)seen.add(dedupeKey);
+    if(dedupeKey){seen.add(dedupeKey);seenOrders.set(sub,(seenOrders.get(sub)||0)+1);}
     const val=parseNum(cols[vendaIdx]||'0');
     map.set(sub,(map.get(sub)||0)+val);
   }
   const entries=[...map.entries()].sort((a,b)=>b[1]-a[1]);
   const subs=entries.map(e=>e[0]);
   const vendas=entries.map(e=>e[1].toFixed(2));
+  const pedidos=subs.map(s=>seenOrders.get(s)||0);
   const namesEl=document.getElementById('inp-2x1-names');
   const vendaEl=document.getElementById('inp-2x1-venda');
   const invEl=document.getElementById('inp-2x1-inv');
   const delCol=document.getElementById('inp-2x1-del-col');
   ce_setLines(namesEl,subs);
-  ce_setLines(vendaEl,vendas);
+  ce_setLines(vendaEl,vendas,pedidos);
   ce_setLines(invEl,subs.map(()=>''));
   draw2x1Lines(namesEl,subs.length);
   draw2x1Lines(vendaEl,subs.length);
