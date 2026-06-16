@@ -1264,8 +1264,10 @@ async function importData(){
     const names=ce_getLines(document.getElementById('inp-2x1-names')).map(s=>s.trim());
     const invs=ce_getLines(document.getElementById('inp-2x1-inv')).map(s=>s.trim());
     const vendas=ce_getLines(document.getElementById('inp-2x1-venda')).map(s=>s.trim());
-    if(!names.filter(Boolean).length){alert('Cole a tabela externa primeiro!');return;}
+    console.log('2x1 names:', names.length, names[0], 'invs:', invs.length, 'vendas:', vendas.length);
+  if(!names.filter(Boolean).length){alert('Cole a tabela externa primeiro!');return;}
     rows=names.map((name,i)=>({name,inv:parseNum(invs[i]||'0'),venda:parseNum(vendas[i]||'0')})).filter(r=>r.name);
+    console.log('rows built:', rows.length);
     if(!rows.length){alert('Nenhum dado válido encontrado. Verifique os campos.');return;}
   } else {
     const txt=document.getElementById('inp-paste').value;
