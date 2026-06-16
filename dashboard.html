@@ -1057,7 +1057,9 @@ function applyMetaToInv(){
   const existingVendas=ce_getLines(vendaEl);
   const existingPedidos=Array.from(vendaEl.querySelectorAll('.ce-line')).map(d=>{
     const wm=d.querySelector('span');
-    return wm?wm.textContent:'';
+    if(!wm)return 0;
+    const match=wm.textContent.match(/\d+/);
+    return match?parseInt(match[0]):0;
   });
 
   // Build merged list: all Meta sub IDs
@@ -1262,6 +1264,7 @@ async function importData(){
     const vendas=ce_getLines(document.getElementById('inp-2x1-venda')).map(s=>s.trim());
     if(!names.filter(Boolean).length){alert('Cole a tabela externa primeiro!');return;}
     rows=names.map((name,i)=>({name,inv:parseNum(invs[i]||'0'),venda:parseNum(vendas[i]||'0')})).filter(r=>r.name);
+    if(!rows.length){alert('Nenhum dado válido encontrado. Verifique os campos.');return;}
   } else {
     const txt=document.getElementById('inp-paste').value;
     if(!txt.trim()){alert('Cole os dados!');return;}
