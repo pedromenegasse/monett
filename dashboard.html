@@ -532,7 +532,6 @@ async function loadAccounts(){
   if(!currentUser)return[];
   const{data}=await sb.from('user_accounts').select('*').order('created_at');
   _accounts=(data||[]).map(a=>({id:a.id,name:a.name,color:a.color,iss:parseFloat(a.iss_rate)||6}));
-  console.log('loadAccounts result:', JSON.stringify(_accounts.map(a=>({id:a.id,name:a.name,iss:a.iss}))));
   return _accounts;
 }
 async function createAccount(name,color){
@@ -567,7 +566,7 @@ function getISS(){
 /* ── DAILY DATA (Supabase) ── */
 async function loadData(acctId){
   if(_data[acctId])return _data[acctId];
-  const{data}=await sb.from('daily_data').select('*').eq('account_id',acctId);
+  const{data}=await sb.from('daily_data').select('*').eq('account_id',acctId).limit(10000);
   const result={};
   for(const row of(data||[])){
     const month=row.date.slice(0,7);
@@ -1247,7 +1246,6 @@ async function importData(){
   document.getElementById('inp-date').blur();
   const dt=document.getElementById('inp-date').value;
   if(!dt){alert('Escolha uma data!');return;}
-  console.log('Importing for date:', dt);
 
   let rows=[];
   const mode=localStorage.getItem('tp_import_mode')||'3col';
@@ -1264,11 +1262,9 @@ async function importData(){
     const names=ce_getLines(document.getElementById('inp-2x1-names')).map(s=>s.trim());
     const invs=ce_getLines(document.getElementById('inp-2x1-inv')).map(s=>s.trim());
     const vendas=ce_getLines(document.getElementById('inp-2x1-venda')).map(s=>s.trim());
-    console.log('2x1 names:', names.length, names[0], 'invs:', invs.length, 'vendas:', vendas.length);
-  if(!names.filter(Boolean).length){alert('Cole a tabela externa primeiro!');return;}
+    if(!names.filter(Boolean).length){alert('Cole a tabela externa primeiro!');return;}
     rows=names.map((name,i)=>({name,inv:parseNum(invs[i]||'0'),venda:parseNum(vendas[i]||'0')})).filter(r=>r.name);
-    console.log('rows built:', rows.length);
-    if(!rows.length){alert('Nenhum dado válido encontrado. Verifique os campos.');return;}
+      if(!rows.length){alert('Nenhum dado válido encontrado. Verifique os campos.');return;}
   } else {
     const txt=document.getElementById('inp-paste').value;
     if(!txt.trim()){alert('Cole os dados!');return;}
@@ -1281,13 +1277,9 @@ async function importData(){
   }
 
   // save all rows first with original names
-  console.log('rows to save:', rows.length, rows[0]);
   const saveResult=await saveRows(acct.id,dt,rows);
-  console.log('save done');
   delete _data[acct.id]; // force full cache clear
   const freshCheck=await loadData(acct.id);
-  console.log('fresh data months:', Object.keys(freshCheck));
-  console.log('june days:', Object.keys(freshCheck['2026-06']||{}));
   // Switch to the month of the inserted date
   const insertedMonth=dt.slice(0,7);
   const monthTabs=document.querySelectorAll('#month-tabs .tab-btn');
@@ -2170,7 +2162,6 @@ async function renderBDSaldo(){
 
   // Set ISS after accounts AND active account are confirmed
   const iss=getISS();
-  console.log('Active acct:', getActiveAcct()?.name, 'ISS:', iss);
   document.getElementById('iss-inp').value=parseFloat(iss).toFixed(2).replace('.',',');
   document.getElementById('iss-display').textContent=fmtPct(iss);
   document.getElementById('inp-date').value=new Date().toISOString().slice(0,10);
