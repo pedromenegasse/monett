@@ -421,15 +421,28 @@ let currentUser=null;
   </div>
   <!-- 2x1: colar tabela externa -->
   <div id="mode-2x1" style="display:none">
-    <div style="margin-bottom:10px">
-      <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Relatório externo (CSV)</label>
-      <div style="display:flex;align-items:center;gap:10px">
-        <label id="inp-2x1-label" style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
-          <span style="font-size:14px">↑</span> <span id="inp-2x1-filename">Selecionar arquivo CSV</span>
-          <input type="file" id="inp-2x1-file" accept=".csv" style="display:none" onchange="load2x1File(this)">
-        </label>
-        <span id="inp-2x1-status" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted)"></span>
-        <button id="inp-2x1-clear" class="btn-x" onclick="clear2x1File()" style="display:none">✕</button>
+    <div style="margin-bottom:10px;display:flex;flex-direction:column;gap:8px">
+      <div>
+        <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Vendas — Shopee (CSV)</label>
+        <div style="display:flex;align-items:center;gap:10px">
+          <label id="inp-2x1-label" style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+            <span style="font-size:14px">↑</span> <span id="inp-2x1-filename">Selecionar arquivo CSV</span>
+            <input type="file" id="inp-2x1-file" accept=".csv" style="display:none" onchange="load2x1File(this)">
+          </label>
+          <span id="inp-2x1-status" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted)"></span>
+          <button id="inp-2x1-clear" class="btn-x" onclick="clear2x1File()" style="display:none">✕</button>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Investimento — Meta (CSV)</label>
+        <div style="display:flex;align-items:center;gap:10px">
+          <label id="inp-meta-label" style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+            <span style="font-size:14px">↑</span> <span id="inp-meta-filename">Selecionar arquivo CSV</span>
+            <input type="file" id="inp-meta-file" accept=".csv" style="display:none" onchange="loadMetaFile(this)">
+          </label>
+          <span id="inp-meta-status" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted)"></span>
+          <button id="inp-meta-clear" class="btn-x" onclick="clearMetaFile()" style="display:none">✕</button>
+        </div>
       </div>
     </div>
     <div id="grid-2x1" style="display:none;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:start">
@@ -760,7 +773,11 @@ function setMode(m){
 }
 
 function ce_getLines(el){
-  return Array.from(el.querySelectorAll('.ce-line')).map(d=>d.textContent);
+  return Array.from(el.querySelectorAll('.ce-line')).map(d=>{
+    const clone=d.cloneNode(true);
+    clone.querySelectorAll('span').forEach(s=>s.remove());
+    return clone.textContent;
+  });
 }
 
 function ce_setLines(el,lines,watermarks){
@@ -978,6 +995,81 @@ function clear2x1File(){
   const delCol=document.getElementById('inp-2x1-del-col');if(delCol)delCol.innerHTML='';
 }
 
+let _metaInvMap = new Map(); // sub_id -> total investment
+
+function loadMetaFile(input){
+  const file=input.files[0];
+  if(!file)return;
+  document.getElementById('inp-meta-filename').textContent=file.name;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    parseMetaCSV(e.target.result);
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+function parseMetaCSV(raw){
+  const content=raw.trim().replace(/^\uFEFF/,'');
+  const lines=content.split('\n').filter(l=>l.trim());
+  if(lines.length<2)return;
+  // detect separator
+  const sep=lines[0].includes('\t')?'\t':',';
+  const headers=parseCSVLine2(lines[0],sep).map(h=>h.trim().replace(/"/g,''));
+  const nomeIdx=headers.findIndex(h=>h.toLowerCase().includes('nome do an'));
+  const invIdx=headers.findIndex(h=>h.toLowerCase().includes('valor usado'));
+  if(nomeIdx<0||invIdx<0){
+    const st=document.getElementById('inp-meta-status');
+    if(st)st.textContent='Colunas não encontradas';
+    return;
+  }
+  _metaInvMap=new Map();
+  for(let i=1;i<lines.length;i++){
+    const cols=parseCSVLine2(lines[i],sep).map(c=>c.trim().replace(/"/g,''));
+    const nome=cols[nomeIdx]||'';
+    const match=nome.match(/\[([^\]]+)\]\[([^\]]+)\]/);
+    if(!match)continue;
+    const sub=match[2];
+    const inv=parseFloat((cols[invIdx]||'0').replace(',','.').replace(/[^0-9.]/g,''))||0;
+    _metaInvMap.set(sub,(_metaInvMap.get(sub)||0)+inv);
+  }
+  const st=document.getElementById('inp-meta-status');
+  if(st)st.textContent=`✓ ${_metaInvMap.size} sub id${_metaInvMap.size!==1?'s':''} encontrado${_metaInvMap.size!==1?'s':''}`;
+  const clrBtn=document.getElementById('inp-meta-clear');
+  if(clrBtn)clrBtn.style.display='';
+  // Fill investment column if names already loaded
+  applyMetaToInv();
+}
+
+function parseCSVLine2(line,sep){
+  if(sep!==',')return line.split(sep);
+  return parseCSVLine(line);
+}
+
+function applyMetaToInv(){
+  const namesEl=document.getElementById('inp-2x1-names');
+  const invEl=document.getElementById('inp-2x1-inv');
+  if(!namesEl||!invEl)return;
+  const names=ce_getLines(namesEl);
+  if(!names.length||!_metaInvMap.size)return;
+  const invLines=names.map(sub=>{
+    const val=_metaInvMap.get(sub);
+    return val!=null?val.toFixed(2):'';
+  });
+  ce_setLines(invEl,invLines);
+  draw2x1Lines(invEl,invLines.length);
+}
+
+function clearMetaFile(){
+  _metaInvMap=new Map();
+  const f=document.getElementById('inp-meta-file');if(f)f.value='';
+  const fn=document.getElementById('inp-meta-filename');if(fn)fn.textContent='Selecionar arquivo CSV';
+  const st=document.getElementById('inp-meta-status');if(st)st.textContent='';
+  const btn=document.getElementById('inp-meta-clear');if(btn)btn.style.display='none';
+  // clear inv column
+  const invEl=document.getElementById('inp-2x1-inv');
+  if(invEl){ce_setLines(invEl,ce_getLines(document.getElementById('inp-2x1-names')).map(()=>''));draw2x1Lines(invEl,ce_getLines(document.getElementById('inp-2x1-names')).length);}
+}
+
 function load2x1File(input){
   const file=input.files[0];
   if(!file)return;
@@ -1082,6 +1174,7 @@ function parse2x1(rawInput){
   }
   const grid=document.getElementById('grid-2x1');
   if(grid)grid.style.display='grid';
+  applyMetaToInv();
   const st=document.getElementById('inp-2x1-status');
   if(st)st.textContent=`✓ ${subs.length} sub id${subs.length!==1?'s':''} encontrado${subs.length!==1?'s':''}`;  const clrBtn=document.getElementById('inp-2x1-clear');if(clrBtn)clrBtn.style.display='';
   const totDiv=document.getElementById('inp-2x1-totais');
@@ -1142,6 +1235,7 @@ async function importData(){
   ['inp-2x1-names','inp-2x1-inv','inp-2x1-venda'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
   const delCol=document.getElementById('inp-2x1-del-col');if(delCol)delCol.innerHTML='';
   const grid2x1=document.getElementById('grid-2x1');if(grid2x1)grid2x1.style.display='none';
+  clearMetaFile();
   const f2x1=document.getElementById('inp-2x1-file');if(f2x1)f2x1.value='';
   const fn=document.getElementById('inp-2x1-filename');if(fn)fn.textContent='Selecionar arquivo CSV';
   const st=document.getElementById('inp-2x1-status');if(st)st.textContent='';
