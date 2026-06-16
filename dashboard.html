@@ -1290,7 +1290,6 @@ async function importData(){
   const st=document.getElementById('inp-2x1-status');if(st)st.textContent='';
   const totDiv2=document.getElementById('inp-2x1-totais');if(totDiv2)totDiv2.style.display='none';
   showToast('✓ Importado!');
-  await renderAll();
 
   // normalize: remove accents, lowercase for comparison
   function normalize(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
@@ -1331,6 +1330,7 @@ async function importData(){
       if(idx>=0)allSubIds.splice(idx,1);
     }
   }
+  await renderAll();
 }
 
 function showConflictModal(rowName, matchName){
