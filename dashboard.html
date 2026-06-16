@@ -566,7 +566,17 @@ function getISS(){
 /* ── DAILY DATA (Supabase) ── */
 async function loadData(acctId){
   if(_data[acctId])return _data[acctId];
-  const{data}=await sb.from('daily_data').select('*').eq('account_id',acctId).limit(10000);
+  let allData=[];
+  let from=0;
+  const pageSize=1000;
+  while(true){
+    const{data:page,error}=await sb.from('daily_data').select('*').eq('account_id',acctId).range(from,from+pageSize-1);
+    if(error||!page||page.length===0)break;
+    allData=[...allData,...page];
+    if(page.length<pageSize)break;
+    from+=pageSize;
+  }
+  const data=allData;
   const result={};
   for(const row of(data||[])){
     const month=row.date.slice(0,7);
