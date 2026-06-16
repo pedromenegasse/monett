@@ -1279,8 +1279,13 @@ async function importData(){
   }
 
   // save all rows first with original names
-  await saveRows(acct.id,dt,rows);
+  console.log('rows to save:', rows.length, rows[0]);
+  const saveResult=await saveRows(acct.id,dt,rows);
+  console.log('save done');
   delete _data[acct.id]; // force full cache clear
+  const freshCheck=await loadData(acct.id);
+  console.log('fresh data months:', Object.keys(freshCheck));
+  console.log('june days:', Object.keys(freshCheck['2026-06']||{}));
   // Switch to the month of the inserted date
   const insertedMonth=dt.slice(0,7);
   const monthTabs=document.querySelectorAll('#month-tabs .tab-btn');
