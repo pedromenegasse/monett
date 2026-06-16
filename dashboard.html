@@ -1048,15 +1048,61 @@ function parseCSVLine2(line,sep){
 function applyMetaToInv(){
   const namesEl=document.getElementById('inp-2x1-names');
   const invEl=document.getElementById('inp-2x1-inv');
-  if(!namesEl||!invEl)return;
-  const names=ce_getLines(namesEl);
-  if(!names.length||!_metaInvMap.size)return;
-  const invLines=names.map(sub=>{
-    const val=_metaInvMap.get(sub);
-    return val!=null?val.toFixed(2):'';
+  const vendaEl=document.getElementById('inp-2x1-venda');
+  const delCol=document.getElementById('inp-2x1-del-col');
+  if(!namesEl||!invEl||!_metaInvMap.size)return;
+
+  // Get existing shopee data
+  const existingNames=ce_getLines(namesEl).filter(Boolean);
+  const existingVendas=ce_getLines(vendaEl);
+  const existingPedidos=Array.from(vendaEl.querySelectorAll('.ce-line')).map(d=>{
+    const wm=d.querySelector('span');
+    return wm?wm.textContent:'';
   });
-  ce_setLines(invEl,invLines);
-  draw2x1Lines(invEl,invLines.length);
+
+  // Build merged list: all Meta sub IDs
+  const allSubs=[...new Set([...existingNames,..._metaInvMap.keys()])];
+
+  const mergedNames=[];
+  const mergedInv=[];
+  const mergedVenda=[];
+  const mergedPedidos=[];
+
+  for(const sub of allSubs){
+    mergedNames.push(sub);
+    const invVal=_metaInvMap.get(sub);
+    mergedInv.push(invVal!=null?invVal.toFixed(2):'');
+    const shopeeIdx=existingNames.indexOf(sub);
+    if(shopeeIdx>=0){
+      mergedVenda.push(existingVendas[shopeeIdx]||'0.00');
+      mergedPedidos.push(existingPedidos[shopeeIdx]||0);
+    } else {
+      mergedVenda.push('0.00');
+      mergedPedidos.push(0);
+    }
+  }
+
+  ce_setLines(namesEl,mergedNames);
+  ce_setLines(invEl,mergedInv);
+  ce_setLines(vendaEl,mergedVenda,mergedPedidos.map(p=>p||null));
+  draw2x1Lines(namesEl,mergedNames.length);
+  draw2x1Lines(invEl,mergedNames.length);
+  draw2x1Lines(vendaEl,mergedNames.length);
+
+  // Rebuild X buttons
+  if(delCol){
+    delCol.innerHTML='';
+    mergedNames.forEach((_,i)=>{
+      const btn=document.createElement('button');
+      btn.textContent='✕';btn.className='btn-x';
+      btn.style.cssText='width:34px;height:34px;border-radius:8px;margin:0';
+      btn.onclick=()=>remove2x1Row(i);
+      delCol.appendChild(btn);
+    });
+  }
+
+  const grid=document.getElementById('grid-2x1');
+  if(grid)grid.style.display='grid';
 }
 
 function clearMetaFile(){
