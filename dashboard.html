@@ -1244,8 +1244,10 @@ function parse2x1(rawInput){
 async function importData(){
   const acct=getActiveAcct();
   if(!acct){alert('Crie uma conta primeiro!');return;}
+  document.getElementById('inp-date').blur();
   const dt=document.getElementById('inp-date').value;
   if(!dt){alert('Escolha uma data!');return;}
+  console.log('Importing for date:', dt);
 
   let rows=[];
   const mode=localStorage.getItem('tp_import_mode')||'3col';
