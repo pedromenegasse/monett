@@ -1278,7 +1278,12 @@ async function importData(){
 
   // save all rows first with original names
   await saveRows(acct.id,dt,rows);
-  invalidateCache(acct.id);
+  delete _data[acct.id]; // force full cache clear
+  // Switch to the month of the inserted date
+  const insertedMonth=dt.slice(0,7);
+  const monthTabs=document.querySelectorAll('#month-tabs .tab-btn');
+  monthTabs.forEach(t=>t.classList.toggle('active',t.dataset.month===insertedMonth));
+  await renderAll();
   ['inp-names','inp-inv','inp-venda'].forEach(id=>{const el=document.getElementById(id);if(el){el.innerHTML='';const d=document.createElement('div');d.className='ce-line';d.textContent='';el.appendChild(d);}});
   ['inp-paste'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['inp-2x1-names','inp-2x1-inv','inp-2x1-venda'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
