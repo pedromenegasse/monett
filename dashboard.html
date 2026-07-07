@@ -972,10 +972,17 @@ function remove2x1Row(idx){
   ids.forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
-    const lines=ce_getLines(el);
-    lines.splice(idx,1);
-    ce_setLines(el,lines.length?lines:['']);
-    draw2x1Lines(el,lines.length||1);
+    if(id==='inp-2x1-venda'){
+      const lines=el.querySelectorAll('.ce-line');
+      if(lines[idx])lines[idx].remove();
+      if(el.querySelectorAll('.ce-line').length===0){const d=document.createElement('div');d.className='ce-line';d.textContent='';el.appendChild(d);}
+      draw2x1Lines(el,el.querySelectorAll('.ce-line').length);
+    } else {
+      const lines=ce_getLines(el);
+      lines.splice(idx,1);
+      ce_setLines(el,lines.length?lines:['']);
+      draw2x1Lines(el,lines.length||1);
+    }
   });
   const delCol=document.getElementById('inp-2x1-del-col');
   if(delCol){
