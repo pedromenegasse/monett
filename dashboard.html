@@ -374,7 +374,7 @@ let currentUser=null;
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
     <div class="mode-toggle" style="margin-bottom:0;height:36px">
       <button class="mode-btn active" id="mode-btn-3col" onclick="setMode('3col')" style="height:36px">3×</button>
-      <button class="mode-btn" id="mode-btn-2x1" onclick="setMode('2x1')" style="height:36px">2×1</button>
+      <button class="mode-btn" id="mode-btn-2x1" onclick="setMode('2x1')" style="height:36px">Auto</button>
       <button class="mode-btn" id="mode-btn-1col" onclick="setMode('1col')" style="height:36px">1×</button>
     </div>
     <input type="date" id="inp-date" style="height:36px;padding:0 12px">
@@ -400,6 +400,13 @@ let currentUser=null;
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Vendas</span><span id="tot-ind-vendas" style="font-size:12px;color:var(--accent2);font-weight:500;line-height:1.2">—</span></div>
         <span style="color:var(--border);font-size:13px">|</span>
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Comissão</span><span id="tot-ind-com" style="font-size:12px;color:var(--yellow);font-weight:500;line-height:1.2">—</span></div>
+      </div>
+      <div id="tot-cliques-balao" style="display:none;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 10px;height:36px;min-width:280px;flex:1;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Cliques</span><span id="tot-cli-taxa" style="font-size:12px;color:var(--text);font-weight:500;line-height:1.2">—</span></div>
+        <span style="color:var(--border);font-size:13px">|</span>
+        <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Meta</span><span id="tot-cli-meta" style="font-size:12px;color:var(--accent2);font-weight:500;line-height:1.2">—</span></div>
+        <span style="color:var(--border);font-size:13px">|</span>
+        <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Shopee</span><span id="tot-cli-shopee" style="font-size:12px;color:var(--yellow);font-weight:500;line-height:1.2">—</span></div>
       </div>
     </div>
   </div>
@@ -444,8 +451,19 @@ let currentUser=null;
           <button id="inp-meta-clear" class="btn-x" onclick="clearMetaFile()" style="display:none">✕</button>
         </div>
       </div>
+      <div>
+        <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Cliques — Shopee (CSV)</label>
+        <div style="display:flex;align-items:center;gap:10px">
+          <label id="inp-clique-label" style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+            <span style="font-size:14px">↑</span> <span id="inp-clique-filename">Selecionar arquivo CSV</span>
+            <input type="file" id="inp-clique-file" accept=".csv" style="display:none" onchange="loadCliqueFile(this)">
+          </label>
+          <span id="inp-clique-status" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted)"></span>
+          <button id="inp-clique-clear" class="btn-x" onclick="clearCliqueFile()" style="display:none">✕</button>
+        </div>
+      </div>
     </div>
-    <div id="grid-2x1" style="display:none;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:start">
+    <div id="grid-2x1" style="display:none;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:start" id="grid-2x1">
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID</label>
         <div id="inp-2x1-names" class="ce-col" contenteditable="true" spellcheck="false" data-field="2x1-names" onkeydown="ce_keydown(event,this)" oninput="ce_input_2x1(this,'names')" onpaste="ce_paste(event,this)"></div>
@@ -457,6 +475,10 @@ let currentUser=null;
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Venda</label>
         <div id="inp-2x1-venda" class="ce-col" contenteditable="true" spellcheck="false" data-field="2x1-venda" onkeydown="ce_keydown(event,this)" oninput="ce_input_2x1(this,'venda')" onpaste="ce_paste(event,this)"></div>
+      </div>
+      <div id="col-cliques" style="display:none">
+        <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Cliques</label>
+        <div id="inp-2x1-cliques" class="ce-col" style="pointer-events:none;cursor:default"></div>
       </div>
       <div id="inp-2x1-del-col" style="display:flex;flex-direction:column;padding-top:20px;gap:0">
       </div>
@@ -1039,6 +1061,7 @@ function parseMetaCSV(raw){
     return;
   }
   _metaInvMap=new Map();
+  _metaCliqueMap=new Map();
   for(let i=1;i<lines.length;i++){
     const cols=parseCSVLine2(lines[i],sep).map(c=>c.trim().replace(/"/g,''));
     const nome=cols[nomeIdx]||'';
@@ -1047,6 +1070,9 @@ function parseMetaCSV(raw){
     const sub=match[2];
     const inv=parseFloat((cols[invIdx]||'0').replace(',','.').replace(/[^0-9.]/g,''))||0;
     _metaInvMap.set(sub,(_metaInvMap.get(sub)||0)+inv);
+    const resultIdx2=headers.findIndex(h=>h.toLowerCase().includes('resultado'));
+    const metaClicks=resultIdx2>=0?parseInt((cols[resultIdx2]||'0').replace(/[^0-9]/g,''))||0:0;
+    _metaCliqueMap.set(sub,(_metaCliqueMap.get(sub)||0)+metaClicks);
   }
   const st=document.getElementById('inp-meta-status');
   if(st)st.textContent=`✓ ${_metaInvMap.size} sub id${_metaInvMap.size!==1?'s':''} encontrado${_metaInvMap.size!==1?'s':''}`;
@@ -1121,6 +1147,98 @@ function applyMetaToInv(){
 
   const grid=document.getElementById('grid-2x1');
   if(grid)grid.style.display='grid';
+}
+
+let _cliqueMap = new Map(); // sub_id -> shopee click count
+let _metaCliqueMap = new Map(); // sub_id -> meta click count (from Meta CSV Resultados)
+
+function loadCliqueFile(input){
+  const file=input.files[0];
+  if(!file)return;
+  document.getElementById('inp-clique-filename').textContent=file.name;
+  const reader=new FileReader();
+  reader.onload=e=>parseCliqueCSV(e.target.result);
+  reader.readAsText(file,'UTF-8');
+}
+
+function parseCliqueCSV(raw){
+  const lines=raw.trim().replace(/^﻿/,'').split('
+').filter(l=>l.trim());
+  if(lines.length<2)return;
+  const sep=lines[0].includes('	')?'	':',';
+  const headers=lines[0].split(sep).map(h=>h.replace(/"/g,'').trim());
+  const subIdx=headers.findIndex(h=>h.toLowerCase().includes('sub_id')||h.toLowerCase().includes('sub id'));
+  if(subIdx<0)return;
+  _cliqueMap=new Map();
+  for(let i=1;i<lines.length;i++){
+    const cols=lines[i].split(sep).map(c=>c.replace(/"/g,'').trim());
+    const sub=(cols[subIdx]||'').split('----')[0].trim();
+    if(sub)_cliqueMap.set(sub,(_cliqueMap.get(sub)||0)+1);
+  }
+  const st=document.getElementById('inp-clique-status');
+  if(st)st.textContent=`✓ ${_cliqueMap.size} sub ids`;
+  const btn=document.getElementById('inp-clique-clear');
+  if(btn)btn.style.display='';
+  applyCliques();
+}
+
+function applyCliques(){
+  const namesEl=document.getElementById('inp-2x1-names');
+  if(!namesEl||!_cliqueMap.size)return;
+  const names=ce_getLines(namesEl).filter(Boolean);
+  if(!names.length)return;
+
+  // Calculate totals
+  const totalShopee=[..._cliqueMap.values()].reduce((a,b)=>a+b,0);
+  const totalMeta=[..._metaCliqueMap.values()].reduce((a,b)=>a+b,0);
+  const taxa=totalMeta>0?Math.round(totalShopee/totalMeta*100):0;
+
+  // Show cliques balloon
+  const balao=document.getElementById('tot-cliques-balao');
+  if(balao){
+    balao.style.display='flex';
+    document.getElementById('tot-cli-taxa').textContent=taxa+'%';
+    document.getElementById('tot-cli-meta').textContent=totalMeta.toLocaleString('pt-BR');
+    document.getElementById('tot-cli-shopee').textContent=totalShopee.toLocaleString('pt-BR');
+  }
+
+  // Show cliques column and expand grid
+  const colCliques=document.getElementById('col-cliques');
+  const grid=document.getElementById('grid-2x1');
+  if(colCliques)colCliques.style.display='';
+  if(grid)grid.style.gridTemplateColumns='1fr 1fr 1fr 1fr auto';
+
+  // Fill cliques column
+  const cliqueEl=document.getElementById('inp-2x1-cliques');
+  if(!cliqueEl)return;
+  cliqueEl.innerHTML='';
+  names.forEach(sub=>{
+    const shopee=_cliqueMap.get(sub)||0;
+    const meta=_metaCliqueMap.get(sub)||0;
+    const t=meta>0?Math.round(shopee/meta*100):null;
+    const d=document.createElement('div');
+    d.className='ce-line';
+    d.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:34px;gap:8px';
+    if(shopee||meta){
+      d.innerHTML=`<span style="color:var(--text);font-size:13px">${t!=null?t+'%':'—'}</span><span style="color:var(--accent2);font-size:13px">${meta?meta.toLocaleString('pt-BR'):'—'}</span><span style="color:var(--yellow);font-size:13px">${shopee?shopee.toLocaleString('pt-BR'):'—'}</span>`;
+    } else {
+      d.innerHTML='<span style="color:var(--muted);font-size:13px">—</span><span style="color:var(--muted);font-size:13px">—</span><span style="color:var(--muted);font-size:13px">—</span>';
+    }
+    cliqueEl.appendChild(d);
+  });
+  draw2x1Lines(cliqueEl,names.length);
+}
+
+function clearCliqueFile(){
+  _cliqueMap=new Map();
+  const f=document.getElementById('inp-clique-file');if(f)f.value='';
+  const fn=document.getElementById('inp-clique-filename');if(fn)fn.textContent='Selecionar arquivo CSV';
+  const st=document.getElementById('inp-clique-status');if(st)st.textContent='';
+  const btn=document.getElementById('inp-clique-clear');if(btn)btn.style.display='none';
+  const col=document.getElementById('col-cliques');if(col)col.style.display='none';
+  const grid=document.getElementById('grid-2x1');if(grid)grid.style.gridTemplateColumns='1fr 1fr 1fr auto';
+  const balao=document.getElementById('tot-cliques-balao');if(balao)balao.style.display='none';
+  const el=document.getElementById('inp-2x1-cliques');if(el)el.innerHTML='';
 }
 
 function clearMetaFile(){
@@ -1308,6 +1426,7 @@ async function importData(){
   const delCol=document.getElementById('inp-2x1-del-col');if(delCol)delCol.innerHTML='';
   const grid2x1=document.getElementById('grid-2x1');if(grid2x1)grid2x1.style.display='none';
   clearMetaFile();
+  clearCliqueFile();
   const f2x1=document.getElementById('inp-2x1-file');if(f2x1)f2x1.value='';
   const fn=document.getElementById('inp-2x1-filename');if(fn)fn.textContent='Selecionar arquivo CSV';
   const st=document.getElementById('inp-2x1-status');if(st)st.textContent='';
