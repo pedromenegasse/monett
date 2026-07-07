@@ -199,7 +199,7 @@ let currentUser=null;
   .color-pick.selected{border-color:var(--text)}
   /* SUB ID MODAL */
   .sub-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding:20px 0;overflow-y:auto}
-  .sub-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:calc(100vw - 40px);max-height:90vh;display:flex;flex-direction:column;overflow:auto}
+  .sub-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:fit-content;min-width:320px;max-width:calc(100vw - 40px);max-height:90vh;display:flex;flex-direction:column;overflow:auto}
   .sub-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
   .sub-modal-header h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent);margin:0}
   .sub-modal-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
