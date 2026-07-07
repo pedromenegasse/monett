@@ -1963,6 +1963,16 @@ async function openRankModal(){
   const mesNome=new Date(+y,+mo-1,1).toLocaleString('pt-BR',{month:'long',year:'numeric'});
   document.getElementById('rank-modal-title').textContent='🏆 Ranking — '+mesNome.charAt(0).toUpperCase()+mesNome.slice(1);
   document.getElementById('rank-modal-table').innerHTML=`
+    <colgroup>
+      <col style="width:60px">
+      <col style="width:18%">
+      <col style="width:13%">
+      <col style="width:13%">
+      <col style="width:13%">
+      <col style="width:13%">
+      <col style="width:8%">
+      <col style="width:14%">
+    </colgroup>
     <thead><tr>
       <th>Rank</th>
       <th style="${thS};text-align:left" ${thH} onclick="sortRankModal('name')">Sub ID <span class="sort-ind" id="rms-name"></span></th>
