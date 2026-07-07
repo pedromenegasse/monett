@@ -199,11 +199,11 @@ let currentUser=null;
   .color-pick.selected{border-color:var(--text)}
   /* SUB ID MODAL */
   .sub-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
-  .sub-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:700px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+  .sub-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:700px;display:flex;flex-direction:column;overflow:visible}
   .sub-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
   .sub-modal-header h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent);margin:0}
   .sub-modal-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
-  .sub-modal-scroll{overflow-y:auto;flex:1;scrollbar-color:var(--border) transparent;min-height:0}
+  .sub-modal-scroll{overflow-y:visible;flex:1;scrollbar-color:var(--border) transparent}
   .sub-modal-scroll::-webkit-scrollbar{width:6px}
   .sub-modal-scroll::-webkit-scrollbar-track{background:transparent}
   .sub-modal-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -1894,6 +1894,8 @@ async function openRankModal(){
 
   // accumulate totals per sub ID
   const acc={};
+  const lastDay=days[days.length-1];
+  const lastDayActive=new Set((md[lastDay]||[]).filter(r=>r.inv>0).map(r=>r.name));
   for(const day of days){
     for(const r of md[day]){
       if(!acc[r.name])acc[r.name]={inv:0,venda:0};
@@ -1944,7 +1946,8 @@ async function openRankModal(){
   const rows=ranked.map((r,i)=>{
     const sc=r.saldo>=0?'color:var(--accent2)':'color:var(--red)';
     const rc=r.roi!==null?(r.roi>=1.5?'color:var(--gold-text)':r.roi<0.1?'color:var(--bord-text)':r.roi>=1?'color:var(--accent2)':'color:var(--red)'):'color:var(--muted)';
-    return`<tr data-rank="${i}" data-inv="${r.inv}" data-meta="${r.comMeta}" data-venda="${r.venda}" data-iss="${r.menosISS}" data-saldo="${r.saldo}" data-roi="${r.roi??-999}" data-name="${r.name}">
+    const isLastDayActive=lastDayActive.has(r.name);
+    return`<tr data-rank="${i}" data-inv="${r.inv}" data-meta="${r.comMeta}" data-venda="${r.venda}" data-iss="${r.menosISS}" data-saldo="${r.saldo}" data-roi="${r.roi??-999}" data-name="${r.name}" data-lastday="${isLastDayActive?1:0}">
       <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:600">${i+1}</td>
       <td style="text-align:left;font-family:'DM Sans',sans-serif">${r.name}</td>
       <td>${fmt(r.inv)}</td>
@@ -1989,8 +1992,8 @@ function filterRankAtivos(){
   const tbody=document.querySelector('#rank-modal-table tbody');
   if(!tbody)return;
   tbody.querySelectorAll('tr').forEach(tr=>{
-    const inv=parseFloat(tr.dataset.inv||0);
-    tr.style.display=(!_rankAtivos||inv>0)?'':'none';
+    const lastday=parseInt(tr.dataset.lastday||0);
+    tr.style.display=(!_rankAtivos||lastday===1)?'':'none';
   });
 }
 
