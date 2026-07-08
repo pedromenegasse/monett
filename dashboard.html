@@ -1093,7 +1093,7 @@ function parseMetaCSV(raw){
   const nomeIdx=headers.findIndex(h=>h.toLowerCase().includes('nome do an'));
   const campanhaIdx=headers.findIndex(h=>h.toLowerCase().includes('nome da campanha'));
   const invIdx=headers.findIndex(h=>h.toLowerCase().includes('valor usado'));
-  if(nomeIdx<0||invIdx<0){
+  if((nomeIdx<0&&campanhaIdx<0)||invIdx<0){
     const st=document.getElementById('inp-meta-status');
     if(st)st.textContent='Colunas não encontradas';
     return;
