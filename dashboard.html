@@ -1070,7 +1070,19 @@ function parseMetaCSV(raw){
     if(st)st.textContent='Colunas não encontradas';
     return;
   }
-  const resultIdx=headers.findIndex(h=>h.toLowerCase().includes('resultado'));
+  // Prefer an exact "Resultados"/"Resultado" header; avoid false matches like
+  // "Tipo de resultado" or "Custo por resultado", which also contain the word
+  // but hold text/cost values instead of the click count.
+  let resultIdx=headers.findIndex(h=>{
+    const hl=h.toLowerCase().trim();
+    return hl==='resultados'||hl==='resultado';
+  });
+  if(resultIdx<0){
+    resultIdx=headers.findIndex(h=>{
+      const hl=h.toLowerCase();
+      return hl.includes('resultado')&&!hl.includes('tipo')&&!hl.includes('custo');
+    });
+  }
   _metaInvMap=new Map();
   _metaCliqueMap=new Map();
   for(let i=1;i<lines.length;i++){
