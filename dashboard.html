@@ -553,7 +553,7 @@ async function doLogout(){await sb.auth.signOut();window.location.href='index.ht
 async function loadAccounts(){
   if(!currentUser)return[];
   const{data}=await sb.from('user_accounts').select('*').order('created_at');
-  _accounts=(data||[]).map(a=>({id:a.id,name:a.name,color:a.color,iss:parseFloat(a.iss_rate)||6,issMonthly:a.iss_monthly||{}}));
+  _accounts=(data||[]).map(a=>({id:a.id,name:a.name,color:a.color,iss:parseFloat(a.iss_rate)||6,issMonthly:{}}));
   return _accounts;
 }
 async function createAccount(name,color){
@@ -585,7 +585,9 @@ function getISS(month){
   const a=getActiveAcct();
   if(!a)return 6;
   const m=month||getActiveMonth();
-  if(a.issMonthly&&a.issMonthly[m]!=null)return a.issMonthly[m];
+  const key='iss_'+a.id+'_'+m;
+  const stored=localStorage.getItem(key);
+  if(stored!=null)return parseFloat(stored);
   return a.iss;
 }
 
@@ -761,12 +763,12 @@ async function saveISS(){
   const v=parseFloat(raw);
   if(isNaN(v)||v<0||v>100){alert('Valor inválido');return;}
   const acct=getActiveAcct();
-  if(acct){
-    const ok=await saveISSDB(acct.id,v);
-    if(!ok){alert('Erro ao salvar ISS. Verifique o console.');return;}
-  }
+  if(!acct)return;
+  const month=getActiveMonth();
+  // Save month-specific ISS to localStorage
+  localStorage.setItem('iss_'+acct.id+'_'+month, v);
   document.getElementById('iss-display').textContent=fmtPct(v);
-  showToast('ISS → '+fmtPct(v));
+  showToast('ISS '+month+' → '+fmtPct(v));
   await renderAll();
 }
 function fmtPct(v){return v.toFixed(2).replace('.',',')+' %';}
