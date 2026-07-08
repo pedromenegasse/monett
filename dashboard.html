@@ -887,6 +887,17 @@ function ce_keydown(e,el){
         else other.insertBefore(d,otherLines[insertIdx]);
         draw2x1Lines(other,other.querySelectorAll('.ce-line').length);
       }
+      // Keep Cliques column in sync (blank placeholder row) if present
+      const cliqueColEl=document.getElementById('inp-2x1-cliques');
+      if(cliqueColEl&&cliqueColEl.querySelectorAll('.ce-line').length){
+        const cLines=Array.from(cliqueColEl.querySelectorAll('.ce-line'));
+        const cd=document.createElement('div');cd.className='ce-line';
+        cd.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:34px;gap:8px';
+        cd.innerHTML='<span style="color:var(--muted);font-size:13px">—</span><span style="color:var(--muted);font-size:13px">—</span><span style="color:var(--muted);font-size:13px">—</span>';
+        if(insertIdx<0||insertIdx>=cLines.length) cliqueColEl.appendChild(cd);
+        else cliqueColEl.insertBefore(cd,cLines[insertIdx]);
+        draw2x1Lines(cliqueColEl,cliqueColEl.querySelectorAll('.ce-line').length);
+      }
       // sync X buttons
       const lc=el.querySelectorAll('.ce-line').length;
       const delCol=document.getElementById('inp-2x1-del-col');
@@ -923,6 +934,13 @@ function ce_keydown(e,el){
           const otherLines=other.querySelectorAll('.ce-line');
           if(removeIdx>=0&&otherLines[removeIdx]) otherLines[removeIdx].remove();
           draw2x1Lines(other,other.querySelectorAll('.ce-line').length);
+        }
+        // Keep Cliques column in sync too
+        const cliqueColEl2=document.getElementById('inp-2x1-cliques');
+        if(cliqueColEl2){
+          const cLines2=cliqueColEl2.querySelectorAll('.ce-line');
+          if(removeIdx>=0&&cLines2[removeIdx])cLines2[removeIdx].remove();
+          draw2x1Lines(cliqueColEl2,cliqueColEl2.querySelectorAll('.ce-line').length);
         }
         const lc2=el.querySelectorAll('.ce-line').length;
         const delCol2=document.getElementById('inp-2x1-del-col');
@@ -1012,6 +1030,15 @@ function remove2x1Row(idx){
       draw2x1Lines(el,lines.length||1);
     }
   });
+  // Keep the Cliques column (Meta/Shopee) in sync with the removed row too —
+  // it has its own custom markup (not plain text), so remove the row directly
+  // from the DOM instead of going through ce_getLines/ce_setLines.
+  const cliqueEl=document.getElementById('inp-2x1-cliques');
+  if(cliqueEl){
+    const cLines=cliqueEl.querySelectorAll('.ce-line');
+    if(cLines[idx])cLines[idx].remove();
+    draw2x1Lines(cliqueEl,cliqueEl.querySelectorAll('.ce-line').length);
+  }
   const delCol=document.getElementById('inp-2x1-del-col');
   if(delCol){
     const btns=Array.from(delCol.children);
