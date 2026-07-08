@@ -789,8 +789,8 @@ function parseNum(s){
 }
 
 /* ── CALC ── */
-function calc(inv,venda){
-  const iss=getISS(activeMonth)/100;
+function calc(inv,venda,month){
+  const iss=getISS(month||getActiveMonth())/100;
   const comMeta=inv*(1+META_TAX);
   const menosISS=venda*(1-iss);
   const saldo=menosISS-comMeta;
@@ -1524,11 +1524,11 @@ function toggleImport(){
 }
 
 /* ── RANKING ── */
-function buildRanking(monthData,days,upToIdx){
+function buildRanking(monthData,days,upToIdx,month){
   const acc={};
   for(let i=0;i<=upToIdx;i++)
     for(const r of monthData[days[i]]){
-      const c=calc(r.inv,r.venda);
+      const c=calc(r.inv,r.venda,month);
       acc[r.name]=(acc[r.name]||0)+c.saldo;
     }
   return Object.entries(acc).sort((a,b)=>b[1]-a[1]).map(([name,saldo],i)=>({name,rank:i+1,saldo}));
@@ -1594,7 +1594,7 @@ function renderMonth(data,month){
   let totInv=0,totVenda=0;
   for(const day of days)for(const r of md[day]){totInv+=r.inv;totVenda+=r.venda;}
   const totComMeta=totInv*(1+META_TAX);
-  const totMenosISS=totVenda*(1-(getISS()/100));
+  const totMenosISS=totVenda*(1-(getISS(month)/100));
   const totSaldo=totMenosISS-totComMeta;
   const totROAS=totComMeta>0?totMenosISS/totComMeta:null;
 
@@ -1618,13 +1618,13 @@ function renderMonth(data,month){
   const allNames=[...new Set(days.flatMap(d=>md[d].map(r=>r.name)))];
   container.innerHTML=[...days].reverse().map(day=>{
     const dayIdx=days.indexOf(day);
-    const curRankArr=buildRanking(md,days,dayIdx);
-    const prevRank=dayIdx>0?rankMap(buildRanking(md,days,dayIdx-1)):{};
+    const curRankArr=buildRanking(md,days,dayIdx,month);
+    const prevRank=dayIdx>0?rankMap(buildRanking(md,days,dayIdx-1,month)):{};
     const cumSaldo={};for(const o of curRankArr)cumSaldo[o.name]=o.saldo;
     const isLatest=day===latestDay;
     const dayMap={};for(const r of md[day])dayMap[r.name]=r;
     const fullRows=allNames.map(name=>dayMap[name]||{name,inv:0,venda:0,missing:true});
-    return renderDay(day,fullRows,curRankArr,prevRank,cumSaldo,isLatest);
+    return renderDay(day,fullRows,curRankArr,prevRank,cumSaldo,isLatest,month);
   }).join('');
   // sync all chevron widths using the first visible table as reference
   requestAnimationFrame(()=>{
@@ -1640,12 +1640,12 @@ function renderMonth(data,month){
   });
 }
 
-function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest){
+function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
   const [y,m,d]=day.split('-');
   const dateLabel=`${d}/${m}/${y}`;
   let dayInv=0,dayVenda=0;
   for(const r of rows){dayInv+=r.inv;dayVenda+=r.venda;}
-  const dayCalc=calc(dayInv,dayVenda);
+  const dayCalc=calc(dayInv,dayVenda,month);
   const sc=dayCalc.saldo>=0?'pos':'neg';
   const crMap={};for(const o of curRanking)crMap[o.name]=o.rank;
   const sortedRows=[...rows].sort((a,b)=>(crMap[a.name]||999)-(crMap[b.name]||999));
@@ -1659,7 +1659,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest){
   const tableDisplay=isLatest?'':'display:none';
 
   const tbody=sortedRows.map(r=>{
-    const c=calc(r.inv,r.venda);
+    const c=calc(r.inv,r.venda,month);
     const curR=displayRankMap[r.name]; // sequential display rank
     const curGlobal=crMap[r.name]||999;
     const prevGlobal=prevRankMap[r.name];
@@ -1938,7 +1938,7 @@ async function openSubModal(name){
     if(!r)return'';
     const [y,m,d]=day.split('-');
     const lbl=`${d}/${m}`;
-    const c=calc(r.inv,r.venda);
+    const c=calc(r.inv,r.venda,month);
     totInv+=r.inv;totVenda+=r.venda;totSaldo+=c.saldo;count++;
     const sc=c.saldo>=0?'color:var(--accent2)':'color:var(--red)';
     const rc=c.roi!==null?(c.roi>=1.5?'color:var(--gold-text)':c.roi<0.1?'color:var(--bord-text)':c.roi>=1?'color:var(--accent2)':'color:var(--red)'):'color:var(--muted)';
@@ -1952,7 +1952,7 @@ async function openSubModal(name){
       <td style="${rc};font-weight:600">${c.roi!==null?c.roi.toFixed(2):'—'}</td>
     </tr>`;
   }).join('');
-  const totC=calc(totInv,totVenda);
+  const totC=calc(totInv,totVenda,month);
   const totSc=totSaldo>=0?'cv-green':'cv-red';
   const totRc=totC.roi!==null?(totC.roi>=1?'cv-green':'cv-red'):'cv-muted';
   document.getElementById('sub-modal-title').textContent=name;
@@ -2052,14 +2052,14 @@ async function openRankModal(){
 
   // sort by saldo desc
   const ranked=Object.entries(acc).map(([name,t])=>{
-    const c=calc(t.inv,t.venda);
+    const c=calc(t.inv,t.venda,month);
     return{name,inv:t.inv,venda:t.venda,comMeta:c.comMeta,menosISS:c.menosISS,saldo:c.saldo,roi:c.roi};
   }).sort((a,b)=>b.saldo-a.saldo);
 
   // month totals
   const totInv=ranked.reduce((s,r)=>s+r.inv,0);
   const totVenda=ranked.reduce((s,r)=>s+r.venda,0);
-  const totC=calc(totInv,totVenda);
+  const totC=calc(totInv,totVenda,month);
   const totSaldo=ranked.reduce((s,r)=>s+r.saldo,0);
   const totSc=totSaldo>=0?'cv-green':'cv-red';
   const totRc=totC.roi!==null?(totC.roi>=1?'cv-green':'cv-red'):'cv-muted';
