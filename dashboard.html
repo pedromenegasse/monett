@@ -1037,13 +1037,15 @@ let _metaInvMap = new Map(); // sub_id -> total investment
 let _cliqueMap = new Map(); // sub_id -> shopee click count
 let _metaCliqueMap = new Map(); // sub_id -> meta click count
 
+let _rawMetaCSV='';
 function loadMetaFile(input){
   const file=input.files[0];
   if(!file)return;
   document.getElementById('inp-meta-filename').textContent=file.name;
   const reader=new FileReader();
   reader.onload=function(e){
-    parseMetaCSV(e.target.result);
+    _rawMetaCSV=e.target.result;
+    parseMetaCSV(_rawMetaCSV);
   };
   reader.readAsText(file,'UTF-8');
 }
@@ -1082,6 +1084,7 @@ function parseMetaCSV(raw){
   if(clrBtn)clrBtn.style.display='';
   // Fill investment column if names already loaded
   applyMetaToInv();
+  if(_cliqueMap.size)applyCliques();
 }
 
 function parseCSVLine2(line,sep){
@@ -1157,20 +1160,10 @@ function loadCliqueFile(input){
   const file=input.files[0];
   if(!file)return;
   document.getElementById('inp-clique-filename').textContent=file.name;
+  // Read clique file, then rebuild metaCliqueMap directly from already-parsed data
   const reader=new FileReader();
   reader.onload=e=>{
-    // Reprocess Meta first to ensure _metaCliqueMap is populated
-    const metaFile=document.getElementById('inp-meta-file');
-    if(metaFile&&metaFile.files&&metaFile.files[0]){
-      const metaReader=new FileReader();
-      metaReader.onload=me=>{
-        parseMetaCSV(me.target.result);
-        parseCliqueCSV(e.target.result);
-      };
-      metaReader.readAsText(metaFile.files[0],'UTF-8');
-    } else {
-      parseCliqueCSV(e.target.result);
-    }
+    parseCliqueCSV(e.target.result);
   };
   reader.readAsText(file,'UTF-8');
 }
@@ -1192,7 +1185,9 @@ function parseCliqueCSV(raw){
   if(st)st.textContent=`✓ ${_cliqueMap.size} sub ids`;
   const btn=document.getElementById('inp-clique-clear');
   if(btn)btn.style.display='';
-  applyCliques();
+  // Rebuild _metaCliqueMap from stored raw CSV before applying
+  if(_rawMetaCSV) parseMetaCSV(_rawMetaCSV);
+  else applyCliques();
 }
 
 function applyCliques(){
