@@ -1157,6 +1157,10 @@ function applyMetaToInv(){
 
   const grid=document.getElementById('grid-2x1');
   if(grid)grid.style.display='grid';
+
+  // Re-sync cliques column against the freshly merged names list,
+  // so Meta clicks (and Shopee clicks) stay correctly matched per row
+  if(_cliqueMap.size)applyCliques();
 }
 
 
