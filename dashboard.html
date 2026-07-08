@@ -1198,9 +1198,11 @@ function parseCliqueCSV(raw){
 
 function applyCliques(){
   const namesEl=document.getElementById('inp-2x1-names');
-  if(!namesEl||!_cliqueMap.size)return;
+  if(!namesEl)return;
   const names=ce_getLines(namesEl).filter(Boolean);
   if(!names.length)return;
+  // Need at least Meta cliques OR Shopee cliques
+  if(!_cliqueMap.size&&!_metaCliqueMap.size)return;
 
   // Calculate totals
   const totalShopee=[..._cliqueMap.values()].reduce((a,b)=>a+b,0);
