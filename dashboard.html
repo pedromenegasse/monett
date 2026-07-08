@@ -463,7 +463,7 @@ let currentUser=null;
         </div>
       </div>
     </div>
-    <div id="grid-2x1" style="display:none;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:start" id="grid-2x1">
+    <div id="grid-2x1" style="display:none;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:start">
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Sub ID</label>
         <div id="inp-2x1-names" class="ce-col" contenteditable="true" spellcheck="false" data-field="2x1-names" onkeydown="ce_keydown(event,this)" oninput="ce_input_2x1(this,'names')" onpaste="ce_paste(event,this)"></div>
@@ -476,7 +476,7 @@ let currentUser=null;
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Venda</label>
         <div id="inp-2x1-venda" class="ce-col" contenteditable="true" spellcheck="false" data-field="2x1-venda" onkeydown="ce_keydown(event,this)" oninput="ce_input_2x1(this,'venda')" onpaste="ce_paste(event,this)"></div>
       </div>
-      <div id="col-cliques" style="display:none">
+      <div id="col-cliques" style="display:none;min-width:0;overflow:hidden">
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Cliques</label>
         <div id="inp-2x1-cliques" class="ce-col" style="pointer-events:none;cursor:default"></div>
       </div>
@@ -1219,8 +1219,8 @@ function applyCliques(){
   // Show cliques column and expand grid
   const colCliques=document.getElementById('col-cliques');
   const grid=document.getElementById('grid-2x1');
-  if(colCliques)colCliques.style.display='';
-  if(grid)grid.style.gridTemplateColumns='1fr 1fr 1fr 1fr auto';
+  if(colCliques)colCliques.style.display='block';
+  if(grid){grid.style.gridTemplateColumns='1fr 1fr 1fr 1fr auto';}
 
   // Fill cliques column
   const cliqueEl=document.getElementById('inp-2x1-cliques');
@@ -1251,7 +1251,7 @@ function clearCliqueFile(){
   const fn=document.getElementById('inp-clique-filename');if(fn)fn.textContent='Selecionar arquivo CSV';
   const st=document.getElementById('inp-clique-status');if(st)st.textContent='';
   const btn=document.getElementById('inp-clique-clear');if(btn)btn.style.display='none';
-  const col=document.getElementById('col-cliques');if(col)col.style.display='none';
+  const col=document.getElementById('col-cliques');if(col){col.style.display='none';}
   const grid=document.getElementById('grid-2x1');if(grid)grid.style.gridTemplateColumns='1fr 1fr 1fr auto';
   const balao=document.getElementById('tot-cliques-balao');if(balao)balao.style.display='none';
   const el=document.getElementById('inp-2x1-cliques');if(el)el.innerHTML='';
