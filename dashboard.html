@@ -1081,7 +1081,6 @@ function parseMetaCSV(raw){
   const clrBtn=document.getElementById('inp-meta-clear');
   if(clrBtn)clrBtn.style.display='';
   // Fill investment column if names already loaded
-  console.log('_metaCliqueMap size:', _metaCliqueMap.size, 'sample:', [..._metaCliqueMap.entries()].slice(0,3));
   applyMetaToInv();
   applyCliques();
 }
@@ -1199,7 +1198,6 @@ function parseCliqueCSV(raw){
 
 function applyCliques(){
   const namesEl=document.getElementById('inp-2x1-names');
-  console.log('applyCliques: cliqueMap=', _cliqueMap.size, 'metaCliqueMap=', _metaCliqueMap.size);
   if(!namesEl||!_cliqueMap.size)return;
   const names=ce_getLines(namesEl).filter(Boolean);
   if(!names.length)return;
@@ -1229,8 +1227,10 @@ function applyCliques(){
   if(!cliqueEl)return;
   cliqueEl.innerHTML='';
   names.forEach(sub=>{
-    const shopee=_cliqueMap.get(sub)||0;
-    const meta=_metaCliqueMap.get(sub)||0;
+    const shopee=_cliqueMap.get(sub)||
+      [..._cliqueMap.entries()].find(([k])=>k.toLowerCase()===sub.toLowerCase())?.[1]||0;
+    const meta=_metaCliqueMap.get(sub)||
+      [..._metaCliqueMap.entries()].find(([k])=>k.toLowerCase()===sub.toLowerCase())?.[1]||0;
     const t=meta>0?Math.round(shopee/meta*100):null;
     const d=document.createElement('div');
     d.className='ce-line';
