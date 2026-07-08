@@ -1081,6 +1081,7 @@ function parseMetaCSV(raw){
   const clrBtn=document.getElementById('inp-meta-clear');
   if(clrBtn)clrBtn.style.display='';
   // Fill investment column if names already loaded
+  console.log('_metaCliqueMap size:', _metaCliqueMap.size, 'sample:', [..._metaCliqueMap.entries()].slice(0,3));
   applyMetaToInv();
   applyCliques();
 }
@@ -1198,11 +1199,10 @@ function parseCliqueCSV(raw){
 
 function applyCliques(){
   const namesEl=document.getElementById('inp-2x1-names');
-  if(!namesEl)return;
+  console.log('applyCliques: cliqueMap=', _cliqueMap.size, 'metaCliqueMap=', _metaCliqueMap.size);
+  if(!namesEl||!_cliqueMap.size)return;
   const names=ce_getLines(namesEl).filter(Boolean);
   if(!names.length)return;
-  // Need at least Meta cliques OR Shopee cliques
-  if(!_cliqueMap.size&&!_metaCliqueMap.size)return;
 
   // Calculate totals
   const totalShopee=[..._cliqueMap.values()].reduce((a,b)=>a+b,0);
