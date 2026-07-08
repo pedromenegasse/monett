@@ -1060,6 +1060,7 @@ function parseMetaCSV(raw){
     if(st)st.textContent='Colunas não encontradas';
     return;
   }
+  const resultIdx=headers.findIndex(h=>h.toLowerCase().includes('resultado'));
   _metaInvMap=new Map();
   _metaCliqueMap=new Map();
   for(let i=1;i<lines.length;i++){
@@ -1070,8 +1071,7 @@ function parseMetaCSV(raw){
     const sub=match[2];
     const inv=parseFloat((cols[invIdx]||'0').replace(',','.').replace(/[^0-9.]/g,''))||0;
     _metaInvMap.set(sub,(_metaInvMap.get(sub)||0)+inv);
-    const resultIdx2=headers.findIndex(h=>h.toLowerCase().includes('resultado'));
-    const metaClicks=resultIdx2>=0?parseInt((cols[resultIdx2]||'0').replace(/[^0-9]/g,''))||0:0;
+    const metaClicks=resultIdx>=0?parseInt((cols[resultIdx]||'0').replace(/[^0-9]/g,''))||0:0;
     _metaCliqueMap.set(sub,(_metaCliqueMap.get(sub)||0)+metaClicks);
   }
   const st=document.getElementById('inp-meta-status');
@@ -1080,6 +1080,7 @@ function parseMetaCSV(raw){
   if(clrBtn)clrBtn.style.display='';
   // Fill investment column if names already loaded
   applyMetaToInv();
+  applyCliques();
 }
 
 function parseCSVLine2(line,sep){
