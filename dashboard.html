@@ -553,7 +553,7 @@ async function doLogout(){await sb.auth.signOut();window.location.href='index.ht
 async function loadAccounts(){
   if(!currentUser)return[];
   const{data}=await sb.from('user_accounts').select('*').order('created_at');
-  _accounts=(data||[]).map(a=>({id:a.id,name:a.name,color:a.color,iss:parseFloat(a.iss_rate)||6}));
+  _accounts=(data||[]).map(a=>({id:a.id,name:a.name,color:a.color,iss:parseFloat(a.iss_rate)||6,issMonthly:a.iss_monthly||{}}));
   return _accounts;
 }
 async function createAccount(name,color){
@@ -581,8 +581,12 @@ function getActiveAcct(){
 function setActiveAcct(id){localStorage.setItem(SK_ACTIVE,id);}
 
 /* ── ISS ── */
-function getISS(){
-  const a=getActiveAcct();return a?a.iss:6;
+function getISS(month){
+  const a=getActiveAcct();
+  if(!a)return 6;
+  const m=month||getActiveMonth();
+  if(a.issMonthly&&a.issMonthly[m]!=null)return a.issMonthly[m];
+  return a.iss;
 }
 
 /* ── DAILY DATA (Supabase) ── */
@@ -784,7 +788,7 @@ function parseNum(s){
 
 /* ── CALC ── */
 function calc(inv,venda){
-  const iss=getISS()/100;
+  const iss=getISS(activeMonth)/100;
   const comMeta=inv*(1+META_TAX);
   const menosISS=venda*(1-iss);
   const saldo=menosISS-comMeta;
@@ -1065,7 +1069,8 @@ function parseMetaCSV(raw){
     return;
   }
   const resultIdx=headers.findIndex(h=>h.toLowerCase().includes('resultado'));
-  if(!_cliqueMap.size){_metaInvMap=new Map();}_metaCliqueMap=new Map();
+  _metaInvMap=new Map();
+  _metaCliqueMap=new Map();
   for(let i=1;i<lines.length;i++){
     const cols=parseCSVLine2(lines[i],sep).map(c=>c.trim().replace(/"/g,''));
     const nome=cols[nomeIdx]||'';
@@ -1083,7 +1088,6 @@ function parseMetaCSV(raw){
   if(clrBtn)clrBtn.style.display='';
   // Fill investment column if names already loaded
   applyMetaToInv();
-  if(_cliqueMap.size)applyCliques();
 }
 
 function parseCSVLine2(line,sep){
@@ -1184,8 +1188,8 @@ function parseCliqueCSV(raw){
   if(st)st.textContent=`✓ ${_cliqueMap.size} sub ids`;
   const btn=document.getElementById('inp-clique-clear');
   if(btn)btn.style.display='';
-  // Rebuild _metaCliqueMap from stored raw CSV before applying
-  if(_rawMetaCSV){parseMetaCSV(_rawMetaCSV);}else{applyCliques();}
+  // _metaCliqueMap already populated when Meta was loaded
+  applyCliques();
 }
 
 function applyCliques(){
@@ -1548,6 +1552,12 @@ async function renderAll(){
   const activeMonth=(months.includes(currentActive)?currentActive:(months.length?months[0]:curMonthKey()));
   renderMonthTabs(months,acct,activeMonth);
   renderMonth(data,activeMonth);
+  // Update ISS display for active month
+  const issVal=getISS(activeMonth);
+  const issInp=document.getElementById('iss-inp');
+  const issDisp=document.getElementById('iss-display');
+  if(issInp)issInp.value=parseFloat(issVal).toFixed(2).replace('.',',');
+  if(issDisp)issDisp.textContent=fmtPct(issVal);
   await renderBD();
 }
 
