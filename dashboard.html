@@ -1034,6 +1034,8 @@ function clear2x1File(){
 }
 
 let _metaInvMap = new Map(); // sub_id -> total investment
+let _cliqueMap = new Map(); // sub_id -> shopee click count
+let _metaCliqueMap = new Map(); // sub_id -> meta click count
 
 function loadMetaFile(input){
   const file=input.files[0];
@@ -1150,8 +1152,7 @@ function applyMetaToInv(){
   if(grid)grid.style.display='grid';
 }
 
-let _cliqueMap = new Map(); // sub_id -> shopee click count
-let _metaCliqueMap = new Map(); // sub_id -> meta click count (from Meta CSV Resultados)
+
 
 function loadCliqueFile(input){
   const file=input.files[0];
