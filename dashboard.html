@@ -1585,6 +1585,12 @@ async function switchMonth(m){
   document.querySelectorAll('#month-tabs .tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.month===m));
   const acct=getActiveAcct();
   if(acct){const data=await loadData(acct.id);renderMonth(data,m);}
+  // Update ISS field to reflect the newly active month's saved value
+  const issVal=getISS(m);
+  const issInp=document.getElementById('iss-inp');
+  const issDisp=document.getElementById('iss-display');
+  if(issInp)issInp.value=parseFloat(issVal).toFixed(2).replace('.',',');
+  if(issDisp)issDisp.textContent=fmtPct(issVal);
   await renderBD();
 }
 
