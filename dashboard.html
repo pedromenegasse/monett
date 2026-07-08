@@ -1065,8 +1065,7 @@ function parseMetaCSV(raw){
     return;
   }
   const resultIdx=headers.findIndex(h=>h.toLowerCase().includes('resultado'));
-  _metaInvMap=new Map();
-  _metaCliqueMap=new Map();
+  if(!_cliqueMap.size){_metaInvMap=new Map();}_metaCliqueMap=new Map();
   for(let i=1;i<lines.length;i++){
     const cols=parseCSVLine2(lines[i],sep).map(c=>c.trim().replace(/"/g,''));
     const nome=cols[nomeIdx]||'';
@@ -1186,8 +1185,7 @@ function parseCliqueCSV(raw){
   const btn=document.getElementById('inp-clique-clear');
   if(btn)btn.style.display='';
   // Rebuild _metaCliqueMap from stored raw CSV before applying
-  if(_rawMetaCSV) parseMetaCSV(_rawMetaCSV);
-  else applyCliques();
+  if(_rawMetaCSV){parseMetaCSV(_rawMetaCSV);}else{applyCliques();}
 }
 
 function applyCliques(){
