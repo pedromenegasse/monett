@@ -1226,11 +1226,15 @@ function applyCliques(){
   const cliqueEl=document.getElementById('inp-2x1-cliques');
   if(!cliqueEl)return;
   cliqueEl.innerHTML='';
+  console.log('names to cross:', names.slice(0,3));
+  console.log('metaCliqueMap keys:', [..._metaCliqueMap.keys()].slice(0,3));
+  console.log('cliqueMap keys:', [..._cliqueMap.keys()].slice(0,3));
   names.forEach(sub=>{
     const shopee=_cliqueMap.get(sub)||
       [..._cliqueMap.entries()].find(([k])=>k.toLowerCase()===sub.toLowerCase())?.[1]||0;
     const meta=_metaCliqueMap.get(sub)||
       [..._metaCliqueMap.entries()].find(([k])=>k.toLowerCase()===sub.toLowerCase())?.[1]||0;
+    if(sub===names[0])console.log('first sub:', sub, 'shopee:', shopee, 'meta:', meta);
     const t=meta>0?Math.round(shopee/meta*100):null;
     const d=document.createElement('div');
     d.className='ce-line';
