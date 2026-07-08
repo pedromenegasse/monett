@@ -1162,8 +1162,7 @@ function loadCliqueFile(input){
 }
 
 function parseCliqueCSV(raw){
-  const lines=raw.trim().replace(/^﻿/,'').split('
-').filter(l=>l.trim());
+  const lines=raw.trim().replace(/^\uFEFF/,'').split('\n').filter(l=>l.trim());
   if(lines.length<2)return;
   const sep=lines[0].includes('	')?'	':',';
   const headers=lines[0].split(sep).map(h=>h.replace(/"/g,'').trim());
