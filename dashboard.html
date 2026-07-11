@@ -516,6 +516,38 @@ let currentUser=null;
   </div>
 </div>
 
+<!-- CLIQUES -->
+<div id="cliques-section" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 0;margin-bottom:24px">
+  <h2 onclick="toggleCliquesSection()" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;gap:6px;font-family:'Syne',sans-serif;font-size:15px;padding:0 18px">
+    <span style="display:flex;align-items:center;gap:6px">
+      <span id="cliques-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Cliques
+    </span>
+  </h2>
+  <div id="cliques-body" style="margin-top:12px;padding:0 18px 18px">
+    <div class="mode-toggle" id="cliques-period-toggle" style="margin-bottom:12px">
+      <button data-p="hoje" class="mode-btn active" onclick="setCliquesPeriod('hoje')">Hoje</button>
+      <button data-p="7" class="mode-btn" onclick="setCliquesPeriod('7')">7 dias</button>
+      <button data-p="30" class="mode-btn" onclick="setCliquesPeriod('30')">30 dias</button>
+    </div>
+    <div id="cliques-legend" style="display:flex;gap:10px;font-size:11px;color:var(--muted);align-items:center;flex-wrap:wrap;margin-bottom:12px;font-family:'DM Mono',monospace">
+      <span><span class="chip" style="background:#5A1E8C;animation:blink 1s infinite"></span>Déficit Crítico</span>
+      <span><span class="chip" style="background:#7e22ce"></span>Déficit Médio</span>
+      <span><span class="chip" style="background:#c084fc"></span>Déficit Leve</span>
+      <span><span class="chip" style="background:var(--accent2)"></span>Déficit + Lucro</span>
+      <span><span class="chip" style="background:var(--red)"></span>Saudável + Prejuízo</span>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace" id="cliques-table"></table>
+  </div>
+</div>
+
+<style>
+#cliques-table th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:center;padding:8px 6px;font-weight:500}
+#cliques-table th:first-child{text-align:left}
+#cliques-table td{padding:8px 6px;border-bottom:1px solid var(--border);text-align:center;color:var(--text)}
+#cliques-table td:first-child{text-align:left}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+
 <!-- MODAL nova conta -->
 <div class="modal-bg" id="modal-acct" style="display:none">
   <div class="modal">
@@ -610,14 +642,19 @@ async function loadData(acctId){
     const month=row.date.slice(0,7);
     if(!result[month])result[month]={};
     if(!result[month][row.date])result[month][row.date]=[];
-    result[month][row.date].push({name:row.sub_id,inv:parseFloat(row.investimento),venda:parseFloat(row.venda)});
+    result[month][row.date].push({name:row.sub_id,inv:parseFloat(row.investimento),venda:parseFloat(row.venda),cliquesMeta:row.cliques_meta==null?null:parseInt(row.cliques_meta),cliquesShopee:row.cliques_shopee==null?null:parseInt(row.cliques_shopee)});
   }
   _data[acctId]=result;
   return result;
 }
 function invalidateCache(acctId){delete _data[acctId];}
 async function saveRows(acctId,date,rows){
-  const upserts=rows.map(r=>({account_id:acctId,user_id:currentUser.id,date,sub_id:r.name,investimento:r.inv,venda:r.venda}));
+  const upserts=rows.map(r=>{
+    const row={account_id:acctId,user_id:currentUser.id,date,sub_id:r.name,investimento:r.inv,venda:r.venda};
+    if(r.cliquesMeta!=null)row.cliques_meta=r.cliquesMeta;
+    if(r.cliquesShopee!=null)row.cliques_shopee=r.cliquesShopee;
+    return row;
+  });
   await sb.from('daily_data').upsert(upserts,{onConflict:'account_id,date,sub_id'});
   invalidateCache(acctId);
 }
@@ -749,6 +786,7 @@ async function switchAccount(id){
   const bdList=document.getElementById('bd-list');
   if(bdList)bdList.innerHTML='';
   await renderAll();
+  renderCliquesSection();
 }
 
 /* ── ISS ── */
@@ -1461,7 +1499,18 @@ async function importData(){
     const invs=ce_getLines(document.getElementById('inp-2x1-inv')).map(s=>s.trim());
     const vendas=ce_getLines(document.getElementById('inp-2x1-venda')).map(s=>s.trim());
     if(!names.filter(Boolean).length){alert('Cole a tabela externa primeiro!');return;}
-    rows=names.map((name,i)=>({name,inv:parseNum(invs[i]||'0'),venda:parseNum(vendas[i]||'0')})).filter(r=>r.name);
+    function lookupClicks(map,sub){
+      if(map.has(sub))return map.get(sub);
+      const found=[...map.entries()].find(([k])=>k.toLowerCase()===sub.toLowerCase());
+      return found?found[1]:null;
+    }
+    rows=names.map((name,i)=>({
+      name,
+      inv:parseNum(invs[i]||'0'),
+      venda:parseNum(vendas[i]||'0'),
+      cliquesMeta:_metaCliqueMap.size?lookupClicks(_metaCliqueMap,name):null,
+      cliquesShopee:_cliqueMap.size?lookupClicks(_cliqueMap,name):null
+    })).filter(r=>r.name);
       if(!rows.length){alert('Nenhum dado válido encontrado. Verifique os campos.');return;}
   } else {
     const txt=document.getElementById('inp-paste').value;
@@ -1483,7 +1532,7 @@ async function importData(){
   const monthTabs=document.querySelectorAll('#month-tabs .tab-btn');
   monthTabs.forEach(t=>t.classList.toggle('active',t.dataset.month===insertedMonth));
   await renderAll();
-  ['inp-names','inp-inv','inp-venda'].forEach(id=>{const el=document.getElementById(id);if(el){el.innerHTML='';const d=document.createElement('div');d.className='ce-line';d.textContent='';el.appendChild(d);}});
+  renderCliquesSection();
   ['inp-paste'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['inp-2x1-names','inp-2x1-inv','inp-2x1-venda'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
   const delCol=document.getElementById('inp-2x1-del-col');if(delCol)delCol.innerHTML='';
@@ -1564,6 +1613,78 @@ function toggleHistorico(){
   localStorage.setItem('tp_hist_open',open?'0':'1');
 }
 
+let _cliquesPeriod='hoje';
+function toggleCliquesSection(){
+  const body=document.getElementById('cliques-body');
+  const icon=document.getElementById('cliques-toggle-icon');
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  icon.textContent=open?'+':'−';
+  localStorage.setItem('tp_cliques_open',open?'0':'1');
+  if(!open)renderCliquesSection();
+}
+function setCliquesPeriod(p){
+  _cliquesPeriod=p;
+  document.querySelectorAll('#cliques-period-toggle .mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
+  renderCliquesSection();
+}
+async function renderCliquesSection(){
+  const tbl=document.getElementById('cliques-table');
+  const acct=getActiveAcct();
+  if(!acct){tbl.innerHTML='';return;}
+  const days=_cliquesPeriod==='hoje'?1:parseInt(_cliquesPeriod);
+  const today=new Date();today.setHours(0,0,0,0);
+  const cutoff=new Date(today);cutoff.setDate(cutoff.getDate()-(days-1));
+  const data=await loadData(acct.id);
+  const agg={};
+  for(const month of Object.keys(data)){
+    for(const day of Object.keys(data[month])){
+      const d=new Date(day+'T00:00:00');
+      if(d<cutoff||d>today)continue;
+      for(const r of data[month][day]){
+        if(r.cliquesMeta==null)continue;
+        if(!agg[r.name])agg[r.name]={name:r.name,meta:0,shopee:0,inv:0,venda:0};
+        agg[r.name].meta+=r.cliquesMeta||0;
+        agg[r.name].shopee+=r.cliquesShopee||0;
+        const c=calc(r.inv,r.venda,month);
+        agg[r.name].inv+=r.inv;
+        agg[r.name].saldo=(agg[r.name].saldo||0)+c.saldo;
+      }
+    }
+  }
+  const rows=Object.values(agg).map(r=>({
+    name:r.name,meta:r.meta,shopee:r.shopee,
+    taxa:r.meta>0?Math.round(r.shopee/r.meta*100):0,
+    saldo:r.saldo||0
+  }));
+  if(!rows.length){tbl.innerHTML='<tr><td style="padding:10px 6px;color:var(--muted)">Nenhum dado de cliques neste período.</td></tr>';return;}
+  rows.sort((a,b)=>{
+    const pa=a.saldo<0?0:1,pb=b.saldo<0?0:1;
+    if(pa!==pb)return pa-pb;
+    return a.taxa-b.taxa;
+  });
+  function colorFor(taxa,saldo){
+    const deficit=taxa<75;
+    if(deficit&&saldo>=0)return{bg:'rgba(59,240,160,0.16)',text:'var(--accent2)'};
+    if(!deficit&&saldo<0)return{bg:'rgba(255,77,109,0.16)',text:'var(--red)'};
+    if(taxa<25)return{bg:'rgba(90,30,140,0.22)',text:'#c084fc',blink:true};
+    if(taxa<50)return{bg:'rgba(126,34,206,0.16)',text:'#c084fc'};
+    if(deficit)return{bg:'rgba(192,132,252,0.14)',text:'#c084fc'};
+    return{bg:'transparent',text:'var(--text)'};
+  }
+  tbl.innerHTML='<tr>'+['Sub id','Meta','Shopee','Taxa','Saldo'].map(h=>'<th>'+h+'</th>').join('')+'</tr>';
+  rows.forEach(r=>{
+    const c=colorFor(r.taxa,r.saldo);
+    tbl.innerHTML+='<tr style="background:'+c.bg+(c.blink?';animation:blink 1.4s infinite':'')+'">'+
+      '<td style="font-weight:500;color:'+c.text+'">'+r.name+'</td>'+
+      '<td>'+r.meta.toLocaleString('pt-BR')+'</td>'+
+      '<td>'+r.shopee.toLocaleString('pt-BR')+'</td>'+
+      '<td style="font-weight:500;color:'+c.text+'">'+r.taxa+'%</td>'+
+      '<td>'+fmt(r.saldo)+'</td>'+
+      '</tr>';
+  });
+}
+
 function toggleImport(){
   const body=document.getElementById('import-body');
   const icon=document.getElementById('import-toggle-icon');
@@ -1634,6 +1755,7 @@ async function switchMonth(m){
   document.querySelectorAll('#month-tabs .tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.month===m));
   const acct=getActiveAcct();
   if(acct){const data=await loadData(acct.id);renderMonth(data,m);}
+  renderCliquesSection();
   // Update ISS field to reflect the newly active month's saved value
   const issVal=getISS(m);
   const issInp=document.getElementById('iss-inp');
@@ -2411,6 +2533,8 @@ async function renderBDSaldo(){
   const savedMode=localStorage.getItem('tp_import_mode')||'3col';
   if(_bdSeparar){const t=document.getElementById('bd-separar-track');if(t)t.classList.add('on');}
   if(localStorage.getItem('tp_hist_open')==='0'){const b=document.getElementById('hist-body');const i=document.getElementById('hist-toggle-icon');if(b){b.style.display='none';i.textContent='+';}}
+  if(localStorage.getItem('tp_cliques_open')==='0'){const b=document.getElementById('cliques-body');const i=document.getElementById('cliques-toggle-icon');if(b){b.style.display='none';i.textContent='+';}}
+  renderCliquesSection();
   setMode(savedMode);
   ['inp-names','inp-inv','inp-venda'].forEach(id=>{
     const el=document.getElementById(id);
