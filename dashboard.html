@@ -536,13 +536,18 @@ let currentUser=null;
       <span><span class="chip" style="background:var(--accent2)"></span>Déficit + Lucro</span>
       <span><span class="chip" style="background:var(--red)"></span>Saudável + Prejuízo</span>
     </div>
-    <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace" id="cliques-table">
+    <table style="border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace;width:100%" id="cliques-table">
       <thead><tr>
-        <th style="cursor:pointer;user-select:none" onclick="sortCliquesTable('name')" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color=''">Sub id <span class="sort-ind" id="cli-sort-name"></span></th>
-        <th style="cursor:pointer;user-select:none" onclick="sortCliquesTable('meta')" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color=''">Meta <span class="sort-ind" id="cli-sort-meta"></span></th>
-        <th style="cursor:pointer;user-select:none" onclick="sortCliquesTable('shopee')" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color=''">Shopee <span class="sort-ind" id="cli-sort-shopee"></span></th>
-        <th style="cursor:pointer;user-select:none" onclick="sortCliquesTable('taxa')" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color=''">Taxa <span class="sort-ind" id="cli-sort-taxa"></span></th>
-        <th style="cursor:pointer;user-select:none" onclick="sortCliquesTable('saldo')" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color=''">Saldo <span class="sort-ind" id="cli-sort-saldo"></span></th>
+        <th style="text-align:left;cursor:pointer;user-select:none" onclick="sortCliquesTable('name')">Sub id <span class="sort-ind" id="cli-sort-name"></span></th>
+        <th class="cli-pair-r" style="cursor:pointer;user-select:none" onclick="sortCliquesTable('meta')">Meta <span class="sort-ind" id="cli-sort-meta"></span></th>
+        <th class="cli-pair-l" style="cursor:pointer;user-select:none" onclick="sortCliquesTable('cpcMeta')">Valor <span class="sort-ind" id="cli-sort-cpcMeta"></span></th>
+        <th class="cli-grp-l cli-pair-r" style="cursor:pointer;user-select:none" onclick="sortCliquesTable('shopee')">Shopee <span class="sort-ind" id="cli-sort-shopee"></span></th>
+        <th class="cli-pair-l" style="cursor:pointer;user-select:none" onclick="sortCliquesTable('cpcReal')">Valor <span class="sort-ind" id="cli-sort-cpcReal"></span></th>
+        <th class="cli-grp-l" style="cursor:pointer;user-select:none" onclick="sortCliquesTable('taxa')">Taxa <span class="sort-ind" id="cli-sort-taxa"></span></th>
+        <th class="cli-grp-l" style="cursor:pointer;user-select:none" onclick="sortCliquesTable('pedidos')">Pedidos <span class="sort-ind" id="cli-sort-pedidos"></span></th>
+        <th style="cursor:pointer;user-select:none" onclick="sortCliquesTable('conversao')">Conversão <span class="sort-ind" id="cli-sort-conversao"></span></th>
+        <th class="cli-grp-l" style="cursor:pointer;user-select:none" onclick="sortCliquesTable('inv')">Investimento <span class="sort-ind" id="cli-sort-inv"></span></th>
+        <th style="cursor:pointer;user-select:none" onclick="sortCliquesTable('saldo')">Saldo <span class="sort-ind" id="cli-sort-saldo"></span></th>
       </tr></thead>
       <tbody id="cliques-tbody"></tbody>
     </table>
@@ -550,10 +555,14 @@ let currentUser=null;
 </div>
 
 <style>
-#cliques-table th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:center;padding:8px 6px;font-weight:500}
+#cliques-table th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:center;padding:8px 6px;font-weight:500;transition:color .15s}
+#cliques-table th:hover{color:var(--text)}
 #cliques-table th:first-child{text-align:left}
 #cliques-table td{padding:8px 6px;border-bottom:1px solid var(--border);text-align:center;color:var(--text)}
 #cliques-table td:first-child{text-align:left}
+.cli-grp-l{border-left:1px solid var(--border);padding-left:14px!important}
+.cli-pair-r{padding-right:2px!important}
+.cli-pair-l{padding-left:2px!important;color:var(--muted)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
 </style>
 
@@ -651,7 +660,7 @@ async function loadData(acctId){
     const month=row.date.slice(0,7);
     if(!result[month])result[month]={};
     if(!result[month][row.date])result[month][row.date]=[];
-    result[month][row.date].push({name:row.sub_id,inv:parseFloat(row.investimento),venda:parseFloat(row.venda),cliquesMeta:row.cliques_meta==null?null:parseInt(row.cliques_meta),cliquesShopee:row.cliques_shopee==null?null:parseInt(row.cliques_shopee)});
+    result[month][row.date].push({name:row.sub_id,inv:parseFloat(row.investimento),venda:parseFloat(row.venda),cliquesMeta:row.cliques_meta==null?null:parseInt(row.cliques_meta),cliquesShopee:row.cliques_shopee==null?null:parseInt(row.cliques_shopee),pedidos:row.pedidos==null?null:parseInt(row.pedidos)});
   }
   _data[acctId]=result;
   return result;
@@ -662,6 +671,7 @@ async function saveRows(acctId,date,rows){
     const row={account_id:acctId,user_id:currentUser.id,date,sub_id:r.name,investimento:r.inv,venda:r.venda};
     if(r.cliquesMeta!=null)row.cliques_meta=r.cliquesMeta;
     if(r.cliquesShopee!=null)row.cliques_shopee=r.cliquesShopee;
+    if(r.pedidos!=null)row.pedidos=r.pedidos;
     return row;
   });
   await sb.from('daily_data').upsert(upserts,{onConflict:'account_id,date,sub_id'});
@@ -872,6 +882,7 @@ function ce_setLines(el,lines,watermarks){
     d.textContent=txt;
     if(watermarks&&watermarks[i]){
       d.style.paddingRight='80px';
+      d.dataset.pedidos=watermarks[i];
       const wm=document.createElement('span');
       wm.style.cssText='position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:rgba(232,201,122,0.25);pointer-events:none;white-space:nowrap';
       wm.textContent=watermarks[i]+' pedido'+(watermarks[i]!==1?'s':'');
@@ -879,6 +890,9 @@ function ce_setLines(el,lines,watermarks){
     }
     el.appendChild(d);
   });
+}
+function ce_getWatermarks(el){
+  return Array.from(el.querySelectorAll('.ce-line')).map(d=>d.dataset.pedidos!=null?parseInt(d.dataset.pedidos):null);
 }
 
 function ce_paste(e,el){
@@ -1513,12 +1527,14 @@ async function importData(){
       const found=[...map.entries()].find(([k])=>k.toLowerCase()===sub.toLowerCase());
       return found?found[1]:null;
     }
+    const pedidosArr=ce_getWatermarks(document.getElementById('inp-2x1-venda'));
     rows=names.map((name,i)=>({
       name,
       inv:parseNum(invs[i]||'0'),
       venda:parseNum(vendas[i]||'0'),
       cliquesMeta:_metaCliqueMap.size?lookupClicks(_metaCliqueMap,name):null,
-      cliquesShopee:_cliqueMap.size?lookupClicks(_cliqueMap,name):null
+      cliquesShopee:_cliqueMap.size?lookupClicks(_cliqueMap,name):null,
+      pedidos:pedidosArr[i]!=null?pedidosArr[i]:null
     })).filter(r=>r.name);
       if(!rows.length){alert('Nenhum dado válido encontrado. Verifique os campos.');return;}
   } else {
@@ -1654,9 +1670,10 @@ async function renderCliquesSection(){
       if(d<cutoff||d>today)continue;
       for(const r of data[month][day]){
         if(r.cliquesMeta==null)continue;
-        if(!agg[r.name])agg[r.name]={name:r.name,meta:0,shopee:0,inv:0,venda:0};
+        if(!agg[r.name])agg[r.name]={name:r.name,meta:0,shopee:0,inv:0,pedidos:0};
         agg[r.name].meta+=r.cliquesMeta||0;
         agg[r.name].shopee+=r.cliquesShopee||0;
+        agg[r.name].pedidos+=r.pedidos||0;
         const c=calc(r.inv,r.venda,month);
         agg[r.name].inv+=r.inv;
         agg[r.name].saldo=(agg[r.name].saldo||0)+c.saldo;
@@ -1664,9 +1681,12 @@ async function renderCliquesSection(){
     }
   }
   const rows=Object.values(agg).map(r=>({
-    name:r.name,meta:r.meta,shopee:r.shopee,
+    name:r.name,meta:r.meta,shopee:r.shopee,inv:r.inv,pedidos:r.pedidos,
     taxa:r.meta>0?Math.round(r.shopee/r.meta*100):0,
-    saldo:r.saldo||0
+    saldo:r.saldo||0,
+    cpcMeta:r.meta>0?r.inv/r.meta:null,
+    cpcReal:r.shopee>0?r.inv/r.shopee:null,
+    conversao:r.pedidos>0?r.shopee/r.pedidos:null
   }));
   if(!rows.length){tbody.innerHTML='<tr><td style="padding:10px 6px;color:var(--muted)">Nenhum dado de cliques neste período.</td></tr>';return;}
   rows.sort((a,b)=>{
@@ -1686,6 +1706,7 @@ async function renderCliquesSection(){
   tbody.innerHTML='';
   rows.forEach((r,i)=>{
     const c=colorFor(r.taxa,r.saldo);
+    const semRetorno=r.shopee===0;
     const tr=document.createElement('tr');
     tr.style.background=c.bg;
     if(c.blink)tr.style.animation='blink 1.4s infinite';
@@ -1695,11 +1716,21 @@ async function renderCliquesSection(){
     tr.dataset.shopee=r.shopee;
     tr.dataset.taxa=r.taxa;
     tr.dataset.saldo=r.saldo;
+    tr.dataset.inv=r.inv;
+    tr.dataset.pedidos=r.pedidos;
+    tr.dataset.cpcMeta=r.cpcMeta==null?-1:r.cpcMeta;
+    tr.dataset.cpcReal=r.cpcReal==null?-1:r.cpcReal;
+    tr.dataset.conversao=r.conversao==null?-1:r.conversao;
     tr.innerHTML=
       '<td style="font-weight:500;color:'+c.text+'">'+r.name+'</td>'+
-      '<td>'+r.meta.toLocaleString('pt-BR')+'</td>'+
-      '<td>'+r.shopee.toLocaleString('pt-BR')+'</td>'+
-      '<td style="font-weight:500;color:'+c.text+'">'+r.taxa+'%</td>'+
+      '<td class="cli-pair-r" style="font-weight:500">'+r.meta.toLocaleString('pt-BR')+'</td>'+
+      '<td class="cli-pair-l">'+(r.cpcMeta==null?'—':fmt(r.cpcMeta))+'</td>'+
+      '<td class="cli-grp-l cli-pair-r" style="font-weight:500;color:'+(semRetorno?'var(--red)':c.text)+'">'+(semRetorno?'Sem':r.shopee.toLocaleString('pt-BR'))+'</td>'+
+      '<td class="cli-pair-l" style="color:'+(semRetorno?'var(--red)':'var(--muted)')+'">'+(semRetorno?'Retorno':fmt(r.cpcReal))+'</td>'+
+      '<td class="cli-grp-l" style="font-weight:500;color:'+c.text+'">'+r.taxa+'%</td>'+
+      '<td class="cli-grp-l">'+r.pedidos.toLocaleString('pt-BR')+'</td>'+
+      '<td>'+(r.conversao==null?'—':r.conversao.toFixed(1))+'</td>'+
+      '<td class="cli-grp-l">'+fmt(r.inv)+'</td>'+
       '<td>'+fmt(r.saldo)+'</td>';
     tbody.appendChild(tr);
   });
@@ -1714,7 +1745,7 @@ function sortCliquesTable(col){
   else if(prev.dir===-1){dir=0;}
   else{dir=1;}
   _cliquesSortState={col,dir};
-  ['name','meta','shopee','taxa','saldo'].forEach(c=>{
+  ['name','meta','cpcMeta','shopee','cpcReal','taxa','pedidos','conversao','inv','saldo'].forEach(c=>{
     const el=document.getElementById('cli-sort-'+c);
     if(!el)return;
     el.textContent=(c===col&&dir===1)?'↓':(c===col&&dir===-1)?'↑':'';
