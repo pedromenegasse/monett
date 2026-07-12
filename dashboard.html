@@ -33,11 +33,11 @@ let currentUser=null;
 
   /* ACCOUNT TABS */
   #account-bar{display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--border)}
-  .acct-tab{font-family:'DM Mono',monospace;font-size:12px;padding:7px 16px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+  .acct-tab{font-family:'DM Mono',monospace;font-size:12px;padding:7px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
   .acct-tab:hover{border-color:var(--accent);color:var(--accent)}
   .acct-tab.active{background:var(--surface2);color:var(--text);border-color:var(--accent);font-weight:500}
   .acct-tab .acct-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-  .acct-add{font-family:'DM Mono',monospace;font-size:12px;padding:7px 14px;border-radius:20px;border:1px dashed var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s}
+  .acct-add{font-family:'DM Mono',monospace;font-size:12px;padding:7px 14px;border-radius:6px;border:1px dashed var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s}
   .acct-add:hover{border-color:var(--accent2);color:var(--accent2)}
   .acct-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 0 0 4px;line-height:1;transition:color .15s}
   .acct-del:hover{color:var(--red)}
@@ -466,8 +466,11 @@ let currentUser=null;
 <!-- TABLE -->
 <div id="table-section" class="nav-panel" data-section="resultados">
   <h2 style="display:flex;align-items:center;justify-content:space-between;gap:6px">
-    <span style="display:flex;align-items:center;gap:6px">
-      <span style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Resultados Diários <small id="tbl-subtitle"></small>
+    <span style="display:flex;align-items:center;gap:12px">
+      <span style="display:flex;align-items:center;gap:6px"><span style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Resultados Diários</span>
+      <span style="display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+        <small id="tbl-subtitle" style="padding:7px 14px;font-size:13px;color:var(--text);background:var(--surface2);font-family:'DM Mono',monospace"></small>
+      </span>
     </span>
   </h2>
   <div id="hist-body" style="margin-top:12px">
@@ -581,9 +584,10 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
 
 <style>
 .section-nav-desktop{display:flex;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:20px;overflow:hidden}
-.section-nav-btn{flex:1;font-family:'DM Mono',monospace;font-size:14px;padding:12px 10px;border:none;border-right:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .15s}
+.section-nav-btn{flex:1;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:14px;padding:13px 10px;border:none;border-right:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .15s}
+.section-nav-btn svg{width:20px;height:20px}
 .section-nav-btn:last-child{border-right:none}
-.section-nav-btn.active{background:var(--surface2);color:var(--text)}
+.section-nav-btn.active{background:var(--accent);color:#0d0f14}
 .section-nav-mobile{display:none;position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--bg);border-top:1px solid var(--border);padding:4px 2px calc(env(safe-area-inset-bottom,0px) + 4px)}
 .section-nav-mobile-inner{display:flex}
 .section-nav-icon-btn{flex:1;display:flex;align-items:center;justify-content:center;padding:10px 2px;background:transparent;border:none;color:var(--muted);cursor:pointer}
@@ -1679,8 +1683,8 @@ const SECTIONS=[
 function renderSectionNav(){
   const d=document.getElementById('section-nav-desktop');
   const m=document.getElementById('section-nav-mobile');
-  if(d)d.innerHTML=SECTIONS.map(s=>`<button class="section-nav-btn" data-section="${s.id}" onclick="switchSection('${s.id}')">${s.label}</button>`).join('');
-  if(m)m.innerHTML='<div class="section-nav-mobile-inner">'+SECTIONS.map(s=>`<button class="section-nav-icon-btn" data-section="${s.id}" onclick="switchSection('${s.id}')" aria-label="${s.label}"><svg viewBox="0 0 24 24">${SECTION_ICONS[s.id]}</svg></button>`).join('')+'</div>';
+  if(d)d.innerHTML=SECTIONS.map(s=>`<button class="section-nav-btn" data-section="${s.id}" onclick="switchSection('${s.id}')" title="${s.label}" aria-label="${s.label}"><svg viewBox="0 0 24 24">${SECTION_ICONS[s.id]}</svg></button>`).join('');
+  if(m)m.innerHTML='<div class="section-nav-mobile-inner">'+SECTIONS.map(s=>`<button class="section-nav-icon-btn" data-section="${s.id}" onclick="switchSection('${s.id}')" title="${s.label}" aria-label="${s.label}"><svg viewBox="0 0 24 24">${SECTION_ICONS[s.id]}</svg></button>`).join('')+'</div>';
 }
 function switchSection(id){
   document.querySelectorAll('.nav-panel').forEach(p=>p.style.display=p.dataset.section===id?'':'none');
