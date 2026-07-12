@@ -525,7 +525,7 @@ let currentUser=null;
   </h2>
   <div id="cliques-body" style="margin-top:12px;padding:0 18px 18px">
     <div class="mode-toggle" id="cliques-period-toggle" style="margin-bottom:12px">
-      <button data-p="hoje" class="mode-btn active" onclick="setCliquesPeriod('hoje')">Último dia</button>
+      <button data-p="hoje" id="cli-btn-hoje" class="mode-btn active" onclick="setCliquesPeriod('hoje')">Último dia</button>
       <button data-p="7" class="mode-btn" onclick="setCliquesPeriod('7')">7 dias</button>
       <button data-p="30" class="mode-btn" onclick="setCliquesPeriod('30')">30 dias</button>
     </div>
@@ -563,7 +563,8 @@ let currentUser=null;
 .cli-grp-l{border-left:1px solid var(--border);padding-left:14px!important}
 .cli-pair-r{padding-right:2px!important}
 .cli-pair-l{padding-left:2px!important}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes cli-blink-purple{0%,100%{background:rgba(90,30,140,0.22)}50%{background:rgba(90,30,140,0.70)}}
+tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
 </style>
 
 <!-- MODAL nova conta -->
@@ -1672,6 +1673,8 @@ async function renderCliquesSection(){
   }
   const days=_cliquesPeriod==='hoje'?1:parseInt(_cliquesPeriod);
   const anchor=latestDay?new Date(latestDay+'T00:00:00'):(()=>{const t=new Date();t.setHours(0,0,0,0);return t;})();
+  const btnHoje=document.getElementById('cli-btn-hoje');
+  if(btnHoje)btnHoje.textContent=latestDay?latestDay.split('-').reverse().slice(0,2).join('/'):'Último dia';
   const cutoff=new Date(anchor);cutoff.setDate(cutoff.getDate()-(days-1));
   const agg={};
   for(const month of Object.keys(data)){
@@ -1719,7 +1722,7 @@ async function renderCliquesSection(){
     const semRetorno=r.shopee===0;
     const tr=document.createElement('tr');
     tr.style.background=c.bg;
-    if(c.blink)tr.style.animation='blink 1.4s infinite';
+    if(c.blink)tr.classList.add('cli-blink');
     tr.dataset.defaultidx=i;
     tr.dataset.name=r.name;
     tr.dataset.meta=r.meta;
@@ -1731,17 +1734,18 @@ async function renderCliquesSection(){
     tr.dataset.cpcMeta=r.cpcMeta==null?-1:r.cpcMeta;
     tr.dataset.cpcReal=r.cpcReal==null?-1:r.cpcReal;
     tr.dataset.conversao=r.conversao==null?-1:r.conversao;
+    const saldoColor=r.saldo>=0?'var(--accent2)':'var(--red)';
     tr.innerHTML=
       '<td style="font-weight:500;color:'+c.text+'">'+r.name+'</td>'+
       '<td class="cli-pair-r" style="font-weight:500">'+r.meta.toLocaleString('pt-BR')+'</td>'+
       '<td class="cli-pair-l" style="color:var(--muted)">'+(r.cpcMeta==null?'—':fmt(r.cpcMeta))+'</td>'+
-      '<td class="cli-grp-l cli-pair-r" style="font-weight:500;color:'+(semRetorno?'var(--red)':c.text)+'">'+(semRetorno?'Sem':r.shopee.toLocaleString('pt-BR'))+'</td>'+
+      '<td class="cli-grp-l cli-pair-r" style="font-weight:500;color:'+(semRetorno?'var(--red)':'var(--text)')+'">'+(semRetorno?'Sem':r.shopee.toLocaleString('pt-BR'))+'</td>'+
       '<td class="cli-pair-l" style="color:'+(semRetorno?'var(--red)':'var(--muted)')+'">'+(semRetorno?'Retorno':fmt(r.cpcReal))+'</td>'+
       '<td class="cli-grp-l" style="font-weight:500;color:'+c.text+'">'+r.taxa+'%</td>'+
       '<td class="cli-grp-l">'+r.pedidos.toLocaleString('pt-BR')+'</td>'+
       '<td style="color:var(--muted)">'+(r.conversao==null?'—':r.conversao.toFixed(1))+'</td>'+
       '<td class="cli-grp-l">'+fmt(r.inv)+'</td>'+
-      '<td>'+fmt(r.saldo)+'</td>';
+      '<td style="font-weight:500;color:'+saldoColor+'">'+fmt(r.saldo)+'</td>';
     tbody.appendChild(tr);
   });
 }
