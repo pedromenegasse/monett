@@ -368,7 +368,7 @@ let currentUser=null;
 <!-- IMPORT -->
 <div id="import-section">
   <h2 onclick="toggleImport()" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px">
-    <span id="import-toggle-icon" style="color:var(--yellow);font-size:16px;transition:transform .2s;display:inline-block">−</span> Dados Diários
+    <span id="import-toggle-icon" style="color:var(--yellow);font-size:16px;transition:transform .2s;display:inline-block">−</span> Inserir Dados
   </h2>
   <div id="import-body" style="margin-top:12px">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
@@ -497,7 +497,7 @@ let currentUser=null;
 <div id="table-section">
   <h2 onclick="toggleHistorico()" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;gap:6px">
     <span style="display:flex;align-items:center;gap:6px">
-      <span id="hist-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Histórico <small id="tbl-subtitle"></small>
+      <span id="hist-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Resultados Diários <small id="tbl-subtitle"></small>
     </span>
   </h2>
   <div id="hist-body" style="margin-top:12px">
@@ -1962,8 +1962,8 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
     return`<tr class="${rowClass}" style="${missingStyle}" data-missing="${isMissing}" data-zero-inv="${isZeroInv}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roi="${c.roi??-999}" data-acum="${acum}" data-name="${r.name}">
       <td>${rankCell}</td>
       <td onclick="openSubModal('${r.name.replace(/'/g,"\\'")}');event.stopPropagation()" style="cursor:pointer;${isMissing?'opacity:0.35':''}">${r.name}</td>
-      <td>${fmt(r.inv)}</td><td>${fmt(c.comMeta)}</td>
-      <td>${fmt(r.venda)}</td><td>${fmt(c.menosISS)}</td>
+      <td>${fmt(r.inv)}</td><td>${fmt(r.venda)}</td>
+      <td>${fmt(c.comMeta)}</td><td>${fmt(c.menosISS)}</td>
       <td class="${sClass}">${fmt(c.saldo)}</td>
       <td>${isMissing?'<span class="neu">—</span>':roiStr}</td>
       <td class="${acumClass}" style="font-weight:500">${fmt(acum)}</td>
@@ -1985,7 +1985,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
         <span class="chevron">▾</span>
         <span class="day-date">${dateLabel}</span>
         <div class="day-totals">
-          <div class="day-totals-row"><span>Invest. <b>${fmt(dayInv)}</b></span><span>Venda <b>${fmt(dayVenda)}</b></span><span>ROAS <b class="${roasClass}">${dayRoas}</b></span></div>
+          <div class="day-totals-row"><span>Invest. <b>${fmt(dayInv)}</b></span><span>Comissão <b>${fmt(dayVenda)}</b></span><span>ROAS <b class="${roasClass}">${dayRoas}</b></span></div>
           <div class="day-totals-row"><span>+Meta <b>${fmt(dayCalc.comMeta)}</b></span><span>−ISS <b>${fmt(dayCalc.menosISS)}</b></span></div>
         </div>
       </div>
@@ -2008,7 +2008,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
       <div style="display:flex;padding:0 14px 12px;gap:8px;align-items:flex-end" onclick="toggleDay(this.parentElement.querySelector('.mbl-row1'))">
         <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:3px 10px">
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">Invest. <b style="color:var(--text);font-weight:500">R$ ${Math.round(dayInv)}</b></div>
-          <div style="font-size:12px;color:var(--muted);white-space:nowrap">Venda <b style="color:var(--text);font-weight:500">R$ ${Math.round(dayVenda)}</b></div>
+          <div style="font-size:12px;color:var(--muted);white-space:nowrap">Comissão <b style="color:var(--text);font-weight:500">R$ ${Math.round(dayVenda)}</b></div>
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">+Meta <b style="color:var(--text);font-weight:500">R$ ${Math.round(dayCalc.comMeta)}</b></div>
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">−ISS <b style="color:var(--text);font-weight:500">R$ ${Math.round(dayCalc.menosISS)}</b></div>
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">ROAS <b class="${roasClass}" style="font-weight:500">${dayRoas}</b></div>
@@ -2026,8 +2026,8 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
           <td><span class="chevron">▾</span></td>
           <td><span class="day-date">${dateLabel}</span></td>
           <td>${fmt(dayInv)}</td>
-          <td>${fmt(dayCalc.comMeta)}</td>
           <td>${fmt(dayVenda)}</td>
+          <td>${fmt(dayCalc.comMeta)}</td>
           <td>${fmt(dayCalc.menosISS)}</td>
           <td class="${sc}">${fmt(dayCalc.saldo)}</td>
           <td class="${roasClass}">${dayRoas}</td>
@@ -2038,8 +2038,8 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
           <th style="cursor:pointer;user-select:none;transition:color .15s" onmouseover="this.style.color='#e8ecf4'" onmouseout="this.style.color=''" onclick="openRankModal()">Rank 🏆</th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','name')">Sub ID <span class="sort-ind" data-col="name"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','inv')">Investimento <span class="sort-ind" data-col="inv"></span></th>
+          <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','venda')">Comissão <span class="sort-ind" data-col="venda"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','meta')">+Meta (13,85%) <span class="sort-ind" data-col="meta"></span></th>
-          <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','venda')">Venda <span class="sort-ind" data-col="venda"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','iss')">−ISS (${fmtPct(getISS())}) <span class="sort-ind" data-col="iss"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','saldo')">Saldo/Dia <span class="sort-ind" data-col="saldo"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','roi')">ROAS <span class="sort-ind" data-col="roi"></span></th>
@@ -2214,8 +2214,8 @@ async function openSubModal(name){
     return`<tr data-idx="${idx}" data-date="${day}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roas="${c.roi??-999}">
       <td>${lbl}</td>
       <td>${fmt(r.inv)}</td>
-      <td>${fmt(c.comMeta)}</td>
       <td>${fmt(r.venda)}</td>
+      <td>${fmt(c.comMeta)}</td>
       <td>${fmt(c.menosISS)}</td>
       <td style="${sc};font-weight:600">${fmt(c.saldo)}</td>
       <td style="${rc};font-weight:600">${c.roi!==null?c.roi.toFixed(2):'—'}</td>
@@ -2233,7 +2233,7 @@ async function openSubModal(name){
       <div class="card-value cv-yellow" style="font-size:16px">${fmt(totC.comMeta)}</div>
     </div>
     <div class="card" style="text-align:center">
-      <div class="card-label">Venda</div>
+      <div class="card-label">Comissão</div>
       <div class="card-value cv-muted" style="font-size:16px;margin:6px 0 4px">${fmt(totVenda)}</div>
       <hr style="border:none;border-top:1px solid var(--border);margin:6px 0">
       <div class="card-value cv-accent" style="font-size:16px">${fmt(totC.menosISS)}</div>
@@ -2245,8 +2245,8 @@ async function openSubModal(name){
   document.getElementById('sub-modal-thead').innerHTML=`<tr>
       <th style="${thS}" ${thH} onclick="sortSubModal('date')">Data <span class="sort-ind" id="sms-date"></span></th>
       <th style="${thS}" ${thH} onclick="sortSubModal('inv')">Investimento <span class="sort-ind" id="sms-inv"></span></th>
+      <th style="${thS}" ${thH} onclick="sortSubModal('venda')">Comissão <span class="sort-ind" id="sms-venda"></span></th>
       <th style="${thS}" ${thH} onclick="sortSubModal('meta')">+Meta <span class="sort-ind" id="sms-meta"></span></th>
-      <th style="${thS}" ${thH} onclick="sortSubModal('venda')">Venda <span class="sort-ind" id="sms-venda"></span></th>
       <th style="${thS}" ${thH} onclick="sortSubModal('iss')">−ISS <span class="sort-ind" id="sms-iss"></span></th>
       <th style="${thS}" ${thH} onclick="sortSubModal('saldo')">Saldo/Dia <span class="sort-ind" id="sms-saldo"></span></th>
       <th style="${thS}" ${thH} onclick="sortSubModal('roas')">ROAS <span class="sort-ind" id="sms-roas"></span></th>
@@ -2341,7 +2341,7 @@ async function openRankModal(){
       <div class="card-value cv-yellow" style="font-size:16px">${fmt(totC.comMeta)}</div>
     </div>
     <div class="card" style="text-align:center">
-      <div class="card-label">Venda</div>
+      <div class="card-label">Comissão</div>
       <div class="card-value cv-muted" style="font-size:16px;margin:6px 0 4px">${fmt(totVenda)}</div>
       <hr style="border:none;border-top:1px solid var(--border);margin:6px 0">
       <div class="card-value cv-accent" style="font-size:16px">${fmt(totC.menosISS)}</div>
@@ -2366,8 +2366,8 @@ async function openRankModal(){
       <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:600">${i+1}</td>
       <td style="text-align:left;font-family:'DM Sans',sans-serif">${r.name}</td>
       <td>${fmt(r.inv)}</td>
-      <td>${fmt(r.comMeta)}</td>
       <td>${fmt(r.venda)}</td>
+      <td>${fmt(r.comMeta)}</td>
       <td>${fmt(r.menosISS)}</td>
       <td style="${rc};font-weight:600">${r.roi!==null?r.roi.toFixed(2):'—'}</td>
       <td style="${sc};font-weight:600">${fmt(r.saldo)}</td>
@@ -2392,8 +2392,8 @@ async function openRankModal(){
       <th>Rank</th>
       <th style="${thS};text-align:left" ${thH} onclick="sortRankModal('name')">Sub ID <span class="sort-ind" id="rms-name"></span></th>
       <th style="${thS}" ${thH} onclick="sortRankModal('inv')">Investimento <span class="sort-ind" id="rms-inv"></span></th>
+      <th style="${thS}" ${thH} onclick="sortRankModal('venda')">Comissão <span class="sort-ind" id="rms-venda"></span></th>
       <th style="${thS}" ${thH} onclick="sortRankModal('meta')">+Meta <span class="sort-ind" id="rms-meta"></span></th>
-      <th style="${thS}" ${thH} onclick="sortRankModal('venda')">Venda <span class="sort-ind" id="rms-venda"></span></th>
       <th style="${thS}" ${thH} onclick="sortRankModal('iss')">−ISS <span class="sort-ind" id="rms-iss"></span></th>
       <th style="${thS}" ${thH} onclick="sortRankModal('roi')">ROAS <span class="sort-ind" id="rms-roi"></span></th>
       <th style="${thS}" ${thH} onclick="sortRankModal('saldo')">Saldo Mês <span class="sort-ind" id="rms-saldo"></span></th>
