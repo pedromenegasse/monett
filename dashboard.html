@@ -132,10 +132,10 @@ let currentUser=null;
   .day-header-left>.day-date{padding:0 13px 0 4px;flex-shrink:0}
   .day-block.open .day-header{display:none}
   .day-block.open .day-header-mobile{display:none!important}
-  tr.totals-row td{background:var(--surface2);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;text-align:center;border-bottom:2px solid var(--border);padding:11px 13px;white-space:nowrap;cursor:pointer}
+  tr.totals-row td{background:var(--surface2);font-family:'DM Mono',monospace;font-size:12px;font-weight:400;text-align:center;border-bottom:2px solid var(--border);padding:11px 13px;white-space:nowrap;cursor:pointer}
   tr.totals-row td:nth-child(2){text-align:left;padding-left:4px}
   tr.totals-row td:first-child{width:54px;padding:11px 0;text-align:center;box-sizing:border-box}
-  .day-date{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--accent)}
+  .day-date{font-family:'DM Mono',monospace;font-size:14px;font-weight:400;color:var(--accent)}
   .day-totals{display:flex;gap:16px;font-family:'DM Mono',monospace;font-size:14px;flex-wrap:wrap}
   .day-totals-row{display:contents}
   .day-totals span{color:var(--muted)}.day-totals b{color:var(--text)}
@@ -468,10 +468,10 @@ let currentUser=null;
 <div id="table-section" class="nav-panel" data-section="resultados">
   <h2 style="display:block">
     <span style="display:flex;align-items:center;gap:6px;margin-bottom:12px"><span style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Resultados Diários</span>
-    <div class="mode-toggle">
-      <span id="tbl-subtitle" class="mode-btn active" style="cursor:default"></span>
-    </div>
   </h2>
+  <div class="mode-toggle" style="margin:0 18px 12px">
+    <span id="tbl-subtitle" class="mode-btn active" style="cursor:default"></span>
+  </div>
   <div id="hist-body" style="margin-top:12px">
   <div id="rank-legend" style="padding:0 18px 12px">
     <span><span class="chip chip-gold"></span>ROAS ≥ 1,5 no dia</span>
@@ -2128,7 +2128,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
           <td>${fmt(dayCalc.menosISS)}</td>
           <td class="${sc}">${fmt(dayCalc.saldo)}</td>
           <td class="${roasClass}">${dayRoas}</td>
-          <td class="${totMesClass}" style="font-weight:700">${fmt(totMesSaldo)}</td>
+          <td class="${totMesClass}">${fmt(totMesSaldo)}</td>
           <td><button class="btn-x" onclick="event.stopPropagation();deleteDay('${day}')">✕</button></td>
         </tr>
         <tr>
