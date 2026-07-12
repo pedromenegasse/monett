@@ -1895,6 +1895,21 @@ function renderMonth(data,month){
     const fullRows=allNames.map(name=>dayMap[name]||{name,inv:0,venda:0,missing:true});
     return renderDay(day,fullRows,curRankArr,prevRank,cumSaldo,isLatest,month);
   }).join('');
+  // sync all chevron widths using the first visible table as reference,
+  // waiting for the custom font to finish loading so the measurement is
+  // accurate on first paint (not just on later re-renders)
+  const syncChevronWidths=()=>{
+    const refTh=document.querySelector('.day-block thead th:first-child');
+    if(refTh){
+      const w=refTh.offsetWidth+'px';
+      document.querySelectorAll('.day-header-left>.chevron').forEach(chev=>chev.style.width=w);
+    }
+  };
+  if(document.fonts&&document.fonts.ready){
+    document.fonts.ready.then(()=>requestAnimationFrame(syncChevronWidths));
+  } else {
+    requestAnimationFrame(syncChevronWidths);
+  }
   requestAnimationFrame(()=>{
     // apply Ativos filter to latest day which starts open
     const latestId='day-'+latestDay.replace(/-/g,'');
