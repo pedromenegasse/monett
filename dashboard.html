@@ -331,6 +331,10 @@ let currentUser=null;
   </div>
 </div>
 
+<!-- SECTION NAV -->
+<nav id="section-nav-desktop" class="section-nav-desktop"></nav>
+<nav id="section-nav-mobile" class="section-nav-mobile"></nav>
+
 <!-- BONUS E DESPESAS -->
 <div id="bd-section">
   <h2 onclick="toggleBD()" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;gap:6px">
@@ -366,7 +370,7 @@ let currentUser=null;
 </div>
 
 <!-- IMPORT -->
-<div id="import-section">
+<div id="import-section" class="nav-panel" data-section="inserir">
   <h2 onclick="toggleImport()" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px">
     <span id="import-toggle-icon" style="color:var(--yellow);font-size:16px;transition:transform .2s;display:inline-block">−</span> Inserir Dados
   </h2>
@@ -494,7 +498,7 @@ let currentUser=null;
 </div>
 
 <!-- TABLE -->
-<div id="table-section">
+<div id="table-section" class="nav-panel" data-section="resultados">
   <h2 onclick="toggleHistorico()" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;gap:6px">
     <span style="display:flex;align-items:center;gap:6px">
       <span id="hist-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Resultados Diários <small id="tbl-subtitle"></small>
@@ -517,7 +521,7 @@ let currentUser=null;
 </div>
 
 <!-- CLIQUES -->
-<div id="cliques-section" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 0;margin-bottom:24px">
+<div id="cliques-section" class="nav-panel" data-section="cliques" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 0;margin-bottom:24px">
   <h2 onclick="toggleCliquesSection()" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;gap:6px;font-family:'Syne',sans-serif;font-size:15px;padding:0 18px">
     <span style="display:flex;align-items:center;gap:6px">
       <span id="cliques-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Cliques
@@ -565,6 +569,33 @@ let currentUser=null;
 .cli-pair-l{padding-left:2px!important}
 @keyframes cli-blink-purple{0%,100%{background:rgba(90,30,140,0.22)}50%{background:rgba(90,30,140,0.70)}}
 tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
+</style>
+
+<!-- FUTURE SECTIONS (placeholders) -->
+<div id="section-vendas" class="nav-panel" data-section="vendas" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:40px 24px;margin-bottom:24px;text-align:center">
+  <div style="color:var(--muted);font-family:'DM Mono',monospace;font-size:13px">Vendas ainda está em construção.</div>
+</div>
+<div id="section-financeiro" class="nav-panel" data-section="financeiro" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:40px 24px;margin-bottom:24px;text-align:center">
+  <div style="color:var(--muted);font-family:'DM Mono',monospace;font-size:13px">Financeiro ainda está em construção.</div>
+</div>
+<div id="section-dicas" class="nav-panel" data-section="dicas" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:40px 24px;margin-bottom:24px;text-align:center">
+  <div style="color:var(--muted);font-family:'DM Mono',monospace;font-size:13px">Dicas ainda está em construção.</div>
+</div>
+
+<style>
+.section-nav-desktop{display:flex;gap:4px;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;overflow-x:auto}
+.section-nav-btn{font-family:'DM Mono',monospace;font-size:12px;padding:9px 16px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .15s}
+.section-nav-btn.active{background:var(--surface2);color:var(--text);border-color:var(--border)}
+.section-nav-mobile{display:none;position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--bg);border-top:1px solid var(--border);padding:4px 2px calc(env(safe-area-inset-bottom,0px) + 4px)}
+.section-nav-mobile-inner{display:flex}
+.section-nav-icon-btn{flex:1;display:flex;align-items:center;justify-content:center;padding:10px 2px;background:transparent;border:none;color:var(--muted);cursor:pointer}
+.section-nav-icon-btn.active{color:var(--accent)}
+.section-nav-icon-btn svg{width:22px;height:22px}
+@media(max-width:900px){
+  .section-nav-desktop{display:none}
+  .section-nav-mobile{display:block}
+  body{padding-bottom:70px}
+}
 </style>
 
 <!-- MODAL nova conta -->
@@ -1630,6 +1661,42 @@ function showConflictModal(rowName, matchName){
     d.querySelector('#cfm-no').onclick=()=>{document.body.removeChild(d);resolve(false);};
   });
 }
+/* ── SECTION NAV ── */
+const SECTION_ICONS={
+  inserir:'<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>',
+  resultados:'<rect x="4" y="12" width="4" height="8" fill="currentColor"/><rect x="10" y="8" width="4" height="12" fill="currentColor"/><rect x="16" y="4" width="4" height="16" fill="currentColor"/>',
+  cliques:'<path d="M8 4l9 9-4 1 3 5-2 1-3-5-3 3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="currentColor"/>',
+  vendas:'<path d="M7 8h10l1 12H6z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/><path d="M9 8V6a3 3 0 016 0v2" stroke="currentColor" stroke-width="2" fill="none"/>',
+  financeiro:'<circle cx="12" cy="12" r="9.5" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12 6.5v11M14.3 8.7a2.6 2.6 0 00-2.3-1.2 2.5 2.5 0 000 5h0a2.5 2.5 0 010 5 2.6 2.6 0 01-2.3-1.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"/>',
+  dicas:'<path d="M12 1.5v1.3M5.5 4.5l1 1M18.5 4.5l-1 1M3.5 11h1.3M19.2 11h1.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M7.8 10.5c0-2.3 1.9-4.2 4.2-4.2s4.2 1.9 4.2 4.2c0 1.5-.8 2.8-1.9 3.6-.5.3-.7.9-.7 1.4v.4h-3.2v-.4c0-.5-.2-1.1-.7-1.4-1.1-.8-1.9-2.1-1.9-3.6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/><path d="M10.4 15.7h3.7M10.8 17.6h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'
+};
+const SECTIONS=[
+  {id:'inserir',label:'Inserir dados'},
+  {id:'resultados',label:'Resultados diários'},
+  {id:'cliques',label:'Cliques'},
+  {id:'vendas',label:'Vendas'},
+  {id:'financeiro',label:'Financeiro'},
+  {id:'dicas',label:'Dicas'}
+];
+function renderSectionNav(){
+  const d=document.getElementById('section-nav-desktop');
+  const m=document.getElementById('section-nav-mobile');
+  if(d)d.innerHTML=SECTIONS.map(s=>`<button class="section-nav-btn" data-section="${s.id}" onclick="switchSection('${s.id}')">${s.label}</button>`).join('');
+  if(m)m.innerHTML='<div class="section-nav-mobile-inner">'+SECTIONS.map(s=>`<button class="section-nav-icon-btn" data-section="${s.id}" onclick="switchSection('${s.id}')" aria-label="${s.label}"><svg viewBox="0 0 24 24">${SECTION_ICONS[s.id]}</svg></button>`).join('')+'</div>';
+}
+function switchSection(id){
+  document.querySelectorAll('.nav-panel').forEach(p=>p.style.display=p.dataset.section===id?'':'none');
+  document.querySelectorAll('.section-nav-btn,.section-nav-icon-btn').forEach(b=>b.classList.toggle('active',b.dataset.section===id));
+  localStorage.setItem('tp_active_section',id);
+  if(id==='cliques')renderCliquesSection();
+}
+function initSectionNav(){
+  renderSectionNav();
+  const saved=localStorage.getItem('tp_active_section');
+  const valid=SECTIONS.some(s=>s.id===saved);
+  switchSection(valid?saved:'resultados');
+}
+
 function toggleHistorico(){
   const body=document.getElementById('hist-body');
   const icon=document.getElementById('hist-toggle-icon');
@@ -2636,6 +2703,7 @@ async function renderBDSaldo(){
   if(localStorage.getItem('tp_hist_open')==='0'){const b=document.getElementById('hist-body');const i=document.getElementById('hist-toggle-icon');if(b){b.style.display='none';i.textContent='+';}}
   if(localStorage.getItem('tp_cliques_open')==='0'){const b=document.getElementById('cliques-body');const i=document.getElementById('cliques-toggle-icon');if(b){b.style.display='none';i.textContent='+';}}
   renderCliquesSection();
+  initSectionNav();
   setMode(savedMode);
   ['inp-names','inp-inv','inp-venda'].forEach(id=>{
     const el=document.getElementById(id);
