@@ -287,7 +287,7 @@ let currentUser=null;
 
 <!-- ACCOUNT TABS -->
 <div id="account-bar">
-  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><div id="acct-tabs" style="display:contents"></div><button class="acct-add" onclick="openAddAccount()">+ Nova conta</button></div>
+  <div id="acct-tabs" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"></div>
 </div>
 
 <!-- MONTH TABS -->
@@ -467,10 +467,10 @@ let currentUser=null;
 <!-- TABLE -->
 <div id="table-section" class="nav-panel" data-section="resultados">
   <h2 style="display:block">
-    <span style="display:flex;align-items:center;gap:6px;margin-bottom:10px"><span style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Resultados Diários</span>
-    <span style="display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden">
-      <small id="tbl-subtitle" style="padding:7px 14px;font-size:13px;color:var(--text);background:var(--surface2);font-family:'DM Mono',monospace"></small>
-    </span>
+    <span style="display:flex;align-items:center;gap:6px;margin-bottom:12px"><span style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Resultados Diários</span>
+    <div class="mode-toggle">
+      <span id="tbl-subtitle" class="mode-btn active" style="cursor:default"></span>
+    </div>
   </h2>
   <div id="hist-body" style="margin-top:12px">
   <div id="rank-legend" style="padding:0 18px 12px">
@@ -796,7 +796,7 @@ function renderAccountTabs(){
   const container=document.getElementById('acct-tabs');
 
   if(!accts.length){
-    container.innerHTML='<span style="font-family:\'DM Mono\',monospace;font-size:12px;color:var(--muted)">Nenhuma conta. Crie uma →</span>';
+    container.innerHTML='<span style="font-family:\'DM Mono\',monospace;font-size:12px;color:var(--muted)">Nenhuma conta. Crie uma →</span><button class="acct-add" onclick="openAddAccount()">+ Nova conta</button>';
     return;
   }
 
@@ -808,7 +808,7 @@ function renderAccountTabs(){
       <button class="acct-del" onclick="event.stopPropagation();renameAccount('${a.id}')" title="Renomear conta" style="opacity:.6;font-size:10px;margin-right:-2px">✏</button>
       <button class="acct-del" onclick="event.stopPropagation();deleteAccount('${a.id}')" title="Remover conta">×</button>
     </div>`;
-  }).join('');
+  }).join('')+'<button class="acct-add" onclick="openAddAccount()">+ Nova conta</button>';
 
   let dragIdx=null;
   container.querySelectorAll('.acct-tab').forEach(el=>{
