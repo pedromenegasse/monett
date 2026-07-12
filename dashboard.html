@@ -525,7 +525,7 @@ let currentUser=null;
   </h2>
   <div id="cliques-body" style="margin-top:12px;padding:0 18px 18px">
     <div class="mode-toggle" id="cliques-period-toggle" style="margin-bottom:12px">
-      <button data-p="hoje" class="mode-btn active" onclick="setCliquesPeriod('hoje')">Hoje</button>
+      <button data-p="hoje" class="mode-btn active" onclick="setCliquesPeriod('hoje')">Último dia</button>
       <button data-p="7" class="mode-btn" onclick="setCliquesPeriod('7')">7 dias</button>
       <button data-p="30" class="mode-btn" onclick="setCliquesPeriod('30')">30 dias</button>
     </div>
@@ -562,7 +562,7 @@ let currentUser=null;
 #cliques-table td:first-child{text-align:left}
 .cli-grp-l{border-left:1px solid var(--border);padding-left:14px!important}
 .cli-pair-r{padding-right:2px!important}
-.cli-pair-l{padding-left:2px!important;color:var(--muted)}
+.cli-pair-l{padding-left:2px!important}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
 </style>
 
@@ -1659,15 +1659,25 @@ async function renderCliquesSection(){
   _cliquesSortState={col:null,dir:0};
   document.querySelectorAll('#cliques-table .sort-ind').forEach(el=>el.textContent='');
   if(!acct){tbody.innerHTML='';return;}
-  const days=_cliquesPeriod==='hoje'?1:parseInt(_cliquesPeriod);
-  const today=new Date();today.setHours(0,0,0,0);
-  const cutoff=new Date(today);cutoff.setDate(cutoff.getDate()-(days-1));
   const data=await loadData(acct.id);
+  // Anchor "Último dia"/7/30 on the most recent date that actually has
+  // cliques data imported, since click reports always lag a day behind.
+  let latestDay=null;
+  for(const month of Object.keys(data)){
+    for(const day of Object.keys(data[month])){
+      if(data[month][day].some(r=>r.cliquesMeta!=null)){
+        if(!latestDay||day>latestDay)latestDay=day;
+      }
+    }
+  }
+  const days=_cliquesPeriod==='hoje'?1:parseInt(_cliquesPeriod);
+  const anchor=latestDay?new Date(latestDay+'T00:00:00'):(()=>{const t=new Date();t.setHours(0,0,0,0);return t;})();
+  const cutoff=new Date(anchor);cutoff.setDate(cutoff.getDate()-(days-1));
   const agg={};
   for(const month of Object.keys(data)){
     for(const day of Object.keys(data[month])){
       const d=new Date(day+'T00:00:00');
-      if(d<cutoff||d>today)continue;
+      if(d<cutoff||d>anchor)continue;
       for(const r of data[month][day]){
         if(r.cliquesMeta==null)continue;
         if(!agg[r.name])agg[r.name]={name:r.name,meta:0,shopee:0,inv:0,pedidos:0};
@@ -1724,12 +1734,12 @@ async function renderCliquesSection(){
     tr.innerHTML=
       '<td style="font-weight:500;color:'+c.text+'">'+r.name+'</td>'+
       '<td class="cli-pair-r" style="font-weight:500">'+r.meta.toLocaleString('pt-BR')+'</td>'+
-      '<td class="cli-pair-l">'+(r.cpcMeta==null?'—':fmt(r.cpcMeta))+'</td>'+
+      '<td class="cli-pair-l" style="color:var(--muted)">'+(r.cpcMeta==null?'—':fmt(r.cpcMeta))+'</td>'+
       '<td class="cli-grp-l cli-pair-r" style="font-weight:500;color:'+(semRetorno?'var(--red)':c.text)+'">'+(semRetorno?'Sem':r.shopee.toLocaleString('pt-BR'))+'</td>'+
       '<td class="cli-pair-l" style="color:'+(semRetorno?'var(--red)':'var(--muted)')+'">'+(semRetorno?'Retorno':fmt(r.cpcReal))+'</td>'+
       '<td class="cli-grp-l" style="font-weight:500;color:'+c.text+'">'+r.taxa+'%</td>'+
       '<td class="cli-grp-l">'+r.pedidos.toLocaleString('pt-BR')+'</td>'+
-      '<td>'+(r.conversao==null?'—':r.conversao.toFixed(1))+'</td>'+
+      '<td style="color:var(--muted)">'+(r.conversao==null?'—':r.conversao.toFixed(1))+'</td>'+
       '<td class="cli-grp-l">'+fmt(r.inv)+'</td>'+
       '<td>'+fmt(r.saldo)+'</td>';
     tbody.appendChild(tr);
