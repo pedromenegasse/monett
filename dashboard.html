@@ -596,6 +596,10 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
       <span id="regua-faltam-label" style="position:absolute;left:0;top:0;font-size:13px;color:var(--muted);white-space:nowrap;font-family:'DM Mono',monospace">Faltam</span>
       <div style="position:absolute;top:0;left:0;right:0" id="regua-falta"></div>
     </div>
+    <div style="position:relative;height:20px;margin-top:4px">
+      <span id="regua-meta-label" style="position:absolute;left:0;top:0;font-size:13px;color:var(--muted);white-space:nowrap;font-family:'DM Mono',monospace">Meta</span>
+      <div style="position:absolute;top:0;left:0;right:0" id="regua-meta-valores"></div>
+    </div>
   </div>
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden">
@@ -1997,17 +2001,21 @@ async function renderVendasSection(){
   const meta=groupShopeeGoal;
   const tiers=[1.0,1.25,1.5],bonusPct=[1,2,3];
   const faltamLabelEl=document.getElementById('regua-faltam-label');
+  const metaLabelEl=document.getElementById('regua-meta-label');
   if(meta<=0){
     if(faltamLabelEl)faltamLabelEl.style.display='none';
+    if(metaLabelEl)metaLabelEl.style.display='none';
     document.getElementById('regua-labels').innerHTML='';
     document.getElementById('regua-bar').innerHTML='<div style="width:100%;height:100%;background:var(--surface2)"></div>';
     document.getElementById('regua-lines').innerHTML='';
     document.getElementById('regua-feito-label').innerHTML='';
     document.getElementById('regua-falta').innerHTML='<div style="color:var(--muted);font-size:11px;font-family:\'DM Mono\',monospace">Defina a meta da Shopee acima para ver o progresso</div>';
+    document.getElementById('regua-meta-valores').innerHTML='';
     const bonusElEmpty=document.getElementById('bonus-a-receber');
     if(bonusElEmpty)bonusElEmpty.textContent=fmt(0);
   } else {
   if(faltamLabelEl)faltamLabelEl.style.display='';
+  if(metaLabelEl)metaLabelEl.style.display='';
   const alvos=tiers.map(t=>meta*t);
   const maxAlvo=alvos[alvos.length-1]||1;
   document.getElementById('regua-bar').innerHTML=alvos.map((alvo,i)=>{
@@ -2033,13 +2041,17 @@ async function renderVendasSection(){
     const leftPct=alvo/maxAlvo*100;
     const done=feitoMes>=alvo;
     const c=done?'var(--accent2)':'var(--muted)';
-    return `<div style="position:absolute;left:${leftPct}%;top:-32px;bottom:-28px;width:1px;background:${c};transform:translateX(-1px)"></div>`;
+    return `<div style="position:absolute;left:${leftPct}%;top:-32px;bottom:-52px;width:1px;background:${c};transform:translateX(-1px)"></div>`;
   }).join('');
   document.getElementById('regua-falta').innerHTML=alvos.map((alvo,i)=>{
     const leftPct=alvo/maxAlvo*100;
     const done=feitoMes>=alvo;
     const falta=Math.max(alvo-feitoMes,0);
     return `<div style="position:absolute;left:${leftPct}%;top:0;transform:translateX(-100%);text-align:right;font-size:13px;white-space:nowrap;padding-right:8px;color:${done?'var(--accent2)':'var(--muted)'};font-family:'DM Mono',monospace">${done?'Batido':fmt(falta)}</div>`;
+  }).join('');
+  document.getElementById('regua-meta-valores').innerHTML=alvos.map((alvo,i)=>{
+    const leftPct=alvo/maxAlvo*100;
+    return `<div style="position:absolute;left:${leftPct}%;top:0;transform:translateX(-100%);text-align:right;font-size:13px;white-space:nowrap;padding-right:8px;color:var(--yellow);font-family:'DM Mono',monospace">${fmt(alvo)}</div>`;
   }).join('');
 
   let bonusAtual=0;
