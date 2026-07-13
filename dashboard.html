@@ -375,9 +375,9 @@ let currentUser=null;
       <div id="tot-cliques-balao" style="display:none;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 10px;height:36px;min-width:280px;flex:1;justify-content:space-between">
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Cliques</span><span id="tot-cli-taxa" style="font-size:12px;color:var(--text);font-weight:500;line-height:1.2">—</span></div>
         <span style="color:var(--border);font-size:13px">|</span>
-        <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Meta</span><span id="tot-cli-meta" style="font-size:12px;color:var(--accent2);font-weight:500;line-height:1.2">—</span></div>
+        <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Meta</span><span id="tot-cli-meta" style="font-size:12px;color:#378ADD;font-weight:500;line-height:1.2">—</span></div>
         <span style="color:var(--border);font-size:13px">|</span>
-        <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Shopee</span><span id="tot-cli-shopee" style="font-size:12px;color:var(--yellow);font-weight:500;line-height:1.2">—</span></div>
+        <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Shopee</span><span id="tot-cli-shopee" style="font-size:12px;color:#EE4D2D;font-weight:500;line-height:1.2">—</span></div>
       </div>
     </div>
   </div>
@@ -444,7 +444,7 @@ let currentUser=null;
         <div id="inp-2x1-inv" class="ce-col" contenteditable="true" spellcheck="false" style="border-color:var(--accent)" data-field="2x1-inv" onkeydown="ce_keydown(event,this)" oninput="ce_input_2x1(this,'inv')" onpaste="ce_paste(event,this)"></div>
       </div>
       <div>
-        <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Venda</label>
+        <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Comissão</label>
         <div id="inp-2x1-venda" class="ce-col" contenteditable="true" spellcheck="false" data-field="2x1-venda" onkeydown="ce_keydown(event,this)" oninput="ce_input_2x1(this,'venda')" onpaste="ce_paste(event,this)"></div>
       </div>
       <div id="col-cliques" style="display:none;min-width:0;overflow:hidden">
@@ -1006,8 +1006,8 @@ function ce_keydown(e,el){
       if(cliqueColEl&&cliqueColEl.querySelectorAll('.ce-line').length){
         const cLines=Array.from(cliqueColEl.querySelectorAll('.ce-line'));
         const cd=document.createElement('div');cd.className='ce-line';
-        cd.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:34px;gap:8px';
-        cd.innerHTML='<span style="color:var(--muted);font-size:13px">—</span><span style="color:var(--muted);font-size:13px">—</span><span style="color:var(--muted);font-size:13px">—</span>';
+        cd.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;padding:0 12px;height:34px;gap:8px';
+        cd.innerHTML='<span style="color:var(--muted);font-size:13px;text-align:left">—</span><span style="color:var(--muted);font-size:13px;text-align:center">—</span><span style="color:var(--muted);font-size:13px;text-align:right">—</span>';
         if(insertIdx<0||insertIdx>=cLines.length) cliqueColEl.appendChild(cd);
         else cliqueColEl.insertBefore(cd,cLines[insertIdx]);
         draw2x1Lines(cliqueColEl,cliqueColEl.querySelectorAll('.ce-line').length);
@@ -1395,11 +1395,11 @@ function applyCliques(){
     const t=meta>0?Math.round(shopee/meta*100):null;
     const d=document.createElement('div');
     d.className='ce-line';
-    d.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:34px;gap:8px';
+    d.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;padding:0 12px;height:34px;gap:8px';
     if(shopee||meta){
-      d.innerHTML=`<span style="color:var(--text);font-size:13px">${t!=null?t+'%':'—'}</span><span style="color:var(--accent2);font-size:13px">${meta?meta.toLocaleString('pt-BR'):'—'}</span><span style="color:var(--yellow);font-size:13px">${shopee?shopee.toLocaleString('pt-BR'):'—'}</span>`;
+      d.innerHTML=`<span style="color:var(--text);font-size:13px;text-align:left">${t!=null?t+'%':'—'}</span><span style="color:#378ADD;font-size:13px;text-align:center">${meta?meta.toLocaleString('pt-BR'):'—'}</span><span style="color:#EE4D2D;font-size:13px;text-align:right">${shopee?shopee.toLocaleString('pt-BR'):'—'}</span>`;
     } else {
-      d.innerHTML='<span style="color:var(--muted);font-size:13px">—</span><span style="color:var(--muted);font-size:13px">—</span><span style="color:var(--muted);font-size:13px">—</span>';
+      d.innerHTML='<span style="color:var(--muted);font-size:13px;text-align:left">—</span><span style="color:var(--muted);font-size:13px;text-align:center">—</span><span style="color:var(--muted);font-size:13px;text-align:right">—</span>';
     }
     cliqueEl.appendChild(d);
   });
