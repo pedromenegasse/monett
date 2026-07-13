@@ -575,7 +575,7 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
         <input type="date" id="inp-vr-bloco-fim" style="height:36px;padding:0 12px">
         <button class="btn-sm" onclick="saveVRBloco()">Salvar</button>
       </div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace" id="diaadia-table"></table>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace;table-layout:fixed" id="diaadia-table"></table>
     </div>
   </div>
 
@@ -645,8 +645,11 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
   </div>
 </div>
 <style>
-#canal-table th,#top10-table th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:left;padding:8px 6px;font-weight:500}
-#canal-table td,#top10-table td{padding:10px 6px;border-bottom:1px solid var(--border);color:var(--text)}
+#canal-table,#top10-table{table-layout:fixed}
+#canal-table th,#top10-table th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:left;padding:8px 6px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#canal-table td,#top10-table td{padding:10px 6px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#canal-table th:first-child,#canal-table td:first-child,#top10-table th:first-child,#top10-table td:first-child{width:34%}
+#canal-table th:not(:first-child),#canal-table td:not(:first-child),#top10-table th:not(:first-child),#top10-table td:not(:first-child){width:22%}
 </style>
 <div id="section-financeiro" class="nav-panel" data-section="financeiro" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px">
   <div id="bd-section">
@@ -836,9 +839,28 @@ async function saveSaleItems(acctId,date,items){
     produto:it.produto,canal:it.canal||null,qtd:it.qtd,
     venda_bruta:it.vendaBruta,comissao:it.comissao,sub_id:it.sub||null
   }));
-  const chunkSize=500;
+  const chunkSize=300;
+  let failedChunks=0;
   for(let i=0;i<rows.length;i+=chunkSize){
-    await sb.from('sale_items').insert(rows.slice(i,i+chunkSize));
+    const chunk=rows.slice(i,i+chunkSize);
+    let ok=false;
+    for(let attempt=0;attempt<3&&!ok;attempt++){
+      const{error}=await sb.from('sale_items').insert(chunk);
+      if(!error){ok=true;}
+      else{
+        console.error('Erro ao salvar lote de itens de venda (tentativa '+(attempt+1)+'):',error);
+        await new Promise(r=>setTimeout(r,600));
+      }
+    }
+    if(!ok)failedChunks++;
+  }
+  if(failedChunks>0){
+    alert('Atenção: '+failedChunks+' lote(s) de itens de venda não foram salvos após 3 tentativas. Os totais da aba Vendas podem ficar incompletos para '+date+'. Tente reimportar.');
+    return;
+  }
+  const{count}=await sb.from('sale_items').select('id',{count:'exact',head:true}).eq('account_id',acctId).eq('date',date);
+  if(count!=null&&count<rows.length){
+    alert('Atenção: esperava salvar '+rows.length+' itens de venda em '+date+', mas só '+count+' ficaram no banco. Tente reimportar essa data.');
   }
 }
 async function saveAccountGoal(acctId,field,value){
@@ -2077,7 +2099,7 @@ async function renderVendasSection(){
     const leftPct=alvo/maxAlvo*100;
     const done=feitoMes>=alvo;
     const c=done?'var(--accent2)':'var(--muted)';
-    return `<div style="position:absolute;left:${leftPct}%;top:-32px;bottom:-52px;width:1px;background:${c};transform:translateX(-1px)"></div>`;
+    return `<div style="position:absolute;left:${leftPct}%;top:-32px;bottom:-32px;width:1px;background:${c};transform:translateX(-1px)"></div>`;
   }).join('');
   document.getElementById('regua-falta').innerHTML=alvos.map((alvo,i)=>{
     const leftPct=alvo/maxAlvo*100;
@@ -2130,15 +2152,19 @@ function renderDiaADiaTable(rows,groupAccts){
     tbl.innerHTML='<tr><td style="padding:10px 6px;color:var(--muted)">Nenhum dado neste mês.</td></tr>';
     return;
   }
-  tbl.innerHTML='<tr><th>Dia</th><th>Total</th>'+groupAccts.map(a=>`<th>${a.name}</th>`).join('')+'</tr>'+
+  const colCount=2+groupAccts.length;
+  const w=(100/colCount).toFixed(2)+'%';
+  const cellStyle=`width:${w};padding:10px 6px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis`;
+  const thStyle=`width:${w};font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:left;padding:8px 6px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis`;
+  tbl.innerHTML=`<tr><th style="${thStyle}">Dia</th><th style="${thStyle}">Total</th>`+groupAccts.map(a=>`<th style="${thStyle}">${a.name}</th>`).join('')+'</tr>'+
     dates.map(d=>{
       const perAcct=byDate[d]||{};
       const total=Object.values(perAcct).reduce((s,v)=>s+v,0);
       const dLabel=d.split('-').reverse().slice(0,2).join('/');
       return '<tr>'+
-        `<td style="font-weight:500">${dLabel}</td>`+
-        `<td style="color:var(--yellow)">${fmt(total)}</td>`+
-        groupAccts.map(a=>`<td>${fmt(perAcct[a.id]||0)}</td>`).join('')+
+        `<td style="${cellStyle};font-weight:500;color:var(--text)">${dLabel}</td>`+
+        `<td style="${cellStyle};color:var(--yellow)">${fmt(total)}</td>`+
+        groupAccts.map(a=>`<td style="${cellStyle};color:var(--text)">${fmt(perAcct[a.id]||0)}</td>`).join('')+
         '</tr>';
     }).join('');
 }
@@ -2191,6 +2217,7 @@ async function renderTop10Table(){
 
   const prodAgg={};
   rows.forEach(r=>{
+    if(r.sub_id==='Venda Bruta Retroativa')return;
     const p=r.produto;
     if(!prodAgg[p])prodAgg[p]={produto:p,itens:0,venda:0,comissao:0};
     prodAgg[p].itens+=r.qtd||1;
@@ -2199,8 +2226,8 @@ async function renderTop10Table(){
   });
   const top10=Object.values(prodAgg).sort((a,b)=>b.venda-a.venda).slice(0,10);
   const topEl=document.getElementById('top10-table');
-  if(topEl)topEl.innerHTML='<tr><th>Produto</th><th>Itens</th><th>Venda bruta</th><th>Comissão</th></tr>'+
-    (top10.length?top10.map((p,i)=>`<tr><td style="font-weight:500">${i+1}. ${p.produto}</td><td style="color:var(--muted)">${p.itens}</td><td>${fmt(p.venda)}</td><td style="color:var(--yellow)">${fmt(p.comissao)}</td></tr>`).join(''):'<tr><td style="color:var(--muted)">Nenhum dado neste período.</td></tr>');
+  if(topEl)topEl.innerHTML='<tr><th style="text-align:left">Produtos</th><th style="text-align:center">Itens</th><th style="text-align:center">Comissão</th><th style="text-align:center">Venda Bruta</th></tr>'+
+    (top10.length?top10.map((p,i)=>`<tr><td style="font-weight:500;text-align:left">${i+1}. ${p.produto}</td><td style="color:var(--muted);text-align:center">${p.itens}</td><td style="color:var(--yellow);text-align:center">${fmt(p.comissao)}</td><td style="text-align:center">${fmt(p.venda)}</td></tr>`).join(''):'<tr><td style="color:var(--muted)">Nenhum dado neste período.</td></tr>');
 }
 async function renderVendasTables(){
   await renderCanalTable();
