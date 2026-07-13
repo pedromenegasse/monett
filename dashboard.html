@@ -579,8 +579,9 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
 
   <div style="position:relative;height:28px;margin-top:24px" id="regua-labels"></div>
   <div style="position:relative;margin-bottom:48px">
-    <div style="display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface2)" id="regua-bar"></div>
+    <div style="display:flex;height:22px;border-radius:11px;overflow:hidden;background:var(--surface2)" id="regua-bar"></div>
     <div style="position:absolute;top:0;left:0;right:0;height:100%;pointer-events:none" id="regua-lines"></div>
+    <div style="position:absolute;top:0;left:0;right:0;height:22px;pointer-events:none" id="regua-feito-label"></div>
     <div style="position:relative;height:20px;margin-top:16px">
       <span id="regua-faltam-label" style="position:absolute;left:0;top:0;font-size:13px;color:var(--muted);white-space:nowrap;font-family:'DM Mono',monospace">Faltam</span>
       <div style="position:absolute;top:0;left:0;right:0" id="regua-falta"></div>
@@ -1962,6 +1963,7 @@ async function renderVendasSection(){
     document.getElementById('regua-labels').innerHTML='';
     document.getElementById('regua-bar').innerHTML='<div style="width:100%;height:100%;background:var(--surface2)"></div>';
     document.getElementById('regua-lines').innerHTML='';
+    document.getElementById('regua-feito-label').innerHTML='';
     document.getElementById('regua-falta').innerHTML='<div style="color:var(--muted);font-size:11px;font-family:\'DM Mono\',monospace">Defina a meta da Shopee acima para ver o progresso</div>';
     const bonusElEmpty=document.getElementById('bonus-a-receber');
     if(bonusElEmpty)bonusElEmpty.textContent=fmt(0);
@@ -1979,6 +1981,9 @@ async function renderVendasSection(){
     const widthPct=segRange/maxAlvo*100;
     return `<div style="width:${widthPct}%;height:100%;position:relative;background:var(--surface2)"><div style="width:${pct}%;height:100%;background:${color}"></div></div>`;
   }).join('');
+  const feitoPctGlobal=Math.min(feitoMes/maxAlvo*100,100);
+  const feitoAtEnd=feitoPctGlobal>=100;
+  document.getElementById('regua-feito-label').innerHTML=feitoMes>0?`<div style="position:absolute;left:${feitoPctGlobal}%;top:0;height:22px;display:flex;align-items:center;padding:0 8px;white-space:nowrap;font-size:12px;color:#0d0f14;font-weight:500;background:var(--yellow);border-radius:${feitoAtEnd?'11px 0 0 11px':'0 11px 11px 0'};${feitoAtEnd?'transform:translateX(-100%)':''}">${fmt(feitoMes)}</div>`:'';
   document.getElementById('regua-labels').innerHTML=alvos.map((alvo,i)=>{
     const leftPct=alvo/maxAlvo*100;
     const done=feitoMes>=alvo;
