@@ -553,12 +553,13 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
       <span style="font-size:13px;color:var(--text);font-family:'DM Mono',monospace">Venda Bruta Retroativa</span>
     </div>
     <div id="vr-body" style="display:none;padding:0 16px 16px">
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;font-family:'DM Mono',monospace">Já vendeu algo neste mês antes de começar a lançar aqui? Informe o valor pra régua e metas ficarem certas desde já.</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;font-family:'DM Mono',monospace">Já vendeu algo neste mês antes de começar a lançar aqui? Informe o valor e até que data ele se refere, pra régua e cards ficarem certos.</div>
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
           <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
           <input type="text" id="inp-venda-retroativa" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:140px;text-align:center;outline:none">
         </span>
+        <input type="date" id="inp-venda-retroativa-data" style="height:36px;padding:0 12px">
         <button class="btn-sm" onclick="saveVendaRetroativa()">Salvar</button>
       </div>
     </div>
@@ -579,7 +580,7 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
 
   <div style="position:relative;height:28px;margin-top:24px" id="regua-labels"></div>
   <div style="position:relative;margin-bottom:48px">
-    <div style="display:flex;height:22px;border-radius:11px;overflow:hidden;background:var(--surface2)" id="regua-bar"></div>
+    <div style="display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--surface2)" id="regua-bar"></div>
     <div style="position:absolute;top:0;left:0;right:0;height:100%;pointer-events:none" id="regua-lines"></div>
     <div style="position:absolute;top:0;left:0;right:0;height:22px;pointer-events:none" id="regua-feito-label"></div>
     <div style="position:relative;height:20px;margin-top:16px">
@@ -820,19 +821,24 @@ function toggleVendaRetroativa(){
   icon.textContent=open?'+':'−';
 }
 async function getVendaRetroativa(acctId,month){
-  const{data}=await sb.from('venda_retroativa').select('valor').eq('account_id',acctId).eq('month',month).maybeSingle();
-  return data?parseFloat(data.valor)||0:0;
+  const{data}=await sb.from('venda_retroativa').select('valor,ate_data').eq('account_id',acctId).eq('month',month).maybeSingle();
+  return data?{valor:parseFloat(data.valor)||0,ateData:data.ate_data||null}:{valor:0,ateData:null};
 }
 async function getVendaRetroativaGroup(acctIds,month){
-  const{data}=await sb.from('venda_retroativa').select('valor').in('account_id',acctIds).eq('month',month);
-  return(data||[]).reduce((s,r)=>s+(parseFloat(r.valor)||0),0);
+  const{data}=await sb.from('venda_retroativa').select('valor,ate_data').in('account_id',acctIds).eq('month',month);
+  const rows=data||[];
+  const valor=rows.reduce((s,r)=>s+(parseFloat(r.valor)||0),0);
+  let latestAteData=null;
+  rows.forEach(r=>{if(r.ate_data&&(!latestAteData||r.ate_data>latestAteData))latestAteData=r.ate_data;});
+  return{valor,ateData:latestAteData};
 }
 async function saveVendaRetroativa(){
   const acct=getActiveAcct();
   if(!acct)return;
   const val=parseNum(document.getElementById('inp-venda-retroativa').value||'0');
+  const ateData=document.getElementById('inp-venda-retroativa-data').value||null;
   const month=getActiveMonth();
-  await sb.from('venda_retroativa').upsert({account_id:acct.id,month,valor:val},{onConflict:'account_id,month'});
+  await sb.from('venda_retroativa').upsert({account_id:acct.id,month,valor:val,ate_data:ateData},{onConflict:'account_id,month'});
   showToast('Venda bruta retroativa salva!');
   renderVendasSection();
 }
@@ -1947,10 +1953,13 @@ async function renderVendasSection(){
   const vendaRetroativaGrupo=await getVendaRetroativaGroup(groupIds,month);
   if(myRenderId!==_vendasRenderId)return;
   const vrInp=document.getElementById('inp-venda-retroativa');
-  if(vrInp)vrInp.value=vendaRetroativaAcct?vendaRetroativaAcct.toLocaleString('pt-BR'):'';
-  const feitoMes=rows.reduce((s,it)=>s+parseFloat(it.venda_bruta||0),0)+vendaRetroativaGrupo;
+  const vrDataInp=document.getElementById('inp-venda-retroativa-data');
+  if(vrInp)vrInp.value=vendaRetroativaAcct.valor?vendaRetroativaAcct.valor.toLocaleString('pt-BR'):'';
+  if(vrDataInp)vrDataInp.value=vendaRetroativaAcct.ateData||'';
+  const feitoMes=rows.reduce((s,it)=>s+parseFloat(it.venda_bruta||0),0)+vendaRetroativaGrupo.valor;
   let latestDay=null;
   rows.forEach(it=>{if(!latestDay||it.date>latestDay)latestDay=it.date;});
+  if(vendaRetroativaGrupo.ateData&&(!latestDay||vendaRetroativaGrupo.ateData>latestDay))latestDay=vendaRetroativaGrupo.ateData;
   const diaAtual=latestDay?parseInt(latestDay.split('-')[2]):1;
   const diasRestantes=Math.max(diasNoMes-diaAtual,1);
 
@@ -1982,8 +1991,8 @@ async function renderVendasSection(){
     return `<div style="width:${widthPct}%;height:100%;position:relative;background:var(--surface2)"><div style="width:${pct}%;height:100%;background:${color}"></div></div>`;
   }).join('');
   const feitoPctGlobal=Math.min(feitoMes/maxAlvo*100,100);
-  const feitoAtEnd=feitoPctGlobal>=100;
-  document.getElementById('regua-feito-label').innerHTML=feitoMes>0?`<div style="position:absolute;left:${feitoPctGlobal}%;top:0;height:22px;display:flex;align-items:center;padding:0 8px;white-space:nowrap;font-size:12px;color:#0d0f14;font-weight:500;background:var(--yellow);border-radius:${feitoAtEnd?'11px 0 0 11px':'0 11px 11px 0'};${feitoAtEnd?'transform:translateX(-100%)':''}">${fmt(feitoMes)}</div>`:'';
+  const feitoAtEnd=feitoPctGlobal>85;
+  document.getElementById('regua-feito-label').innerHTML=feitoMes>0?`<div style="position:absolute;left:${feitoPctGlobal}%;top:0;height:22px;display:flex;align-items:center;padding:0 8px;${feitoAtEnd?'margin-right:-8px':'margin-left:-8px'};white-space:nowrap;font-size:12px;color:#0d0f14;font-weight:500;background:var(--yellow);border-radius:6px;${feitoAtEnd?'transform:translateX(-100%)':''}">${fmt(feitoMes)}</div>`:'';
   document.getElementById('regua-labels').innerHTML=alvos.map((alvo,i)=>{
     const leftPct=alvo/maxAlvo*100;
     const done=feitoMes>=alvo;
