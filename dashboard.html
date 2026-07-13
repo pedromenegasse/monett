@@ -547,20 +547,20 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
   <div id="vendas-grupo-note" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:14px"></div>
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden">
-    <div onclick="toggleVendaRetroativa()" style="cursor:pointer;user-select:none;padding:12px 16px;display:flex;align-items:center;gap:8px">
-      <span id="vr-toggle-icon" style="color:var(--yellow);font-size:14px">+</span>
-      <span style="font-size:13px;color:var(--text);font-family:'DM Mono',monospace">Venda Bruta Retroativa</span>
-    </div>
-    <div id="vr-body" style="display:none;padding:0 16px 16px">
+    <h2 onclick="toggleVendasSub('diaadia')" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-size:15px;padding:18px 20px;margin:0">
+      <span id="diaadia-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">+</span> Dia a Dia
+    </h2>
+    <div id="diaadia-sub-body" style="display:none;padding:0 16px 16px">
       <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;font-family:'DM Mono',monospace">Já vendeu algo neste mês antes de começar a lançar aqui? Informe o valor e até que data ele se refere, pra régua e cards ficarem certos.</div>
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+        <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
           <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
           <input type="text" id="inp-venda-retroativa" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:140px;text-align:center;outline:none">
         </span>
         <input type="date" id="inp-venda-retroativa-data" style="height:36px;padding:0 12px">
         <button class="btn-sm" onclick="saveVendaRetroativa()">Salvar</button>
       </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace" id="diaadia-table"></table>
     </div>
   </div>
 
@@ -819,7 +819,7 @@ async function saveSaleItems(acctId,date,items){
   const rows=items.map(it=>({
     account_id:acctId,user_id:currentUser.id,date,
     produto:it.produto,canal:it.canal||null,qtd:it.qtd,
-    venda_bruta:it.vendaBruta,comissao:it.comissao
+    venda_bruta:it.vendaBruta,comissao:it.comissao,sub_id:it.sub||null
   }));
   const chunkSize=500;
   for(let i=0;i<rows.length;i+=chunkSize){
@@ -1679,6 +1679,7 @@ function parse2x1(rawInput){
       const produto=(cols[nomeItemIdx]||'').trim();
       if(produto){
         _saleItemsBuffer.push({
+          sub:sub||'Sem Sub Id',
           produto,
           canal:canalIdx>=0?(cols[canalIdx]||'').trim():'',
           qtd:qtdIdx>=0?(parseInt(cols[qtdIdx])||1):1,
@@ -1697,14 +1698,15 @@ function parse2x1(rawInput){
       if(isDirect){dirPedidos.add(pedido);dirCom+=comVal;}
       else{indPedidos.add(pedido);indCom+=comVal;}
     }
-    if(!sub)continue;
-    const dedupeKey=pedido?`${sub}||${pedido}`:null;
+    if(!sub&&!compraVal)continue;
+    const subKey=sub||'Sem Sub Id';
+    const dedupeKey=pedido?`${subKey}||${pedido}`:null;
     if(dedupeKey&&seen.has(dedupeKey))continue;
-    if(dedupeKey){seen.add(dedupeKey);seenOrders.set(sub,(seenOrders.get(sub)||0)+1);}
+    if(dedupeKey){seen.add(dedupeKey);seenOrders.set(subKey,(seenOrders.get(subKey)||0)+1);}
     const val=parseNum(cols[vendaIdx]||'0');
-    map.set(sub,(map.get(sub)||0)+val);
+    map.set(subKey,(map.get(subKey)||0)+val);
     const com=comissaoIdx>=0?parseNum(cols[comissaoIdx]||'0'):0;
-    comMap.set(sub,(comMap.get(sub)||0)+com);
+    comMap.set(subKey,(comMap.get(subKey)||0)+com);
   }
   const entries=[...map.entries()].sort((a,b)=>b[1]-a[1]);
   const subs=entries.map(e=>e[0]);
@@ -1803,7 +1805,11 @@ async function importData(){
 
   // save all rows first with original names
   const saveResult=await saveRows(acct.id,dt,rows);
-  if(_saleItemsBuffer.length)await saveSaleItems(acct.id,dt,_saleItemsBuffer);
+  // Só salva itens de venda cujo sub_id ainda está na tabela final —
+  // respeita as linhas que o usuário apagou manualmente antes de "Adicionar"
+  const finalSubs=new Set(rows.map(r=>r.name.toLowerCase()));
+  const saleItemsToSave=_saleItemsBuffer.filter(it=>!it.sub||finalSubs.has(it.sub.toLowerCase()));
+  if(saleItemsToSave.length)await saveSaleItems(acct.id,dt,saleItemsToSave);
   delete _data[acct.id]; // force full cache clear
   const freshCheck=await loadData(acct.id);
   // Switch to the month of the inserted date
@@ -2075,6 +2081,42 @@ async function renderVendasSection(){
     </div>`).join('');
 
   await renderVendasTables();
+  renderDiaADiaTable(rows,groupAccts);
+}
+function renderDiaADiaTable(rows,groupAccts){
+  const tbl=document.getElementById('diaadia-table');
+  if(!tbl)return;
+  const byDate={};
+  const semSubIdByDate={};
+  const semSubIdComByDate={};
+  rows.forEach(r=>{
+    if(!r.sub_id||r.sub_id==='Sem Sub Id'){
+      semSubIdByDate[r.date]=(semSubIdByDate[r.date]||0)+parseFloat(r.venda_bruta||0);
+      semSubIdComByDate[r.date]=(semSubIdComByDate[r.date]||0)+parseFloat(r.comissao||0);
+      return;
+    }
+    if(!byDate[r.date])byDate[r.date]={};
+    byDate[r.date][r.account_id]=(byDate[r.date][r.account_id]||0)+parseFloat(r.venda_bruta||0);
+  });
+  const dates=[...new Set([...Object.keys(byDate),...Object.keys(semSubIdByDate)])].sort((a,b)=>b.localeCompare(a));
+  if(!dates.length){
+    tbl.innerHTML='<tr><td style="padding:10px 6px;color:var(--muted)">Nenhum dado neste mês.</td></tr>';
+    return;
+  }
+  tbl.innerHTML='<tr><th>Dia</th><th>Total</th>'+groupAccts.map(a=>`<th>${a.name}</th>`).join('')+'<th>Sem Sub Id</th></tr>'+
+    dates.map(d=>{
+      const perAcct=byDate[d]||{};
+      const semSubId=semSubIdByDate[d]||0;
+      const semSubIdCom=semSubIdComByDate[d]||0;
+      const total=Object.values(perAcct).reduce((s,v)=>s+v,0)+semSubId;
+      const dLabel=d.split('-').reverse().slice(0,2).join('/');
+      return '<tr>'+
+        `<td style="font-weight:500">${dLabel}</td>`+
+        `<td style="color:var(--yellow)">${fmt(total)}</td>`+
+        groupAccts.map(a=>`<td>${fmt(perAcct[a.id]||0)}</td>`).join('')+
+        `<td style="color:var(--muted)">${fmt(semSubId)}<br><span style="font-size:11px;opacity:.7">comissão ${fmt(semSubIdCom)}</span></td>`+
+        '</tr>';
+    }).join('');
 }
 async function renderCanalTable(){
   const acct=getActiveAcct();
