@@ -69,7 +69,7 @@ let currentUser=null;
   .toggle-track.on{background:var(--accent2)}
   .toggle-track.on .toggle-thumb{transform:translateX(18px);background:#fff}
   #bd-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px}
-  #bd-section h2{font-family:'Syne',sans-serif;font-size:15px;margin-bottom:0}
+  #bd-section h2{font-family:'Syne',sans-serif;font-size:17px;margin-bottom:0}
   #bd-desc,#bd-valor{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:0 12px;outline:none;transition:border .15s;-webkit-appearance:none}
   #bd-desc:focus,#bd-valor:focus{border-color:var(--accent)}
   #bd-desc::placeholder,#bd-valor::placeholder{color:var(--muted)}
@@ -86,7 +86,7 @@ let currentUser=null;
 
   /* IMPORT */
   #import-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px}
-  #import-section h2{font-family:'Syne',sans-serif;font-size:15px;margin-bottom:0}
+  #import-section h2{font-family:'Syne',sans-serif;font-size:17px;margin-bottom:0}
   .field{display:flex;flex-direction:column;gap:5px}
   .field label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em}
   input[type="text"],input[type="email"],input[type="password"],input[type="number"]{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:8px 12px;outline:none;transition:border .15s;-webkit-appearance:none}
@@ -123,7 +123,7 @@ let currentUser=null;
 
   /* TABLE */
   #table-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 0;margin-bottom:24px}
-  #table-section h2{font-family:'Syne',sans-serif;font-size:15px;margin-bottom:0;padding:0 18px}
+  #table-section h2{font-family:'Syne',sans-serif;font-size:17px;margin-bottom:0;padding:0 18px}
   #table-section h2 small{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);font-weight:400}
   .day-block{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden}
   .day-header{display:flex;align-items:center;justify-content:space-between;padding:11px 14px 11px 0;background:var(--surface2);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;gap:8px;flex-wrap:wrap}
@@ -490,7 +490,7 @@ let currentUser=null;
 
 <!-- CLIQUES -->
 <div id="cliques-section" class="nav-panel" data-section="cliques" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 0;margin-bottom:24px">
-  <h2 style="display:flex;align-items:center;justify-content:space-between;gap:6px;font-family:'Syne',sans-serif;font-size:15px;padding:0 18px">
+  <h2 style="display:flex;align-items:center;justify-content:space-between;gap:6px;font-family:'Syne',sans-serif;font-size:17px;padding:0 18px">
     <span style="display:flex;align-items:center;gap:6px">
       <span style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Cliques
     </span>
@@ -543,11 +543,11 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
 <div id="section-vendas" class="nav-panel" data-section="vendas" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px">
   <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
     <span style="color:var(--yellow);font-size:16px">−</span>
-    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--text)">Vendas</span>
+    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:var(--text)">Vendas</span>
   </div>
   <div id="vendas-grupo-note" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:14px"></div>
 
-  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden">
     <div onclick="toggleVendaRetroativa()" style="cursor:pointer;user-select:none;padding:12px 16px;display:flex;align-items:center;gap:8px">
       <span id="vr-toggle-icon" style="color:var(--yellow);font-size:14px">+</span>
       <span style="font-size:13px;color:var(--text);font-family:'DM Mono',monospace">Venda Bruta Retroativa</span>
@@ -599,11 +599,10 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
     </div>
   </div>
 
-  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden">
-    <div onclick="toggleVendasSub('canal')" style="cursor:pointer;user-select:none;padding:12px 16px;display:flex;align-items:center;gap:8px">
-      <span id="canal-toggle-icon" style="color:var(--yellow);font-size:16px">−</span>
-      <span style="font-size:15px;font-weight:800;color:var(--text);font-family:'Syne',sans-serif">Canal</span>
-    </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden">
+    <h2 onclick="toggleVendasSub('canal')" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-size:17px;padding:18px 20px;margin:0">
+      <span id="canal-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Canal
+    </h2>
     <div id="canal-sub-body" style="padding:0 16px 16px">
       <div class="mode-toggle" id="canal-period-toggle" style="margin-bottom:14px">
         <button data-p="hoje" id="canal-btn-hoje" class="mode-btn active" onclick="setCanalPeriod('hoje')">Último dia</button>
@@ -614,11 +613,10 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
     </div>
   </div>
 
-  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
-    <div onclick="toggleVendasSub('top10')" style="cursor:pointer;user-select:none;padding:12px 16px;display:flex;align-items:center;gap:8px">
-      <span id="top10-toggle-icon" style="color:var(--yellow);font-size:16px">−</span>
-      <span style="font-size:15px;font-weight:800;color:var(--text);font-family:'Syne',sans-serif">Top 10 produtos</span>
-    </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+    <h2 onclick="toggleVendasSub('top10')" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-size:17px;padding:18px 20px;margin:0">
+      <span id="top10-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Top 10 produtos
+    </h2>
     <div id="top10-sub-body" style="padding:0 16px 16px">
       <div class="mode-toggle" id="top10-period-toggle" style="margin-bottom:14px">
         <button data-p="hoje" id="top10-btn-hoje" class="mode-btn active" onclick="setTop10Period('hoje')">Último dia</button>
