@@ -541,10 +541,11 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
 
 <!-- FUTURE SECTIONS (placeholders) -->
 <div id="section-vendas" class="nav-panel" data-section="vendas" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px">
-  <div style="display:flex;align-items:center;gap:6px;margin-bottom:20px">
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
     <span style="color:var(--yellow);font-size:16px">−</span>
     <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--text)">Vendas</span>
   </div>
+  <div id="vendas-grupo-note" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:14px"></div>
 
   <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
     <span style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-family:'DM Mono',monospace">Meta 100%</span>
@@ -655,6 +656,8 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
   <div class="modal">
     <h3>Nova conta</h3>
     <input type="text" id="modal-name" placeholder="Nome da conta (ex: Loja X)" maxlength="32">
+    <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Grupo (opcional)</div>
+    <input type="text" id="modal-grupo" placeholder="ex: Pedro — une Vendas e ISS com outras contas do grupo" maxlength="32" style="margin-bottom:14px">
     <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Cor</div>
     <div class="color-picks" id="color-picks"></div>
     <div class="modal-btns">
@@ -687,16 +690,16 @@ async function doLogout(){await sb.auth.signOut();window.location.href='index.ht
 async function loadAccounts(){
   if(!currentUser)return[];
   const{data}=await sb.from('user_accounts').select('*').order('sort_order',{nullsFirst:false}).order('created_at');
-  _accounts=(data||[]).map(a=>({id:a.id,name:a.name,color:a.color,iss:parseFloat(a.iss_rate)||6,issMonthly:{},shopeeGoal:parseFloat(a.shopee_goal)||0,objetivoMensal:parseFloat(a.objetivo_mensal)||0}));
+  _accounts=(data||[]).map(a=>({id:a.id,name:a.name,color:a.color,iss:parseFloat(a.iss_rate)||6,issMonthly:{},shopeeGoal:parseFloat(a.shopee_goal)||0,objetivoMensal:parseFloat(a.objetivo_mensal)||0,grupo:(a.grupo||'').trim()}));
   return _accounts;
 }
 async function saveAccountOrder(){
   await Promise.all(_accounts.map((a,i)=>sb.from('user_accounts').update({sort_order:i}).eq('id',a.id)));
 }
-async function createAccount(name,color){
+async function createAccount(name,color,grupo){
   const sortOrder=_accounts.length;
-  const{data}=await sb.from('user_accounts').insert({user_id:currentUser.id,name,color,iss_rate:6,sort_order:sortOrder}).select().single();
-  return data?{id:data.id,name:data.name,color:data.color,iss:6}:null;
+  const{data}=await sb.from('user_accounts').insert({user_id:currentUser.id,name,color,iss_rate:6,sort_order:sortOrder,grupo:grupo||null}).select().single();
+  return data?{id:data.id,name:data.name,color:data.color,iss:6,grupo:(data.grupo||'').trim(),shopeeGoal:0,objetivoMensal:0}:null;
 }
 async function removeAccount(id){
   await sb.from('user_accounts').delete().eq('id',id);
@@ -716,6 +719,12 @@ function getActiveAcct(){
   const id=localStorage.getItem(SK_ACTIVE);
   return _accounts.find(a=>a.id===id)||_accounts[0]||null;
 }
+function getGroupAccountIds(acct){
+  if(!acct)return[];
+  if(!acct.grupo)return[acct.id];
+  const g=acct.grupo.toLowerCase();
+  return _accounts.filter(a=>(a.grupo||'').toLowerCase()===g).map(a=>a.id);
+}
 function setActiveAcct(id){localStorage.setItem(SK_ACTIVE,id);}
 
 /* ── ISS ── */
@@ -723,7 +732,8 @@ function getISS(month){
   const a=getActiveAcct();
   if(!a)return 6;
   const m=month||getActiveMonth();
-  const key='iss_'+a.id+'_'+m;
+  const groupKey=a.grupo?('grupo_'+a.grupo.toLowerCase()):a.id;
+  const key='iss_'+groupKey+'_'+m;
   const stored=localStorage.getItem(key);
   if(stored!=null)return parseFloat(stored);
   return a.iss;
@@ -821,6 +831,7 @@ let selectedColor = PALETTE[0];
 function openAddAccount(){
   selectedColor=PALETTE[0];
   document.getElementById('modal-name').value='';
+  document.getElementById('modal-grupo').value='';
   const picks=document.getElementById('color-picks');
   picks.innerHTML=PALETTE.map((c,i)=>
     `<div class="color-pick${i===0?' selected':''}" style="background:${c}" onclick="pickColor('${c}',this)"></div>`
@@ -837,7 +848,8 @@ function pickColor(c,el){
 async function confirmAddAccount(){
   const name=document.getElementById('modal-name').value.trim();
   if(!name){alert('Digite um nome!');return;}
-  const acct=await createAccount(name,selectedColor);
+  const grupo=document.getElementById('modal-grupo').value.trim();
+  const acct=await createAccount(name,selectedColor,grupo);
   if(!acct){alert('Erro ao criar conta.');return;}
   _accounts.push(acct);
   setActiveAcct(acct.id);
@@ -906,6 +918,12 @@ async function renameAccount(id){
   const newName=prompt('Novo nome da conta:',a.name);
   if(!newName||!newName.trim())return;
   await renameAccountDB(id,newName.trim());
+  const newGrupo=prompt('Grupo (deixe vazio para nenhum) — contas do mesmo grupo compartilham Vendas e ISS:',a.grupo||'');
+  if(newGrupo!==null){
+    const g=newGrupo.trim();
+    await sb.from('user_accounts').update({grupo:g||null}).eq('id',id);
+    a.grupo=g;
+  }
   renderAccountTabs();
 }
 
@@ -948,10 +966,11 @@ async function saveISS(){
   const acct=getActiveAcct();
   if(!acct)return;
   const month=getActiveMonth();
-  // Save month-specific ISS to localStorage
-  localStorage.setItem('iss_'+acct.id+'_'+month, v);
+  // Save month-specific ISS to localStorage — shared across accounts in the same group
+  const groupKey=acct.grupo?('grupo_'+acct.grupo.toLowerCase()):acct.id;
+  localStorage.setItem('iss_'+groupKey+'_'+month, v);
   document.getElementById('iss-display').textContent=fmtPct(v);
-  showToast('ISS '+month+' → '+fmtPct(v));
+  showToast('ISS '+month+' → '+fmtPct(v)+(acct.grupo?' (grupo '+acct.grupo+')':''));
   await renderAll();
 }
 function fmtPct(v){return v.toFixed(2).replace('.',',')+' %';}
@@ -1823,14 +1842,16 @@ async function saveShopeeGoal(){
   const acct=getActiveAcct();
   if(!acct)return;
   const val=parseNum(document.getElementById('inp-shopee-goal').value||'0');
-  await saveAccountGoal(acct.id,'shopeeGoal',val);
+  const groupIds=getGroupAccountIds(acct);
+  await Promise.all(groupIds.map(id=>saveAccountGoal(id,'shopeeGoal',val)));
   renderVendasSection();
 }
 async function saveObjetivoMensal(){
   const acct=getActiveAcct();
   if(!acct)return;
   const val=parseNum(document.getElementById('inp-objetivo-mensal').value||'0');
-  await saveAccountGoal(acct.id,'objetivoMensal',val);
+  const groupIds=getGroupAccountIds(acct);
+  await Promise.all(groupIds.map(id=>saveAccountGoal(id,'objetivoMensal',val)));
   renderVendasSection();
 }
 async function renderVendasSection(){
@@ -1840,13 +1861,16 @@ async function renderVendasSection(){
   const objInp=document.getElementById('inp-objetivo-mensal');
   if(goalInp)goalInp.value=acct.shopeeGoal?acct.shopeeGoal.toLocaleString('pt-BR'):'';
   if(objInp)objInp.value=acct.objetivoMensal?acct.objetivoMensal.toLocaleString('pt-BR'):'';
+  const grupoNoteEl=document.getElementById('vendas-grupo-note');
+  if(grupoNoteEl)grupoNoteEl.textContent=acct.grupo?('Unificado com o grupo "'+acct.grupo+'"'):'';
 
   const month=getActiveMonth();
   const [y,m]=month.split('-').map(Number);
   const diasNoMes=new Date(y,m,0).getDate();
   const start=month+'-01';
   const end=new Date(y,m,0).toISOString().slice(0,10);
-  const{data:items}=await sb.from('sale_items').select('*').eq('account_id',acct.id).gte('date',start).lte('date',end);
+  const groupIds=getGroupAccountIds(acct);
+  const{data:items}=await sb.from('sale_items').select('*').in('account_id',groupIds).gte('date',start).lte('date',end);
   const rows=items||[];
   const feitoMes=rows.reduce((s,it)=>s+parseFloat(it.venda_bruta||0),0);
   let latestDay=null;
@@ -1857,6 +1881,14 @@ async function renderVendasSection(){
   // Régua de bônus Shopee
   const meta=acct.shopeeGoal||0;
   const tiers=[1.0,1.25,1.5],bonusPct=[1,2,3];
+  if(meta<=0){
+    document.getElementById('regua-labels').innerHTML='';
+    document.getElementById('regua-bar').innerHTML='<div style="width:100%;height:100%;background:var(--surface2)"></div>';
+    document.getElementById('regua-lines').innerHTML='';
+    document.getElementById('regua-falta').innerHTML='<div style="color:var(--muted);font-size:11px;font-family:\'DM Mono\',monospace">Defina a meta da Shopee acima para ver o progresso</div>';
+    const bonusElEmpty=document.getElementById('bonus-a-receber');
+    if(bonusElEmpty)bonusElEmpty.textContent=fmt(0);
+  } else {
   const alvos=tiers.map(t=>meta*t);
   const maxAlvo=alvos[alvos.length-1]||1;
   document.getElementById('regua-bar').innerHTML=alvos.map((alvo,i)=>{
@@ -1892,6 +1924,7 @@ async function renderVendasSection(){
   for(let i=alvos.length-1;i>=0;i--){if(feitoMes>=alvos[i]){bonusAtual=bonusPct[i];break;}}
   const bonusEl=document.getElementById('bonus-a-receber');
   if(bonusEl)bonusEl.textContent=fmt(feitoMes*bonusAtual/100);
+  }
 
   // Cards Feito/Objetivo/Falta
   const objetivoMensal=acct.objetivoMensal||0;
@@ -1916,8 +1949,9 @@ async function renderVendasSection(){
 async function renderVendasTables(){
   const acct=getActiveAcct();
   if(!acct)return;
+  const groupIds=getGroupAccountIds(acct);
   const days=_vendasPeriod==='hoje'?1:parseInt(_vendasPeriod);
-  const{data:latestRows}=await sb.from('sale_items').select('date').eq('account_id',acct.id).order('date',{ascending:false}).limit(1);
+  const{data:latestRows}=await sb.from('sale_items').select('date').in('account_id',groupIds).order('date',{ascending:false}).limit(1);
   const latestDate=latestRows&&latestRows[0]?latestRows[0].date:null;
   const anchor=latestDate?new Date(latestDate+'T00:00:00'):(()=>{const t=new Date();t.setHours(0,0,0,0);return t;})();
   const cutoff=new Date(anchor);cutoff.setDate(cutoff.getDate()-(days-1));
@@ -1926,7 +1960,7 @@ async function renderVendasTables(){
   const btnHoje=document.getElementById('vendas-btn-hoje');
   if(btnHoje)btnHoje.textContent=latestDate?latestDate.split('-').reverse().slice(0,2).join('/'):'Último dia';
 
-  const{data:items}=await sb.from('sale_items').select('*').eq('account_id',acct.id).gte('date',startStr).lte('date',endStr);
+  const{data:items}=await sb.from('sale_items').select('*').in('account_id',groupIds).gte('date',startStr).lte('date',endStr);
   const rows=items||[];
 
   const canalAgg={};
