@@ -557,7 +557,7 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
           <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
-          <input type="text" id="inp-venda-retroativa" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:110px;text-align:center;outline:none">
+          <input type="text" id="inp-venda-retroativa" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:140px;text-align:center;outline:none">
         </span>
         <button class="btn-sm" onclick="saveVendaRetroativa()">Salvar</button>
       </div>
@@ -568,7 +568,7 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
     <span style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-family:'DM Mono',monospace">Meta 100%</span>
     <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
       <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
-      <input type="text" id="inp-shopee-goal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:110px;text-align:center;outline:none">
+      <input type="text" id="inp-shopee-goal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:140px;text-align:center;outline:none">
     </span>
     <button class="btn-sm" onclick="saveShopeeGoal()">Salvar</button>
     <span style="margin-left:auto;display:flex;align-items:center;gap:6px">
@@ -577,12 +577,12 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
     </span>
   </div>
 
-  <div style="position:relative;height:28px;margin-top:8px" id="regua-labels"></div>
-  <div style="position:relative;margin-bottom:36px">
+  <div style="position:relative;height:28px;margin-top:24px" id="regua-labels"></div>
+  <div style="position:relative;margin-bottom:48px">
     <div style="display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface2)" id="regua-bar"></div>
     <div style="position:absolute;top:0;left:0;right:0;height:100%;pointer-events:none" id="regua-lines"></div>
     <div style="position:relative;height:20px;margin-top:16px">
-      <span style="position:absolute;left:0;top:0;font-size:13px;color:var(--muted);white-space:nowrap;font-family:'DM Mono',monospace">Faltam</span>
+      <span id="regua-faltam-label" style="position:absolute;left:0;top:0;font-size:13px;color:var(--muted);white-space:nowrap;font-family:'DM Mono',monospace">Faltam</span>
       <div style="position:absolute;top:0;left:0;right:0" id="regua-falta"></div>
     </div>
   </div>
@@ -591,7 +591,7 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
     <span style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-family:'DM Mono',monospace">Objetivo mensal</span>
     <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
       <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
-      <input type="text" id="inp-objetivo-mensal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:110px;text-align:center;outline:none">
+      <input type="text" id="inp-objetivo-mensal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:140px;text-align:center;outline:none">
     </span>
     <button class="btn-sm" onclick="saveObjetivoMensal()">Salvar</button>
   </div>
@@ -1918,13 +1918,18 @@ async function saveObjetivoMensal(){
   await Promise.all(groupIds.map(id=>saveAccountGoal(id,'objetivoMensal',val)));
   renderVendasSection();
 }
+let _vendasRenderId=0;
 async function renderVendasSection(){
+  const myRenderId=++_vendasRenderId;
   const acct=getActiveAcct();
   if(!acct)return;
+  const groupAccts=_accounts.filter(a=>getGroupAccountIds(acct).includes(a.id));
+  const groupShopeeGoal=acct.shopeeGoal||groupAccts.find(a=>a.shopeeGoal)?.shopeeGoal||0;
+  const groupObjetivoMensal=acct.objetivoMensal||groupAccts.find(a=>a.objetivoMensal)?.objetivoMensal||0;
   const goalInp=document.getElementById('inp-shopee-goal');
   const objInp=document.getElementById('inp-objetivo-mensal');
-  if(goalInp)goalInp.value=acct.shopeeGoal?acct.shopeeGoal.toLocaleString('pt-BR'):'';
-  if(objInp)objInp.value=acct.objetivoMensal?acct.objetivoMensal.toLocaleString('pt-BR'):'';
+  if(goalInp)goalInp.value=groupShopeeGoal?groupShopeeGoal.toLocaleString('pt-BR'):'';
+  if(objInp)objInp.value=groupObjetivoMensal?groupObjetivoMensal.toLocaleString('pt-BR'):'';
   const grupoNoteEl=document.getElementById('vendas-grupo-note');
   if(grupoNoteEl)grupoNoteEl.textContent=acct.grupo?('Unificado com o grupo "'+acct.grupo+'"'):'';
 
@@ -1935,9 +1940,11 @@ async function renderVendasSection(){
   const end=new Date(y,m,0).toISOString().slice(0,10);
   const groupIds=getGroupAccountIds(acct);
   const{data:items}=await sb.from('sale_items').select('*').in('account_id',groupIds).gte('date',start).lte('date',end);
+  if(myRenderId!==_vendasRenderId)return;
   const rows=items||[];
   const vendaRetroativaAcct=await getVendaRetroativa(acct.id,month);
   const vendaRetroativaGrupo=await getVendaRetroativaGroup(groupIds,month);
+  if(myRenderId!==_vendasRenderId)return;
   const vrInp=document.getElementById('inp-venda-retroativa');
   if(vrInp)vrInp.value=vendaRetroativaAcct?vendaRetroativaAcct.toLocaleString('pt-BR'):'';
   const feitoMes=rows.reduce((s,it)=>s+parseFloat(it.venda_bruta||0),0)+vendaRetroativaGrupo;
@@ -1947,9 +1954,11 @@ async function renderVendasSection(){
   const diasRestantes=Math.max(diasNoMes-diaAtual,1);
 
   // Régua de bônus Shopee
-  const meta=acct.shopeeGoal||0;
+  const meta=groupShopeeGoal;
   const tiers=[1.0,1.25,1.5],bonusPct=[1,2,3];
+  const faltamLabelEl=document.getElementById('regua-faltam-label');
   if(meta<=0){
+    if(faltamLabelEl)faltamLabelEl.style.display='none';
     document.getElementById('regua-labels').innerHTML='';
     document.getElementById('regua-bar').innerHTML='<div style="width:100%;height:100%;background:var(--surface2)"></div>';
     document.getElementById('regua-lines').innerHTML='';
@@ -1957,6 +1966,7 @@ async function renderVendasSection(){
     const bonusElEmpty=document.getElementById('bonus-a-receber');
     if(bonusElEmpty)bonusElEmpty.textContent=fmt(0);
   } else {
+  if(faltamLabelEl)faltamLabelEl.style.display='';
   const alvos=tiers.map(t=>meta*t);
   const maxAlvo=alvos[alvos.length-1]||1;
   document.getElementById('regua-bar').innerHTML=alvos.map((alvo,i)=>{
@@ -1995,7 +2005,7 @@ async function renderVendasSection(){
   }
 
   // Cards Feito/Objetivo/Falta
-  const objetivoMensal=acct.objetivoMensal||0;
+  const objetivoMensal=groupObjetivoMensal;
   const cardsData=[
     {label:'Feito',dia:diaAtual>0?feitoMes/diaAtual:0,mes:feitoMes},
     {label:'Objetivo',dia:objetivoMensal/diasNoMes,mes:objetivoMensal},
