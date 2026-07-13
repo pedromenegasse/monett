@@ -566,6 +566,16 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
   </div>
 
   <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+    <span style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-family:'DM Mono',monospace">Objetivo mensal</span>
+    <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
+      <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
+      <input type="text" id="inp-objetivo-mensal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:140px;text-align:center;outline:none">
+    </span>
+    <button class="btn-sm" onclick="saveObjetivoMensal()">Salvar</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:28px" id="objetivo-cards"></div>
+
+  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
     <span style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-family:'DM Mono',monospace">Meta 100%</span>
     <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
       <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
@@ -589,26 +599,35 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
     </div>
   </div>
 
-  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
-    <span style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-family:'DM Mono',monospace">Objetivo mensal</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
-      <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
-      <input type="text" id="inp-objetivo-mensal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:140px;text-align:center;outline:none">
-    </span>
-    <button class="btn-sm" onclick="saveObjetivoMensal()">Salvar</button>
+  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden">
+    <div onclick="toggleVendasSub('canal')" style="cursor:pointer;user-select:none;padding:12px 16px;display:flex;align-items:center;gap:8px">
+      <span id="canal-toggle-icon" style="color:var(--yellow);font-size:14px">−</span>
+      <span style="font-size:13px;color:var(--text);font-family:'DM Mono',monospace">Canal</span>
+    </div>
+    <div id="canal-sub-body" style="padding:0 16px 16px">
+      <div class="mode-toggle" id="canal-period-toggle" style="margin-bottom:14px">
+        <button data-p="hoje" id="canal-btn-hoje" class="mode-btn active" onclick="setCanalPeriod('hoje')">Último dia</button>
+        <button data-p="7" class="mode-btn" onclick="setCanalPeriod('7')">7 dias</button>
+        <button data-p="30" class="mode-btn" onclick="setCanalPeriod('30')">30 dias</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace" id="canal-table"></table>
+    </div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:28px" id="objetivo-cards"></div>
 
-  <div class="mode-toggle" id="vendas-period-toggle" style="margin-bottom:14px">
-    <button data-p="hoje" id="vendas-btn-hoje" class="mode-btn active" onclick="setVendasPeriod('hoje')">Último dia</button>
-    <button data-p="7" class="mode-btn" onclick="setVendasPeriod('7')">7 dias</button>
-    <button data-p="30" class="mode-btn" onclick="setVendasPeriod('30')">30 dias</button>
+  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+    <div onclick="toggleVendasSub('top10')" style="cursor:pointer;user-select:none;padding:12px 16px;display:flex;align-items:center;gap:8px">
+      <span id="top10-toggle-icon" style="color:var(--yellow);font-size:14px">−</span>
+      <span style="font-size:13px;color:var(--text);font-family:'DM Mono',monospace">Top 10 produtos</span>
+    </div>
+    <div id="top10-sub-body" style="padding:0 16px 16px">
+      <div class="mode-toggle" id="top10-period-toggle" style="margin-bottom:14px">
+        <button data-p="hoje" id="top10-btn-hoje" class="mode-btn active" onclick="setTop10Period('hoje')">Último dia</button>
+        <button data-p="7" class="mode-btn" onclick="setTop10Period('7')">7 dias</button>
+        <button data-p="30" class="mode-btn" onclick="setTop10Period('30')">30 dias</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace" id="top10-table"></table>
+    </div>
   </div>
-
-  <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace;margin-bottom:28px" id="canal-table"></table>
-
-  <div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;font-family:'DM Mono',monospace">Top 10 produtos</div>
-  <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace" id="top10-table"></table>
 </div>
 <style>
 #canal-table th,#top10-table th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:left;padding:8px 6px;font-weight:500}
@@ -1903,11 +1922,25 @@ function initSectionNav(){
 }
 
 /* ── VENDAS ── */
-let _vendasPeriod='hoje';
-function setVendasPeriod(p){
-  _vendasPeriod=p;
-  document.querySelectorAll('#vendas-period-toggle .mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
-  renderVendasTables();
+let _canalPeriod='hoje';
+let _top10Period='hoje';
+function setCanalPeriod(p){
+  _canalPeriod=p;
+  document.querySelectorAll('#canal-period-toggle .mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
+  renderCanalTable();
+}
+function setTop10Period(p){
+  _top10Period=p;
+  document.querySelectorAll('#top10-period-toggle .mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
+  renderTop10Table();
+}
+function toggleVendasSub(which){
+  const body=document.getElementById(which+'-sub-body');
+  const icon=document.getElementById(which+'-toggle-icon');
+  if(!body||!icon)return;
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  icon.textContent=open?'+':'−';
 }
 async function saveShopeeGoal(){
   const acct=getActiveAcct();
@@ -2038,18 +2071,18 @@ async function renderVendasSection(){
 
   await renderVendasTables();
 }
-async function renderVendasTables(){
+async function renderCanalTable(){
   const acct=getActiveAcct();
   if(!acct)return;
   const groupIds=getGroupAccountIds(acct);
-  const days=_vendasPeriod==='hoje'?1:parseInt(_vendasPeriod);
+  const days=_canalPeriod==='hoje'?1:parseInt(_canalPeriod);
   const{data:latestRows}=await sb.from('sale_items').select('date').in('account_id',groupIds).order('date',{ascending:false}).limit(1);
   const latestDate=latestRows&&latestRows[0]?latestRows[0].date:null;
   const anchor=latestDate?new Date(latestDate+'T00:00:00'):(()=>{const t=new Date();t.setHours(0,0,0,0);return t;})();
   const cutoff=new Date(anchor);cutoff.setDate(cutoff.getDate()-(days-1));
   const startStr=cutoff.toISOString().slice(0,10);
   const endStr=anchor.toISOString().slice(0,10);
-  const btnHoje=document.getElementById('vendas-btn-hoje');
+  const btnHoje=document.getElementById('canal-btn-hoje');
   if(btnHoje)btnHoje.textContent=latestDate?latestDate.split('-').reverse().slice(0,2).join('/'):'Último dia';
 
   const{data:items}=await sb.from('sale_items').select('*').in('account_id',groupIds).gte('date',startStr).lte('date',endStr);
@@ -2067,6 +2100,23 @@ async function renderVendasTables(){
   const canalEl=document.getElementById('canal-table');
   if(canalEl)canalEl.innerHTML='<tr><th>Canal</th><th>Pedidos</th><th>Vendas brutas</th><th>Comissão</th></tr>'+
     (canalList.length?canalList.map(d=>`<tr><td style="font-weight:500">${d.canal}</td><td style="color:var(--muted)">${d.pedidos.toLocaleString('pt-BR')}</td><td>${fmt(d.venda)}</td><td style="color:var(--yellow)">${fmt(d.comissao)}</td></tr>`).join(''):'<tr><td style="color:var(--muted)">Nenhum dado neste período.</td></tr>');
+}
+async function renderTop10Table(){
+  const acct=getActiveAcct();
+  if(!acct)return;
+  const groupIds=getGroupAccountIds(acct);
+  const days=_top10Period==='hoje'?1:parseInt(_top10Period);
+  const{data:latestRows}=await sb.from('sale_items').select('date').in('account_id',groupIds).order('date',{ascending:false}).limit(1);
+  const latestDate=latestRows&&latestRows[0]?latestRows[0].date:null;
+  const anchor=latestDate?new Date(latestDate+'T00:00:00'):(()=>{const t=new Date();t.setHours(0,0,0,0);return t;})();
+  const cutoff=new Date(anchor);cutoff.setDate(cutoff.getDate()-(days-1));
+  const startStr=cutoff.toISOString().slice(0,10);
+  const endStr=anchor.toISOString().slice(0,10);
+  const btnHoje=document.getElementById('top10-btn-hoje');
+  if(btnHoje)btnHoje.textContent=latestDate?latestDate.split('-').reverse().slice(0,2).join('/'):'Último dia';
+
+  const{data:items}=await sb.from('sale_items').select('*').in('account_id',groupIds).gte('date',startStr).lte('date',endStr);
+  const rows=items||[];
 
   const prodAgg={};
   rows.forEach(r=>{
@@ -2080,6 +2130,10 @@ async function renderVendasTables(){
   const topEl=document.getElementById('top10-table');
   if(topEl)topEl.innerHTML='<tr><th>Produto</th><th>Itens</th><th>Venda bruta</th><th>Comissão</th></tr>'+
     (top10.length?top10.map((p,i)=>`<tr><td style="font-weight:500">${i+1}. ${p.produto}</td><td style="color:var(--muted)">${p.itens}</td><td>${fmt(p.venda)}</td><td style="color:var(--yellow)">${fmt(p.comissao)}</td></tr>`).join(''):'<tr><td style="color:var(--muted)">Nenhum dado neste período.</td></tr>');
+}
+async function renderVendasTables(){
+  await renderCanalTable();
+  await renderTop10Table();
 }
 
 function toggleHistorico(){
