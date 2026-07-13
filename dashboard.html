@@ -547,6 +547,23 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
   </div>
   <div id="vendas-grupo-note" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:14px"></div>
 
+  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden">
+    <div onclick="toggleVendaRetroativa()" style="cursor:pointer;user-select:none;padding:12px 16px;display:flex;align-items:center;gap:8px">
+      <span id="vr-toggle-icon" style="color:var(--yellow);font-size:14px">+</span>
+      <span style="font-size:13px;color:var(--text);font-family:'DM Mono',monospace">Venda Bruta Retroativa</span>
+    </div>
+    <div id="vr-body" style="display:none;padding:0 16px 16px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;font-family:'DM Mono',monospace">Já vendeu algo neste mês antes de começar a lançar aqui? Informe o valor pra régua e metas ficarem certas desde já.</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
+          <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
+          <input type="text" id="inp-venda-retroativa" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:110px;text-align:center;outline:none">
+        </span>
+        <button class="btn-sm" onclick="saveVendaRetroativa()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
   <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
     <span style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-family:'DM Mono',monospace">Meta 100%</span>
     <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
@@ -560,12 +577,12 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
     </span>
   </div>
 
-  <div style="position:relative;height:20px" id="regua-labels"></div>
-  <div style="position:relative;margin-bottom:28px">
+  <div style="position:relative;height:28px;margin-top:8px" id="regua-labels"></div>
+  <div style="position:relative;margin-bottom:36px">
     <div style="display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface2)" id="regua-bar"></div>
     <div style="position:absolute;top:0;left:0;right:0;height:100%;pointer-events:none" id="regua-lines"></div>
-    <div style="position:relative;height:16px;margin-top:10px">
-      <span style="position:absolute;left:0;top:0;font-size:11px;color:var(--muted);white-space:nowrap;font-family:'DM Mono',monospace">Faltam</span>
+    <div style="position:relative;height:20px;margin-top:16px">
+      <span style="position:absolute;left:0;top:0;font-size:13px;color:var(--muted);white-space:nowrap;font-family:'DM Mono',monospace">Faltam</span>
       <div style="position:absolute;top:0;left:0;right:0" id="regua-falta"></div>
     </div>
   </div>
@@ -586,7 +603,6 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
     <button data-p="30" class="mode-btn" onclick="setVendasPeriod('30')">30 dias</button>
   </div>
 
-  <div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;font-family:'DM Mono',monospace">Canal</div>
   <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace;margin-bottom:28px" id="canal-table"></table>
 
   <div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;font-family:'DM Mono',monospace">Top 10 produtos</div>
@@ -654,7 +670,7 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
 <!-- MODAL nova conta -->
 <div class="modal-bg" id="modal-acct" style="display:none">
   <div class="modal">
-    <h3>Nova conta</h3>
+    <h3 id="modal-acct-title">Nova conta</h3>
     <input type="text" id="modal-name" placeholder="Nome da conta (ex: Loja X)" maxlength="32">
     <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Grupo (opcional)</div>
     <input type="text" id="modal-grupo" placeholder="ex: Pedro — une Vendas e ISS com outras contas do grupo" maxlength="32" style="margin-bottom:14px">
@@ -662,7 +678,7 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
     <div class="color-picks" id="color-picks"></div>
     <div class="modal-btns">
       <button class="btn-outline" onclick="closeModal()">Cancelar</button>
-      <button class="btn" onclick="confirmAddAccount()">Criar</button>
+      <button class="btn" id="modal-acct-confirm-btn" onclick="confirmAddAccount()">Criar</button>
     </div>
   </div>
 </div>
@@ -795,6 +811,30 @@ async function saveAccountGoal(acctId,field,value){
   const a=_accounts.find(x=>x.id===acctId);
   if(a)a[field]=value;
 }
+function toggleVendaRetroativa(){
+  const body=document.getElementById('vr-body');
+  const icon=document.getElementById('vr-toggle-icon');
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  icon.textContent=open?'+':'−';
+}
+async function getVendaRetroativa(acctId,month){
+  const{data}=await sb.from('venda_retroativa').select('valor').eq('account_id',acctId).eq('month',month).maybeSingle();
+  return data?parseFloat(data.valor)||0:0;
+}
+async function getVendaRetroativaGroup(acctIds,month){
+  const{data}=await sb.from('venda_retroativa').select('valor').in('account_id',acctIds).eq('month',month);
+  return(data||[]).reduce((s,r)=>s+(parseFloat(r.valor)||0),0);
+}
+async function saveVendaRetroativa(){
+  const acct=getActiveAcct();
+  if(!acct)return;
+  const val=parseNum(document.getElementById('inp-venda-retroativa').value||'0');
+  const month=getActiveMonth();
+  await sb.from('venda_retroativa').upsert({account_id:acct.id,month,valor:val},{onConflict:'account_id,month'});
+  showToast('Venda bruta retroativa salva!');
+  renderVendasSection();
+}
 async function deleteRowDB(acctId,date,subId){
   await sb.from('daily_data').delete().eq('account_id',acctId).eq('date',date).eq('sub_id',subId);
   invalidateCache(acctId);
@@ -828,13 +868,33 @@ async function deleteBD(id,acctId,month){
 
 /* ── ADD ACCOUNT MODAL ── */
 let selectedColor = PALETTE[0];
+let _modalEditingId=null;
 function openAddAccount(){
+  _modalEditingId=null;
+  document.getElementById('modal-acct-title').textContent='Nova conta';
+  document.getElementById('modal-acct-confirm-btn').textContent='Criar';
   selectedColor=PALETTE[0];
   document.getElementById('modal-name').value='';
   document.getElementById('modal-grupo').value='';
   const picks=document.getElementById('color-picks');
   picks.innerHTML=PALETTE.map((c,i)=>
     `<div class="color-pick${i===0?' selected':''}" style="background:${c}" onclick="pickColor('${c}',this)"></div>`
+  ).join('');
+  document.getElementById('modal-acct').style.display='flex';
+  setTimeout(()=>document.getElementById('modal-name').focus(),50);
+}
+function openEditAccount(id){
+  const a=_accounts.find(x=>x.id===id);
+  if(!a)return;
+  _modalEditingId=id;
+  document.getElementById('modal-acct-title').textContent='Editar conta';
+  document.getElementById('modal-acct-confirm-btn').textContent='Salvar';
+  selectedColor=a.color||PALETTE[0];
+  document.getElementById('modal-name').value=a.name;
+  document.getElementById('modal-grupo').value=a.grupo||'';
+  const picks=document.getElementById('color-picks');
+  picks.innerHTML=PALETTE.map((c,i)=>
+    `<div class="color-pick${c===selectedColor?' selected':''}" style="background:${c}" onclick="pickColor('${c}',this)"></div>`
   ).join('');
   document.getElementById('modal-acct').style.display='flex';
   setTimeout(()=>document.getElementById('modal-name').focus(),50);
@@ -849,6 +909,21 @@ async function confirmAddAccount(){
   const name=document.getElementById('modal-name').value.trim();
   if(!name){alert('Digite um nome!');return;}
   const grupo=document.getElementById('modal-grupo').value.trim();
+
+  if(_modalEditingId){
+    const id=_modalEditingId;
+    const a=_accounts.find(x=>x.id===id);
+    await renameAccountDB(id,name);
+    await sb.from('user_accounts').update({grupo:grupo||null,color:selectedColor}).eq('id',id);
+    if(a){a.name=name;a.grupo=grupo;a.color=selectedColor;}
+    closeModal();
+    renderAccountTabs();
+    await renderAll();
+    renderVendasSection();
+    showToast('Conta "'+name+'" atualizada!');
+    return;
+  }
+
   const acct=await createAccount(name,selectedColor,grupo);
   if(!acct){alert('Erro ao criar conta.');return;}
   _accounts.push(acct);
@@ -912,19 +987,8 @@ function renderAccountTabs(){
   });
 }
 
-async function renameAccount(id){
-  const a=_accounts.find(x=>x.id===id);
-  if(!a)return;
-  const newName=prompt('Novo nome da conta:',a.name);
-  if(!newName||!newName.trim())return;
-  await renameAccountDB(id,newName.trim());
-  const newGrupo=prompt('Grupo (deixe vazio para nenhum) — contas do mesmo grupo compartilham Vendas e ISS:',a.grupo||'');
-  if(newGrupo!==null){
-    const g=newGrupo.trim();
-    await sb.from('user_accounts').update({grupo:g||null}).eq('id',id);
-    a.grupo=g;
-  }
-  renderAccountTabs();
+function renameAccount(id){
+  openEditAccount(id);
 }
 
 async function switchAccount(id){
@@ -1872,7 +1936,11 @@ async function renderVendasSection(){
   const groupIds=getGroupAccountIds(acct);
   const{data:items}=await sb.from('sale_items').select('*').in('account_id',groupIds).gte('date',start).lte('date',end);
   const rows=items||[];
-  const feitoMes=rows.reduce((s,it)=>s+parseFloat(it.venda_bruta||0),0);
+  const vendaRetroativaAcct=await getVendaRetroativa(acct.id,month);
+  const vendaRetroativaGrupo=await getVendaRetroativaGroup(groupIds,month);
+  const vrInp=document.getElementById('inp-venda-retroativa');
+  if(vrInp)vrInp.value=vendaRetroativaAcct?vendaRetroativaAcct.toLocaleString('pt-BR'):'';
+  const feitoMes=rows.reduce((s,it)=>s+parseFloat(it.venda_bruta||0),0)+vendaRetroativaGrupo;
   let latestDay=null;
   rows.forEach(it=>{if(!latestDay||it.date>latestDay)latestDay=it.date;});
   const diaAtual=latestDay?parseInt(latestDay.split('-')[2]):1;
@@ -1905,19 +1973,19 @@ async function renderVendasSection(){
     const leftPct=alvo/maxAlvo*100;
     const done=feitoMes>=alvo;
     const c=done?'var(--accent2)':'var(--muted)';
-    return `<div style="position:absolute;left:${leftPct}%;top:0;transform:translateX(-100%);font-size:11px;color:${c};white-space:nowrap;padding-right:6px;font-family:'DM Mono',monospace">+${bonusPct[i]}%</div>`;
+    return `<div style="position:absolute;left:${leftPct}%;top:0;transform:translateX(-100%);font-size:13px;color:${c};white-space:nowrap;padding-right:8px;font-family:'DM Mono',monospace">+${bonusPct[i]}%</div>`;
   }).join('');
   document.getElementById('regua-lines').innerHTML=alvos.map((alvo,i)=>{
     const leftPct=alvo/maxAlvo*100;
     const done=feitoMes>=alvo;
     const c=done?'var(--accent2)':'var(--muted)';
-    return `<div style="position:absolute;left:${leftPct}%;top:-24px;bottom:-20px;width:1px;background:${c};transform:translateX(-1px)"></div>`;
+    return `<div style="position:absolute;left:${leftPct}%;top:-32px;bottom:-28px;width:1px;background:${c};transform:translateX(-1px)"></div>`;
   }).join('');
   document.getElementById('regua-falta').innerHTML=alvos.map((alvo,i)=>{
     const leftPct=alvo/maxAlvo*100;
     const done=feitoMes>=alvo;
     const falta=Math.max(alvo-feitoMes,0);
-    return `<div style="position:absolute;left:${leftPct}%;top:0;transform:translateX(-100%);text-align:right;font-size:11px;white-space:nowrap;padding-right:6px;color:${done?'var(--accent2)':'var(--muted)'};font-family:'DM Mono',monospace">${done?'Batido':fmt(falta)}</div>`;
+    return `<div style="position:absolute;left:${leftPct}%;top:0;transform:translateX(-100%);text-align:right;font-size:13px;white-space:nowrap;padding-right:8px;color:${done?'var(--accent2)':'var(--muted)'};font-family:'DM Mono',monospace">${done?'Batido':fmt(falta)}</div>`;
   }).join('');
 
   let bonusAtual=0;
