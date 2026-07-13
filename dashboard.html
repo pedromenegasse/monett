@@ -377,7 +377,7 @@ let currentUser=null;
         <span style="color:var(--border);font-size:13px">|</span>
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Meta</span><span id="tot-cli-meta" style="font-size:12px;color:#378ADD;font-weight:500;line-height:1.2">—</span></div>
         <span style="color:var(--border);font-size:13px">|</span>
-        <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Shopee</span><span id="tot-cli-shopee" style="font-size:12px;color:#EE4D2D;font-weight:500;line-height:1.2">—</span></div>
+        <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Shopee</span><span id="tot-cli-shopee" style="font-size:12px;color:#FF9500;font-weight:500;line-height:1.2">—</span></div>
       </div>
     </div>
   </div>
@@ -470,7 +470,7 @@ let currentUser=null;
     <span style="display:flex;align-items:center;gap:6px;margin-bottom:12px"><span style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Resultados Diários</span>
   </h2>
   <div class="mode-toggle" style="margin:0 18px 12px">
-    <span id="tbl-subtitle" class="mode-btn active" style="cursor:default"></span>
+    <span id="tbl-subtitle" class="mode-btn active" style="cursor:default;height:36px;display:inline-flex;align-items:center"></span>
   </div>
   <div id="hist-body" style="margin-top:12px">
   <div id="rank-legend" style="padding:0 18px 12px">
@@ -1397,7 +1397,7 @@ function applyCliques(){
     d.className='ce-line';
     d.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;padding:0 12px;height:34px;gap:8px';
     if(shopee||meta){
-      d.innerHTML=`<span style="color:var(--text);font-size:13px;text-align:left">${t!=null?t+'%':'—'}</span><span style="color:#378ADD;font-size:13px;text-align:center">${meta?meta.toLocaleString('pt-BR'):'—'}</span><span style="color:#EE4D2D;font-size:13px;text-align:right">${shopee?shopee.toLocaleString('pt-BR'):'—'}</span>`;
+      d.innerHTML=`<span style="color:var(--text);font-size:13px;text-align:left">${t!=null?t+'%':'—'}</span><span style="color:#378ADD;font-size:13px;text-align:center">${meta?meta.toLocaleString('pt-BR'):'—'}</span><span style="color:#FF9500;font-size:13px;text-align:right">${shopee?shopee.toLocaleString('pt-BR'):'—'}</span>`;
     } else {
       d.innerHTML='<span style="color:var(--muted);font-size:13px;text-align:left">—</span><span style="color:var(--muted);font-size:13px;text-align:center">—</span><span style="color:var(--muted);font-size:13px;text-align:right">—</span>';
     }
