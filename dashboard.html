@@ -551,14 +551,29 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
       <span id="diaadia-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">+</span> Dia a Dia
     </h2>
     <div id="diaadia-sub-body" style="display:none;padding:0 16px 16px">
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;font-family:'DM Mono',monospace">Já vendeu algo neste mês antes de começar a lançar aqui? Informe o valor e até que data ele se refere, pra régua e cards ficarem certos.</div>
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;font-family:'DM Mono',monospace">Já vendeu algo neste mês antes de começar a lançar aqui? Informe o valor — como "Dia" (uma data) ou "Bloco" (um período), pra régua e cards ficarem certos.</div>
+      <div class="mode-toggle" id="vr-mode-toggle" style="margin-bottom:12px">
+        <button data-m="dia" class="mode-btn active" onclick="setVRMode('dia')">Dia</button>
+        <button data-m="bloco" class="mode-btn" onclick="setVRMode('bloco')">Bloco</button>
+      </div>
+      <div id="vr-mode-dia" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
         <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
           <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
-          <input type="text" id="inp-venda-retroativa" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:140px;text-align:center;outline:none">
+          <input type="text" id="inp-vr-dia-valor" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:140px;text-align:center;outline:none">
         </span>
-        <input type="date" id="inp-venda-retroativa-data" style="height:36px;padding:0 12px">
-        <button class="btn-sm" onclick="saveVendaRetroativa()">Salvar</button>
+        <input type="date" id="inp-vr-dia-data" style="height:36px;padding:0 12px">
+        <button class="btn-sm" onclick="saveVRDia()">Salvar</button>
+      </div>
+      <div id="vr-mode-bloco" style="display:none;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+        <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
+          <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
+          <input type="text" id="inp-vr-bloco-valor" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:140px;text-align:center;outline:none">
+        </span>
+        <span style="color:var(--muted);font-size:12px">de</span>
+        <input type="date" id="inp-vr-bloco-inicio" style="height:36px;padding:0 12px">
+        <span style="color:var(--muted);font-size:12px">até</span>
+        <input type="date" id="inp-vr-bloco-fim" style="height:36px;padding:0 12px">
+        <button class="btn-sm" onclick="saveVRBloco()">Salvar</button>
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace" id="diaadia-table"></table>
     </div>
@@ -839,26 +854,51 @@ function toggleVendaRetroativa(){
   body.style.display=open?'none':'block';
   icon.textContent=open?'+':'−';
 }
-async function getVendaRetroativa(acctId,month){
-  const{data}=await sb.from('venda_retroativa').select('valor,ate_data').eq('account_id',acctId).eq('month',month).maybeSingle();
-  return data?{valor:parseFloat(data.valor)||0,ateData:data.ate_data||null}:{valor:0,ateData:null};
+let _vrMode='dia';
+function setVRMode(m){
+  _vrMode=m;
+  document.querySelectorAll('#vr-mode-toggle .mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.m===m));
+  document.getElementById('vr-mode-dia').style.display=m==='dia'?'flex':'none';
+  document.getElementById('vr-mode-bloco').style.display=m==='bloco'?'flex':'none';
 }
-async function getVendaRetroativaGroup(acctIds,month){
-  const{data}=await sb.from('venda_retroativa').select('valor,ate_data').in('account_id',acctIds).eq('month',month);
-  const rows=data||[];
-  const valor=rows.reduce((s,r)=>s+(parseFloat(r.valor)||0),0);
-  let latestAteData=null;
-  rows.forEach(r=>{if(r.ate_data&&(!latestAteData||r.ate_data>latestAteData))latestAteData=r.ate_data;});
-  return{valor,ateData:latestAteData};
+async function saveVRItem(acctId,date,valor){
+  await sb.from('sale_items').delete().eq('account_id',acctId).eq('date',date).eq('sub_id','Venda Bruta Retroativa');
+  await sb.from('sale_items').insert({
+    account_id:acctId,user_id:currentUser.id,date,
+    produto:'Venda Bruta Retroativa',canal:null,qtd:1,
+    venda_bruta:valor,comissao:0,sub_id:'Venda Bruta Retroativa'
+  });
 }
-async function saveVendaRetroativa(){
+async function saveVRDia(){
   const acct=getActiveAcct();
   if(!acct)return;
-  const val=parseNum(document.getElementById('inp-venda-retroativa').value||'0');
-  const ateData=document.getElementById('inp-venda-retroativa-data').value||null;
-  const month=getActiveMonth();
-  await sb.from('venda_retroativa').upsert({account_id:acct.id,month,valor:val,ate_data:ateData},{onConflict:'account_id,month'});
+  const val=parseNum(document.getElementById('inp-vr-dia-valor').value||'0');
+  const data=document.getElementById('inp-vr-dia-data').value;
+  if(!data){alert('Escolha uma data.');return;}
+  if(!val){alert('Informe um valor.');return;}
+  await saveVRItem(acct.id,data,val);
   showToast('Venda bruta retroativa salva!');
+  document.getElementById('inp-vr-dia-valor').value='';
+  renderVendasSection();
+}
+async function saveVRBloco(){
+  const acct=getActiveAcct();
+  if(!acct)return;
+  const val=parseNum(document.getElementById('inp-vr-bloco-valor').value||'0');
+  const inicio=document.getElementById('inp-vr-bloco-inicio').value;
+  const fim=document.getElementById('inp-vr-bloco-fim').value;
+  if(!inicio||!fim){alert('Escolha a data inicial e final.');return;}
+  if(!val){alert('Informe um valor.');return;}
+  const d1=new Date(inicio+'T00:00:00'),d2=new Date(fim+'T00:00:00');
+  if(d2<d1){alert('A data final deve ser depois da inicial.');return;}
+  const dias=Math.round((d2-d1)/86400000)+1;
+  const valorPorDia=val/dias;
+  for(let i=0;i<dias;i++){
+    const d=new Date(d1);d.setDate(d.getDate()+i);
+    await saveVRItem(acct.id,d.toISOString().slice(0,10),valorPorDia);
+  }
+  showToast('Venda bruta retroativa salva em '+dias+' dia(s)!');
+  document.getElementById('inp-vr-bloco-valor').value='';
   renderVendasSection();
 }
 async function deleteRowDB(acctId,date,subId){
@@ -1988,17 +2028,9 @@ async function renderVendasSection(){
   const{data:items}=await sb.from('sale_items').select('*').in('account_id',groupIds).gte('date',start).lte('date',end);
   if(myRenderId!==_vendasRenderId)return;
   const rows=items||[];
-  const vendaRetroativaAcct=await getVendaRetroativa(acct.id,month);
-  const vendaRetroativaGrupo=await getVendaRetroativaGroup(groupIds,month);
-  if(myRenderId!==_vendasRenderId)return;
-  const vrInp=document.getElementById('inp-venda-retroativa');
-  const vrDataInp=document.getElementById('inp-venda-retroativa-data');
-  if(vrInp)vrInp.value=vendaRetroativaAcct.valor?vendaRetroativaAcct.valor.toLocaleString('pt-BR'):'';
-  if(vrDataInp)vrDataInp.value=vendaRetroativaAcct.ateData||'';
-  const feitoMes=rows.reduce((s,it)=>s+parseFloat(it.venda_bruta||0),0)+vendaRetroativaGrupo.valor;
+  const feitoMes=rows.reduce((s,it)=>s+parseFloat(it.venda_bruta||0),0);
   let latestDay=null;
   rows.forEach(it=>{if(!latestDay||it.date>latestDay)latestDay=it.date;});
-  if(vendaRetroativaGrupo.ateData&&(!latestDay||vendaRetroativaGrupo.ateData>latestDay))latestDay=vendaRetroativaGrupo.ateData;
   const diaAtual=latestDay?parseInt(latestDay.split('-')[2]):1;
   const diasRestantes=Math.max(diasNoMes-diaAtual,1);
 
@@ -2087,34 +2119,24 @@ function renderDiaADiaTable(rows,groupAccts){
   const tbl=document.getElementById('diaadia-table');
   if(!tbl)return;
   const byDate={};
-  const semSubIdByDate={};
-  const semSubIdComByDate={};
   rows.forEach(r=>{
-    if(!r.sub_id||r.sub_id==='Sem Sub Id'){
-      semSubIdByDate[r.date]=(semSubIdByDate[r.date]||0)+parseFloat(r.venda_bruta||0);
-      semSubIdComByDate[r.date]=(semSubIdComByDate[r.date]||0)+parseFloat(r.comissao||0);
-      return;
-    }
     if(!byDate[r.date])byDate[r.date]={};
     byDate[r.date][r.account_id]=(byDate[r.date][r.account_id]||0)+parseFloat(r.venda_bruta||0);
   });
-  const dates=[...new Set([...Object.keys(byDate),...Object.keys(semSubIdByDate)])].sort((a,b)=>b.localeCompare(a));
+  const dates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
   if(!dates.length){
     tbl.innerHTML='<tr><td style="padding:10px 6px;color:var(--muted)">Nenhum dado neste mês.</td></tr>';
     return;
   }
-  tbl.innerHTML='<tr><th>Dia</th><th>Total</th>'+groupAccts.map(a=>`<th>${a.name}</th>`).join('')+'<th>Sem Sub Id</th></tr>'+
+  tbl.innerHTML='<tr><th>Dia</th><th>Total</th>'+groupAccts.map(a=>`<th>${a.name}</th>`).join('')+'</tr>'+
     dates.map(d=>{
       const perAcct=byDate[d]||{};
-      const semSubId=semSubIdByDate[d]||0;
-      const semSubIdCom=semSubIdComByDate[d]||0;
-      const total=Object.values(perAcct).reduce((s,v)=>s+v,0)+semSubId;
+      const total=Object.values(perAcct).reduce((s,v)=>s+v,0);
       const dLabel=d.split('-').reverse().slice(0,2).join('/');
       return '<tr>'+
         `<td style="font-weight:500">${dLabel}</td>`+
         `<td style="color:var(--yellow)">${fmt(total)}</td>`+
         groupAccts.map(a=>`<td>${fmt(perAcct[a.id]||0)}</td>`).join('')+
-        `<td style="color:var(--muted)">${fmt(semSubId)}<br><span style="font-size:11px;opacity:.7">comissão ${fmt(semSubIdCom)}</span></td>`+
         '</tr>';
     }).join('');
 }
