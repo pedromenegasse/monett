@@ -69,7 +69,7 @@ let currentUser=null;
   .toggle-track.on{background:var(--accent2)}
   .toggle-track.on .toggle-thumb{transform:translateX(18px);background:#fff}
   #bd-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px}
-  #bd-section h2{font-family:'Syne',sans-serif;font-size:17px;margin-bottom:0}
+  #bd-section h2{font-family:'Syne',sans-serif;font-size:15px;margin-bottom:0}
   #bd-desc,#bd-valor{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:0 12px;outline:none;transition:border .15s;-webkit-appearance:none}
   #bd-desc:focus,#bd-valor:focus{border-color:var(--accent)}
   #bd-desc::placeholder,#bd-valor::placeholder{color:var(--muted)}
@@ -541,10 +541,9 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
 
 <!-- FUTURE SECTIONS (placeholders) -->
 <div id="section-vendas" class="nav-panel" data-section="vendas" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px">
-  <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-    <span style="color:var(--yellow);font-size:16px">−</span>
-    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:var(--text)">Vendas</span>
-  </div>
+  <h2 style="display:flex;align-items:center;gap:6px;margin:0 0 6px;font-family:'Syne',sans-serif;font-size:17px">
+    <span style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Vendas
+  </h2>
   <div id="vendas-grupo-note" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:14px"></div>
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden">
@@ -600,10 +599,10 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
   </div>
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden">
-    <h2 onclick="toggleVendasSub('canal')" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-size:17px;padding:18px 20px;margin:0">
-      <span id="canal-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Canal
+    <h2 onclick="toggleVendasSub('canal')" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-size:15px;padding:18px 20px;margin:0">
+      <span id="canal-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">+</span> Canal
     </h2>
-    <div id="canal-sub-body" style="padding:0 16px 16px">
+    <div id="canal-sub-body" style="display:none;padding:0 16px 16px">
       <div class="mode-toggle" id="canal-period-toggle" style="margin-bottom:14px">
         <button data-p="hoje" id="canal-btn-hoje" class="mode-btn active" onclick="setCanalPeriod('hoje')">Último dia</button>
         <button data-p="7" class="mode-btn" onclick="setCanalPeriod('7')">7 dias</button>
@@ -614,10 +613,10 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
   </div>
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden">
-    <h2 onclick="toggleVendasSub('top10')" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-size:17px;padding:18px 20px;margin:0">
-      <span id="top10-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">−</span> Top 10 produtos
+    <h2 onclick="toggleVendasSub('top10')" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-size:15px;padding:18px 20px;margin:0">
+      <span id="top10-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">+</span> Top 10 produtos
     </h2>
-    <div id="top10-sub-body" style="padding:0 16px 16px">
+    <div id="top10-sub-body" style="display:none;padding:0 16px 16px">
       <div class="mode-toggle" id="top10-period-toggle" style="margin-bottom:14px">
         <button data-p="hoje" id="top10-btn-hoje" class="mode-btn active" onclick="setTop10Period('hoje')">Último dia</button>
         <button data-p="7" class="mode-btn" onclick="setTop10Period('7')">7 dias</button>
@@ -2096,7 +2095,7 @@ async function renderCanalTable(){
   });
   const canalList=Object.values(canalAgg).sort((a,b)=>b.venda-a.venda);
   const canalEl=document.getElementById('canal-table');
-  if(canalEl)canalEl.innerHTML='<tr><th>Canal</th><th>Pedidos</th><th>Vendas brutas</th><th>Comissão</th></tr>'+
+  if(canalEl)canalEl.innerHTML='<tr><th></th><th>Pedidos</th><th>Vendas brutas</th><th>Comissão</th></tr>'+
     (canalList.length?canalList.map(d=>`<tr><td style="font-weight:500">${d.canal}</td><td style="color:var(--muted)">${d.pedidos.toLocaleString('pt-BR')}</td><td>${fmt(d.venda)}</td><td style="color:var(--yellow)">${fmt(d.comissao)}</td></tr>`).join(''):'<tr><td style="color:var(--muted)">Nenhum dado neste período.</td></tr>');
 }
 async function renderTop10Table(){
