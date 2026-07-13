@@ -540,9 +540,61 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
 </style>
 
 <!-- FUTURE SECTIONS (placeholders) -->
-<div id="section-vendas" class="nav-panel" data-section="vendas" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:40px 24px;margin-bottom:24px;text-align:center">
-  <div style="color:var(--muted);font-family:'DM Mono',monospace;font-size:13px">Vendas ainda está em construção.</div>
+<div id="section-vendas" class="nav-panel" data-section="vendas" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px">
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:20px">
+    <span style="color:var(--yellow);font-size:16px">−</span>
+    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--text)">Vendas</span>
+  </div>
+
+  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+    <span style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-family:'DM Mono',monospace">Meta 100%</span>
+    <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
+      <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
+      <input type="text" id="inp-shopee-goal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:110px;text-align:center;outline:none">
+    </span>
+    <button class="btn-sm" onclick="saveShopeeGoal()">Salvar</button>
+    <span style="margin-left:auto;display:flex;align-items:center;gap:6px">
+      <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace">Bônus a receber</span>
+      <span id="bonus-a-receber" style="background:rgba(59,240,160,0.16);color:var(--accent2);font-size:14px;font-weight:500;padding:5px 12px;border-radius:6px;font-family:'DM Mono',monospace">R$ 0,00</span>
+    </span>
+  </div>
+
+  <div style="position:relative;height:20px" id="regua-labels"></div>
+  <div style="position:relative;margin-bottom:28px">
+    <div style="display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface2)" id="regua-bar"></div>
+    <div style="position:absolute;top:0;left:0;right:0;height:100%;pointer-events:none" id="regua-lines"></div>
+    <div style="position:relative;height:16px;margin-top:10px">
+      <span style="position:absolute;left:0;top:0;font-size:11px;color:var(--muted);white-space:nowrap;font-family:'DM Mono',monospace">Faltam</span>
+      <div style="position:absolute;top:0;left:0;right:0" id="regua-falta"></div>
+    </div>
+  </div>
+
+  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+    <span style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-family:'DM Mono',monospace">Objetivo mensal</span>
+    <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
+      <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
+      <input type="text" id="inp-objetivo-mensal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:110px;text-align:center;outline:none">
+    </span>
+    <button class="btn-sm" onclick="saveObjetivoMensal()">Salvar</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:28px" id="objetivo-cards"></div>
+
+  <div class="mode-toggle" id="vendas-period-toggle" style="margin-bottom:14px">
+    <button data-p="hoje" id="vendas-btn-hoje" class="mode-btn active" onclick="setVendasPeriod('hoje')">Último dia</button>
+    <button data-p="7" class="mode-btn" onclick="setVendasPeriod('7')">7 dias</button>
+    <button data-p="30" class="mode-btn" onclick="setVendasPeriod('30')">30 dias</button>
+  </div>
+
+  <div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;font-family:'DM Mono',monospace">Canal</div>
+  <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace;margin-bottom:28px" id="canal-table"></table>
+
+  <div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;font-family:'DM Mono',monospace">Top 10 produtos</div>
+  <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace" id="top10-table"></table>
 </div>
+<style>
+#canal-table th,#top10-table th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:left;padding:8px 6px;font-weight:500}
+#canal-table td,#top10-table td{padding:10px 6px;border-bottom:1px solid var(--border);color:var(--text)}
+</style>
 <div id="section-financeiro" class="nav-panel" data-section="financeiro" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px">
   <div id="bd-section">
     <h2 onclick="toggleBD()" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;gap:6px">
@@ -635,7 +687,7 @@ async function doLogout(){await sb.auth.signOut();window.location.href='index.ht
 async function loadAccounts(){
   if(!currentUser)return[];
   const{data}=await sb.from('user_accounts').select('*').order('sort_order',{nullsFirst:false}).order('created_at');
-  _accounts=(data||[]).map(a=>({id:a.id,name:a.name,color:a.color,iss:parseFloat(a.iss_rate)||6,issMonthly:{}}));
+  _accounts=(data||[]).map(a=>({id:a.id,name:a.name,color:a.color,iss:parseFloat(a.iss_rate)||6,issMonthly:{},shopeeGoal:parseFloat(a.shopee_goal)||0,objetivoMensal:parseFloat(a.objetivo_mensal)||0}));
   return _accounts;
 }
 async function saveAccountOrder(){
@@ -712,6 +764,26 @@ async function saveRows(acctId,date,rows){
   });
   await sb.from('daily_data').upsert(upserts,{onConflict:'account_id,date,sub_id'});
   invalidateCache(acctId);
+}
+async function saveSaleItems(acctId,date,items){
+  if(!items||!items.length)return;
+  // Replace any existing items for this account/date to avoid duplicating on re-import
+  await sb.from('sale_items').delete().eq('account_id',acctId).eq('date',date);
+  const rows=items.map(it=>({
+    account_id:acctId,user_id:currentUser.id,date,
+    produto:it.produto,canal:it.canal||null,qtd:it.qtd,
+    venda_bruta:it.vendaBruta,comissao:it.comissao
+  }));
+  const chunkSize=500;
+  for(let i=0;i<rows.length;i+=chunkSize){
+    await sb.from('sale_items').insert(rows.slice(i,i+chunkSize));
+  }
+}
+async function saveAccountGoal(acctId,field,value){
+  const col=field==='shopeeGoal'?'shopee_goal':'objetivo_mensal';
+  await sb.from('user_accounts').update({[col]:value}).eq('id',acctId);
+  const a=_accounts.find(x=>x.id===acctId);
+  if(a)a[field]=value;
 }
 async function deleteRowDB(acctId,date,subId){
   await sb.from('daily_data').delete().eq('account_id',acctId).eq('date',date).eq('sub_id',subId);
@@ -859,6 +931,7 @@ async function switchAccount(id){
   if(bdList)bdList.innerHTML='';
   await renderAll();
   renderCliquesSection();
+  renderVendasSection();
 }
 
 /* ── ISS ── */
@@ -1183,6 +1256,7 @@ function clear2x1File(){
 let _metaInvMap = new Map(); // sub_id -> total investment
 let _cliqueMap = new Map(); // sub_id -> shopee click count
 let _metaCliqueMap = new Map(); // sub_id -> meta click count
+let _saleItemsBuffer = []; // itens de venda (produto/canal/qtd) da planilha Vendas-Shopee
 
 let _rawMetaCSV='';
 function loadMetaFile(input){
@@ -1466,9 +1540,14 @@ function parse2x1(rawInput){
   const comissaoIdx=headers.findIndex(h=>h.includes('líquida')||h.includes('liquida')||h.includes('líquido')||h.includes('Comissão líquida'));
   const compraIdx=headers.findIndex(h=>h.includes('Valor de Compra'));
   const atribIdx=headers.findIndex(h=>h.includes('atribuição')||h.includes('atribuicao'));
+  const nomeItemIdx=headers.findIndex(h=>h.includes('Nome do Item'));
+  const canalIdx=headers.findIndex(h=>h.trim()==='Canal');
+  const qtdIdx=headers.findIndex(h=>h.trim()==='Qtd');
+  const comissaoItemIdx=headers.findIndex(h=>h.includes('Comissão total do item'));
   if(subIdx<0||vendaIdx<0){
     alert('Colunas Sub_id1 ou Comissão total do pedido(R$) não encontradas.');return;
   }
+  _saleItemsBuffer=[];
   const seen=new Set();
   const seenOrders=new Map();
   const map=new Map();
@@ -1487,6 +1566,18 @@ function parse2x1(rawInput){
     // sum Valor de Compra for ALL rows (each row = one item)
     const compraVal=parseNum(cols[compraIdx>=0?compraIdx:vendaIdx]||'0');
     totalBruto+=compraVal;
+    if(nomeItemIdx>=0){
+      const produto=(cols[nomeItemIdx]||'').trim();
+      if(produto){
+        _saleItemsBuffer.push({
+          produto,
+          canal:canalIdx>=0?(cols[canalIdx]||'').trim():'',
+          qtd:qtdIdx>=0?(parseInt(cols[qtdIdx])||1):1,
+          vendaBruta:compraVal,
+          comissao:comissaoItemIdx>=0?parseNum(cols[comissaoItemIdx]||'0'):0
+        });
+      }
+    }
     const atrib=atribIdx>=0?(cols[atribIdx]||'').trim():'';
     const isDirect=atrib==='Pedido na mesma loja';
     if(isDirect){dirVendas+=compraVal;}else{indVendas+=compraVal;}
@@ -1603,6 +1694,7 @@ async function importData(){
 
   // save all rows first with original names
   const saveResult=await saveRows(acct.id,dt,rows);
+  if(_saleItemsBuffer.length)await saveSaleItems(acct.id,dt,_saleItemsBuffer);
   delete _data[acct.id]; // force full cache clear
   const freshCheck=await loadData(acct.id);
   // Switch to the month of the inserted date
@@ -1611,6 +1703,7 @@ async function importData(){
   monthTabs.forEach(t=>t.classList.toggle('active',t.dataset.month===insertedMonth));
   await renderAll();
   renderCliquesSection();
+  renderVendasSection();
   ['inp-paste'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['inp-2x1-names','inp-2x1-inv','inp-2x1-venda'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
   const delCol=document.getElementById('inp-2x1-del-col');if(delCol)delCol.innerHTML='';
@@ -1710,12 +1803,157 @@ function switchSection(id){
   document.querySelectorAll('.section-nav-btn,.section-nav-icon-btn').forEach(b=>b.classList.toggle('active',b.dataset.section===id));
   localStorage.setItem('tp_active_section',id);
   if(id==='cliques')renderCliquesSection();
+  if(id==='vendas')renderVendasSection();
 }
 function initSectionNav(){
   renderSectionNav();
   const saved=localStorage.getItem('tp_active_section');
   const valid=SECTIONS.some(s=>s.id===saved);
   switchSection(valid?saved:'resultados');
+}
+
+/* ── VENDAS ── */
+let _vendasPeriod='hoje';
+function setVendasPeriod(p){
+  _vendasPeriod=p;
+  document.querySelectorAll('#vendas-period-toggle .mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
+  renderVendasTables();
+}
+async function saveShopeeGoal(){
+  const acct=getActiveAcct();
+  if(!acct)return;
+  const val=parseNum(document.getElementById('inp-shopee-goal').value||'0');
+  await saveAccountGoal(acct.id,'shopeeGoal',val);
+  renderVendasSection();
+}
+async function saveObjetivoMensal(){
+  const acct=getActiveAcct();
+  if(!acct)return;
+  const val=parseNum(document.getElementById('inp-objetivo-mensal').value||'0');
+  await saveAccountGoal(acct.id,'objetivoMensal',val);
+  renderVendasSection();
+}
+async function renderVendasSection(){
+  const acct=getActiveAcct();
+  if(!acct)return;
+  const goalInp=document.getElementById('inp-shopee-goal');
+  const objInp=document.getElementById('inp-objetivo-mensal');
+  if(goalInp)goalInp.value=acct.shopeeGoal?acct.shopeeGoal.toLocaleString('pt-BR'):'';
+  if(objInp)objInp.value=acct.objetivoMensal?acct.objetivoMensal.toLocaleString('pt-BR'):'';
+
+  const month=getActiveMonth();
+  const [y,m]=month.split('-').map(Number);
+  const diasNoMes=new Date(y,m,0).getDate();
+  const start=month+'-01';
+  const end=new Date(y,m,0).toISOString().slice(0,10);
+  const{data:items}=await sb.from('sale_items').select('*').eq('account_id',acct.id).gte('date',start).lte('date',end);
+  const rows=items||[];
+  const feitoMes=rows.reduce((s,it)=>s+parseFloat(it.venda_bruta||0),0);
+  let latestDay=null;
+  rows.forEach(it=>{if(!latestDay||it.date>latestDay)latestDay=it.date;});
+  const diaAtual=latestDay?parseInt(latestDay.split('-')[2]):1;
+  const diasRestantes=Math.max(diasNoMes-diaAtual,1);
+
+  // Régua de bônus Shopee
+  const meta=acct.shopeeGoal||0;
+  const tiers=[1.0,1.25,1.5],bonusPct=[1,2,3];
+  const alvos=tiers.map(t=>meta*t);
+  const maxAlvo=alvos[alvos.length-1]||1;
+  document.getElementById('regua-bar').innerHTML=alvos.map((alvo,i)=>{
+    const prevAlvo=i===0?0:alvos[i-1];
+    const segRange=alvo-prevAlvo||1;
+    const segFeito=Math.min(Math.max(feitoMes-prevAlvo,0),segRange);
+    const pct=segFeito/segRange*100;
+    const done=feitoMes>=alvo;
+    const color=done?'var(--accent2)':'var(--yellow)';
+    const widthPct=segRange/maxAlvo*100;
+    return `<div style="width:${widthPct}%;height:100%;position:relative;background:var(--surface2)"><div style="width:${pct}%;height:100%;background:${color}"></div></div>`;
+  }).join('');
+  document.getElementById('regua-labels').innerHTML=alvos.map((alvo,i)=>{
+    const leftPct=alvo/maxAlvo*100;
+    const done=feitoMes>=alvo;
+    const c=done?'var(--accent2)':'var(--muted)';
+    return `<div style="position:absolute;left:${leftPct}%;top:0;transform:translateX(-100%);font-size:11px;color:${c};white-space:nowrap;padding-right:6px;font-family:'DM Mono',monospace">+${bonusPct[i]}%</div>`;
+  }).join('');
+  document.getElementById('regua-lines').innerHTML=alvos.map((alvo,i)=>{
+    const leftPct=alvo/maxAlvo*100;
+    const done=feitoMes>=alvo;
+    const c=done?'var(--accent2)':'var(--muted)';
+    return `<div style="position:absolute;left:${leftPct}%;top:-24px;bottom:-20px;width:1px;background:${c};transform:translateX(-1px)"></div>`;
+  }).join('');
+  document.getElementById('regua-falta').innerHTML=alvos.map((alvo,i)=>{
+    const leftPct=alvo/maxAlvo*100;
+    const done=feitoMes>=alvo;
+    const falta=Math.max(alvo-feitoMes,0);
+    return `<div style="position:absolute;left:${leftPct}%;top:0;transform:translateX(-100%);text-align:right;font-size:11px;white-space:nowrap;padding-right:6px;color:${done?'var(--accent2)':'var(--muted)'};font-family:'DM Mono',monospace">${done?'Batido':fmt(falta)}</div>`;
+  }).join('');
+
+  let bonusAtual=0;
+  for(let i=alvos.length-1;i>=0;i--){if(feitoMes>=alvos[i]){bonusAtual=bonusPct[i];break;}}
+  const bonusEl=document.getElementById('bonus-a-receber');
+  if(bonusEl)bonusEl.textContent=fmt(feitoMes*bonusAtual/100);
+
+  // Cards Feito/Objetivo/Falta
+  const objetivoMensal=acct.objetivoMensal||0;
+  const cardsData=[
+    {label:'Feito',dia:diaAtual>0?feitoMes/diaAtual:0,mes:feitoMes},
+    {label:'Objetivo',dia:objetivoMensal/diasNoMes,mes:objetivoMensal},
+    {label:'Falta',dia:Math.max(objetivoMensal-feitoMes,0)/diasRestantes,mes:Math.max(objetivoMensal-feitoMes,0)}
+  ];
+  const cardsEl=document.getElementById('objetivo-cards');
+  if(cardsEl)cardsEl.innerHTML=cardsData.map(c=>`
+    <div>
+      <div style="font-size:11px;color:var(--yellow);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;font-family:'DM Mono',monospace">${c.label}</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">Dia</span><span style="font-size:16px;font-weight:500;color:var(--yellow);font-family:'DM Mono',monospace">${fmt(c.dia)}</span></div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:4px 0">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">Mês</span><span style="font-size:16px;font-weight:500;color:var(--muted);font-family:'DM Mono',monospace">${fmt(c.mes)}</span></div>
+      </div>
+    </div>`).join('');
+
+  await renderVendasTables();
+}
+async function renderVendasTables(){
+  const acct=getActiveAcct();
+  if(!acct)return;
+  const days=_vendasPeriod==='hoje'?1:parseInt(_vendasPeriod);
+  const{data:latestRows}=await sb.from('sale_items').select('date').eq('account_id',acct.id).order('date',{ascending:false}).limit(1);
+  const latestDate=latestRows&&latestRows[0]?latestRows[0].date:null;
+  const anchor=latestDate?new Date(latestDate+'T00:00:00'):(()=>{const t=new Date();t.setHours(0,0,0,0);return t;})();
+  const cutoff=new Date(anchor);cutoff.setDate(cutoff.getDate()-(days-1));
+  const startStr=cutoff.toISOString().slice(0,10);
+  const endStr=anchor.toISOString().slice(0,10);
+  const btnHoje=document.getElementById('vendas-btn-hoje');
+  if(btnHoje)btnHoje.textContent=latestDate?latestDate.split('-').reverse().slice(0,2).join('/'):'Último dia';
+
+  const{data:items}=await sb.from('sale_items').select('*').eq('account_id',acct.id).gte('date',startStr).lte('date',endStr);
+  const rows=items||[];
+
+  const canalAgg={};
+  rows.forEach(r=>{
+    const c=r.canal||'Sem canal';
+    if(!canalAgg[c])canalAgg[c]={canal:c,pedidos:0,venda:0,comissao:0};
+    canalAgg[c].pedidos+=r.qtd||1;
+    canalAgg[c].venda+=parseFloat(r.venda_bruta||0);
+    canalAgg[c].comissao+=parseFloat(r.comissao||0);
+  });
+  const canalList=Object.values(canalAgg).sort((a,b)=>b.venda-a.venda);
+  const canalEl=document.getElementById('canal-table');
+  if(canalEl)canalEl.innerHTML='<tr><th>Canal</th><th>Pedidos</th><th>Vendas brutas</th><th>Comissão</th></tr>'+
+    (canalList.length?canalList.map(d=>`<tr><td style="font-weight:500">${d.canal}</td><td style="color:var(--muted)">${d.pedidos.toLocaleString('pt-BR')}</td><td>${fmt(d.venda)}</td><td style="color:var(--yellow)">${fmt(d.comissao)}</td></tr>`).join(''):'<tr><td style="color:var(--muted)">Nenhum dado neste período.</td></tr>');
+
+  const prodAgg={};
+  rows.forEach(r=>{
+    const p=r.produto;
+    if(!prodAgg[p])prodAgg[p]={produto:p,itens:0,venda:0,comissao:0};
+    prodAgg[p].itens+=r.qtd||1;
+    prodAgg[p].venda+=parseFloat(r.venda_bruta||0);
+    prodAgg[p].comissao+=parseFloat(r.comissao||0);
+  });
+  const top10=Object.values(prodAgg).sort((a,b)=>b.venda-a.venda).slice(0,10);
+  const topEl=document.getElementById('top10-table');
+  if(topEl)topEl.innerHTML='<tr><th>Produto</th><th>Itens</th><th>Venda bruta</th><th>Comissão</th></tr>'+
+    (top10.length?top10.map((p,i)=>`<tr><td style="font-weight:500">${i+1}. ${p.produto}</td><td style="color:var(--muted)">${p.itens}</td><td>${fmt(p.venda)}</td><td style="color:var(--yellow)">${fmt(p.comissao)}</td></tr>`).join(''):'<tr><td style="color:var(--muted)">Nenhum dado neste período.</td></tr>');
 }
 
 function toggleHistorico(){
@@ -2722,6 +2960,7 @@ async function renderBDSaldo(){
   const savedMode=localStorage.getItem('tp_import_mode')||'3col';
   if(_bdSeparar){const t=document.getElementById('bd-separar-track');if(t)t.classList.add('on');}
   renderCliquesSection();
+  renderVendasSection();
   initSectionNav();
   setMode(savedMode);
   ['inp-names','inp-inv','inp-venda'].forEach(id=>{
