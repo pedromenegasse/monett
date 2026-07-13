@@ -903,10 +903,12 @@ async function saveVRBloco(){
 }
 async function deleteRowDB(acctId,date,subId){
   await sb.from('daily_data').delete().eq('account_id',acctId).eq('date',date).eq('sub_id',subId);
+  await sb.from('sale_items').delete().eq('account_id',acctId).eq('date',date).eq('sub_id',subId);
   invalidateCache(acctId);
 }
 async function deleteDayDB(acctId,date){
   await sb.from('daily_data').delete().eq('account_id',acctId).eq('date',date);
+  await sb.from('sale_items').delete().eq('account_id',acctId).eq('date',date);
   invalidateCache(acctId);
 }
 
@@ -2715,11 +2717,13 @@ async function deleteDay(day){
   if(!confirm(`Remover dados do dia ${day}?`))return;
   await deleteDayDB(acct.id,day);
   await renderAll();
+  renderVendasSection();
 }
 async function deleteRow(day,name){
   const acct=getActiveAcct();if(!acct)return;
   await deleteRowDB(acct.id,day,name);
   await renderAll();
+  renderVendasSection();
 }
 
 /* ── EXPORT / IMPORT ── */
