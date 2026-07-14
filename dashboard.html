@@ -2895,7 +2895,7 @@ function renderReguaRadial(meta,alvos,feitoMes,bonusPct){
   const fracFill=Math.min(feitoMes/metaMax,1);
   const angleFill=Math.PI-(fracFill*Math.PI);
   const fx=cx+r*Math.cos(angleFill),fy=cy-r*Math.sin(angleFill);
-  const largeArc=fracFill>=0.5?1:0;
+  const largeArc=0; // o arco da régua nunca passa de 180°, então é sempre o arco curto
   const maxTierDone=feitoMes>=metaMax;
   document.getElementById('regua-radial-fill').setAttribute('d',fracFill<=0?'M 60 170 A 130 130 0 0 1 60 170':`M 60 170 A ${r} ${r} 0 ${largeArc} 1 ${fx} ${fy}`);
   document.getElementById('regua-radial-fill').setAttribute('stroke',maxTierDone?'var(--accent2)':'var(--yellow)');
