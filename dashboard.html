@@ -515,7 +515,7 @@ let currentUser=null;
       <span><span class="chip" style="background:var(--accent2)"></span>Déficit + Lucro</span>
       <span><span class="chip" style="background:var(--red)"></span>Saudável + Prejuízo</span>
     </div>
-    <table style="border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace;width:100%" id="cliques-table">
+    <div class="day-table-wrap"><table style="border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace;width:100%;min-width:720px" id="cliques-table">
       <thead><tr>
         <th style="text-align:left;cursor:pointer;user-select:none" onclick="sortCliquesTable('name')">Sub id <span class="sort-ind" id="cli-sort-name"></span></th>
         <th class="cli-pair-r" style="cursor:pointer;user-select:none" onclick="sortCliquesTable('meta')">Meta <span class="sort-ind" id="cli-sort-meta"></span></th>
@@ -529,7 +529,7 @@ let currentUser=null;
         <th style="cursor:pointer;user-select:none" onclick="sortCliquesTable('saldo')">Saldo <span class="sort-ind" id="cli-sort-saldo"></span></th>
       </tr></thead>
       <tbody id="cliques-tbody"></tbody>
-    </table>
+    </table></div>
   </div>
 </div>
 
@@ -602,10 +602,10 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
       <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
       <input type="text" id="inp-shopee-goal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:140px;text-align:center;outline:none">
     </span>
-    <button class="btn-sm" onclick="saveShopeeGoal()">Salvar</button>
+    <button class="btn-sm" onclick="saveShopeeGoal()" style="height:32px;display:inline-flex;align-items:center;box-sizing:border-box">Salvar</button>
     <span class="meta100-bonus" style="margin-left:auto;display:flex;align-items:center;gap:6px">
       <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace">Bônus a receber</span>
-      <span id="bonus-a-receber" style="background:rgba(59,240,160,0.16);color:var(--accent2);font-size:14px;font-weight:500;padding:5px 12px;border-radius:6px;font-family:'DM Mono',monospace">R$ 0,00</span>
+      <span id="bonus-a-receber" style="background:rgba(59,240,160,0.16);color:var(--accent2);font-size:14px;font-weight:500;padding:0 12px;border-radius:6px;font-family:'DM Mono',monospace;height:32px;display:inline-flex;align-items:center;box-sizing:border-box">R$ 0,00</span>
     </span>
   </div>
 
