@@ -2238,7 +2238,6 @@ async function renderCanalTable(){
 }
 let _top10Data=[];
 let _top10SortCol='comissao';
-let _top10SortDir='desc';
 async function renderTop10Table(){
   const acct=getActiveAcct();
   if(!acct)return;
@@ -2269,27 +2268,20 @@ async function renderTop10Table(){
   renderTop10Sorted();
 }
 function sortTop10Table(col){
-  if(_top10SortCol===col){_top10SortDir=_top10SortDir==='desc'?'asc':'desc';}
-  else{_top10SortCol=col;_top10SortDir='desc';}
+  _top10SortCol=col;
   renderTop10Sorted();
 }
 function renderTop10Sorted(){
-  const col=_top10SortCol,dir=_top10SortDir;
-  const sorted=[..._top10Data].sort((a,b)=>{
-    const av=col==='produto'?a.produto.toLowerCase():a[col];
-    const bv=col==='produto'?b.produto.toLowerCase():b[col];
-    if(av<bv)return dir==='asc'?-1:1;
-    if(av>bv)return dir==='asc'?1:-1;
-    return 0;
-  });
+  const col=_top10SortCol;
+  const sorted=[..._top10Data].sort((a,b)=>b[col]-a[col]);
   const top10=sorted.slice(0,10);
-  const arrow=c=>_top10SortCol===c?(_top10SortDir==='desc'?' ↓':' ↑'):'';
+  const activeStyle=c=>_top10SortCol===c?'color:var(--yellow)':'color:var(--muted)';
   const topEl=document.getElementById('top10-table');
   if(topEl)topEl.innerHTML=`<tr>
     <th style="text-align:left">Produtos</th>
-    <th style="text-align:center;cursor:pointer;user-select:none" onclick="sortTop10Table('itens')">Itens${arrow('itens')}</th>
-    <th style="text-align:center;cursor:pointer;user-select:none" onclick="sortTop10Table('comissao')">Comissão${arrow('comissao')}</th>
-    <th style="text-align:center;cursor:pointer;user-select:none" onclick="sortTop10Table('venda')">Venda Bruta${arrow('venda')}</th>
+    <th style="text-align:center;cursor:pointer;user-select:none;${activeStyle('itens')}" onclick="sortTop10Table('itens')">Itens</th>
+    <th style="text-align:center;cursor:pointer;user-select:none;${activeStyle('comissao')}" onclick="sortTop10Table('comissao')">Comissão</th>
+    <th style="text-align:center;cursor:pointer;user-select:none;${activeStyle('venda')}" onclick="sortTop10Table('venda')">Venda Bruta</th>
   </tr>`+
     (top10.length?top10.map((p,i)=>{
       const link=p.shopId&&p.itemId?`https://shopee.com.br/product/${p.shopId}/${p.itemId}`:null;
