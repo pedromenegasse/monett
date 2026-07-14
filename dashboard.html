@@ -50,6 +50,7 @@ let currentUser=null;
   #iss-inp:focus{border-color:var(--accent)}
   .iss-pct{font-family:'DM Mono',monospace;font-size:13px;color:var(--muted)}
   .iss-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+  .iss-label{display:inline-block;min-width:172px}
   .iss-meta b{color:var(--yellow)}
   .btn-sm{background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:6px 14px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
   .btn-sm:hover{background:var(--accent);color:#0d0f14}
@@ -307,8 +308,8 @@ let currentUser=null;
 <!-- ISS BAR -->
 <div id="iss-bar" style="display:flex;align-items:center;flex-wrap:wrap;gap:10px">
   <span class="iss-meta">
-    <span>Taxa Meta (investimento): <input type="text" id="meta-taxa-inp" value="13,85" inputmode="decimal" style="background:var(--surface2);border:1px solid var(--border-strong,#3a3a38);border-radius:4px;color:var(--yellow);font-family:'DM Mono',monospace;font-size:11px;font-weight:400;padding:2px 4px;width:56px;text-align:center;outline:none"> <span style="color:var(--yellow);font-family:'DM Mono',monospace;font-size:11px;font-weight:400">%</span></span>
-    <span><span class="iss-pipe">&nbsp;|&nbsp;</span>ISS (deduzido da venda): <input type="text" id="iss-inp" value="6,00" inputmode="decimal" style="background:var(--surface2);border:1px solid var(--border-strong,#3a3a38);border-radius:4px;color:var(--yellow);font-family:'DM Mono',monospace;font-size:11px;font-weight:400;padding:2px 4px;width:56px;text-align:center;outline:none"> <span style="color:var(--yellow);font-family:'DM Mono',monospace;font-size:11px;font-weight:400">%</span></span>
+    <span><span class="iss-label">Taxa Meta (investimento):</span> <input type="text" id="meta-taxa-inp" value="13,85" inputmode="decimal" style="background:var(--surface2);border:1px solid var(--border-strong,#3a3a38);border-radius:4px;color:var(--yellow);font-family:'DM Mono',monospace;font-size:11px;font-weight:400;padding:2px 4px;width:56px;text-align:center;outline:none"> <span style="color:var(--yellow);font-family:'DM Mono',monospace;font-size:11px;font-weight:400">%</span></span>
+    <span><span class="iss-pipe">&nbsp;|&nbsp;</span><span class="iss-label">ISS (deduzido da venda):</span> <input type="text" id="iss-inp" value="6,00" inputmode="decimal" style="background:var(--surface2);border:1px solid var(--border-strong,#3a3a38);border-radius:4px;color:var(--yellow);font-family:'DM Mono',monospace;font-size:11px;font-weight:400;padding:2px 4px;width:56px;text-align:center;outline:none"> <span style="color:var(--yellow);font-family:'DM Mono',monospace;font-size:11px;font-weight:400">%</span></span>
   </span>
   <button class="btn-sm" onclick="saveISS()">Salvar</button>
 </div>
