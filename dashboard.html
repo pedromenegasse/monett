@@ -230,6 +230,7 @@ let currentUser=null;
     .meta100-inputrow{width:100%!important;display:flex!important;justify-content:space-between!important;box-sizing:border-box!important}
     .meta100-valuebox{flex:1;min-width:0}
     .meta100-valuebox input{width:100%!important;min-width:0}
+    .meta100-btn,#bonus-a-receber{min-width:104px;justify-content:center}
     .meta100-bonus{width:100%!important;margin-left:0!important;display:flex!important;justify-content:space-between!important;box-sizing:border-box!important}
     #bd-header-summary{font-size:14px!important;width:auto!important}
     .sub-modal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -606,7 +607,7 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
         <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
         <input type="text" id="inp-shopee-goal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:140px;text-align:center;outline:none">
       </span>
-      <button class="btn-sm" onclick="saveShopeeGoal()" style="height:32px;display:inline-flex;align-items:center;box-sizing:border-box">Salvar</button>
+      <button class="btn-sm meta100-btn" onclick="saveShopeeGoal()" style="height:32px;display:inline-flex;align-items:center;box-sizing:border-box">Salvar</button>
     </span>
     <span class="meta100-bonus" style="margin-left:auto;display:flex;align-items:center;gap:6px">
       <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace">Bônus a receber</span>
@@ -2181,7 +2182,7 @@ async function renderVendasSection(){
   let bonusAtual=0;
   for(let i=alvos.length-1;i>=0;i--){if(feitoMes>=alvos[i]){bonusAtual=bonusPct[i];break;}}
   const bonusEl=document.getElementById('bonus-a-receber');
-  if(bonusEl)bonusEl.textContent=fmt(feitoMes*bonusAtual/100);
+  if(bonusEl)bonusEl.textContent=fmt(Math.min(feitoMes*bonusAtual/100,100000));
   }
 
   // Cards Feito/Objetivo/Falta
