@@ -221,6 +221,8 @@ let currentUser=null;
   .sub-modal .card-label{text-align:center}
   .day-header-mobile{display:none}
   @media(max-width:900px){
+    .regua-desktop{display:none!important}
+    .regua-mobile{display:flex!important}
     #bd-header-summary{font-size:14px!important;width:auto!important}
     .sub-modal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
     #sub-modal-table{min-width:unset!important;font-size:9px}
@@ -602,6 +604,7 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
     </span>
   </div>
 
+  <div class="regua-desktop">
   <div style="position:relative;height:28px;margin-top:24px" id="regua-labels"></div>
   <div style="position:relative;margin-bottom:56px">
     <div style="display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--surface2)" id="regua-bar"></div>
@@ -614,6 +617,17 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
     <div style="position:relative;height:20px;margin-top:4px">
       <div style="position:absolute;top:0;left:0;right:0" id="regua-meta-valores"></div>
     </div>
+  </div>
+  </div>
+
+  <div class="regua-mobile" style="display:none;flex-direction:column;align-items:center;margin-bottom:20px">
+    <svg width="100%" viewBox="0 0 380 190" style="max-width:280px" id="regua-radial-svg">
+      <path d="M 60 170 A 130 130 0 0 1 320 170" fill="none" stroke="var(--surface2)" stroke-width="18" stroke-linecap="round"/>
+      <path id="regua-radial-fill" d="M 60 170 A 130 130 0 0 1 60 170" fill="none" stroke="var(--yellow)" stroke-width="18" stroke-linecap="round"/>
+      <g id="regua-radial-ticks"></g>
+      <text id="regua-radial-pct" x="190" y="160" text-anchor="middle" font-size="28" font-weight="500" fill="var(--text)" font-family="'DM Mono',monospace">0%</text>
+    </svg>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;margin-top:1.75rem;width:100%;max-width:300px;font-family:'DM Mono',monospace" id="regua-radial-legend"></div>
   </div>
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden">
@@ -2092,6 +2106,10 @@ async function renderVendasSection(){
     document.getElementById('regua-meta-valores').innerHTML='';
     const bonusElEmpty=document.getElementById('bonus-a-receber');
     if(bonusElEmpty)bonusElEmpty.textContent=fmt(0);
+    document.getElementById('regua-radial-pct').textContent='—';
+    document.getElementById('regua-radial-fill').setAttribute('d','M 60 170 A 130 130 0 0 1 60 170');
+    document.getElementById('regua-radial-ticks').innerHTML='';
+    document.getElementById('regua-radial-legend').innerHTML='<div style="color:var(--muted);font-size:12px">Defina a meta da Shopee acima para ver o progresso</div>';
   } else {
   if(faltamLabelEl)faltamLabelEl.style.display='';
   const alvos=tiers.map(t=>meta*t);
@@ -2147,6 +2165,8 @@ async function renderVendasSection(){
     return `<div style="position:absolute;left:${leftPct}%;top:0;white-space:nowrap;padding-left:8px;font-size:13px;color:var(--yellow);font-family:'DM Mono',monospace">${abbrevFmt(alvo)}</div>`;
   }).join('');
   }
+
+  renderReguaRadial(meta,alvos,feitoMes,bonusPct);
 
   let bonusAtual=0;
   for(let i=alvos.length-1;i>=0;i--){if(feitoMes>=alvos[i]){bonusAtual=bonusPct[i];break;}}
@@ -2849,6 +2869,43 @@ function abbrevFmt(v){
   if(v>=1000000)return'R$ '+(v/1000000).toFixed(2)+'M';
   if(v>=1000)return'R$ '+(v/1000).toFixed(1)+'mil';
   return'R$ '+v.toLocaleString('pt-BR',{maximumFractionDigits:0});
+}
+function renderReguaRadial(meta,alvos,feitoMes,bonusPct){
+  const svg=document.getElementById('regua-radial-svg');
+  if(!svg)return;
+  const cx=190,cy=170,r=130;
+  const metaMax=alvos[alvos.length-1]||1;
+  const pctOf100=meta>0?Math.min(feitoMes/meta*100,999):0;
+  document.getElementById('regua-radial-pct').textContent=pctOf100.toFixed(0)+'%';
+  const fracFill=Math.min(feitoMes/metaMax,1);
+  const angleFill=Math.PI-(fracFill*Math.PI);
+  const fx=cx+r*Math.cos(angleFill),fy=cy-r*Math.sin(angleFill);
+  const largeArc=fracFill>0.5?1:0;
+  const maxTierDone=feitoMes>=metaMax;
+  document.getElementById('regua-radial-fill').setAttribute('d',fracFill<=0?'M 60 170 A 130 130 0 0 1 60 170':`M 60 170 A ${r} ${r} 0 ${largeArc} 1 ${fx} ${fy}`);
+  document.getElementById('regua-radial-fill').setAttribute('stroke',maxTierDone?'var(--accent2)':'var(--yellow)');
+  const fracs=alvos.map(a=>a/metaMax);
+  let ticksHtml='';
+  fracs.forEach((f,i)=>{
+    const angle=Math.PI-(f*Math.PI);
+    const x1=cx+(r-14)*Math.cos(angle),y1=cy-(r-14)*Math.sin(angle);
+    const x2=cx+(r+14)*Math.cos(angle),y2=cy-(r+14)*Math.sin(angle);
+    const lx=cx+(r+30)*Math.cos(angle),ly=cy-(r+30)*Math.sin(angle);
+    const done=feitoMes>=alvos[i];
+    const color=done?'var(--accent2)':'var(--muted)';
+    ticksHtml+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2"/>`;
+    ticksHtml+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="500" fill="${color}" font-family="'DM Mono',monospace">+${bonusPct[i]}%</text>`;
+  });
+  document.getElementById('regua-radial-ticks').innerHTML=ticksHtml;
+  const tiers=[100,125,150];
+  document.getElementById('regua-radial-legend').innerHTML=alvos.map((alvo,i)=>{
+    const done=feitoMes>=alvo;
+    const falta=Math.max(alvo-feitoMes,0);
+    return `<div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="color:var(--text)">${tiers[i]}% <span style="color:var(--muted)">| ${abbrevFmt(alvo)}</span></span>
+      <span style="color:${done?'var(--accent2)':'var(--muted)'}">${done?'Alcançado':'Faltam '+abbrevFmt(falta)}</span>
+    </div>`;
+  }).join('');
 }
 function showToast(msg){
   const t=document.getElementById('toast');
