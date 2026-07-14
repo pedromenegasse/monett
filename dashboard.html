@@ -863,6 +863,19 @@ async function saveSaleItems(acctId,date,items){
     alert('Atenção: esperava salvar '+rows.length+' itens de venda em '+date+', mas só '+count+' ficaram no banco. Tente reimportar essa data.');
   }
 }
+async function fetchAllSaleItems(groupIds,startStr,endStr){
+  let allData=[];
+  let from=0;
+  const pageSize=1000;
+  while(true){
+    const{data:page,error}=await sb.from('sale_items').select('*').in('account_id',groupIds).gte('date',startStr).lte('date',endStr).range(from,from+pageSize-1);
+    if(error||!page||page.length===0)break;
+    allData=[...allData,...page];
+    if(page.length<pageSize)break;
+    from+=pageSize;
+  }
+  return allData;
+}
 async function saveAccountGoal(acctId,field,value){
   const col=field==='shopeeGoal'?'shopee_goal':'objetivo_mensal';
   await sb.from('user_accounts').update({[col]:value}).eq('id',acctId);
@@ -2049,7 +2062,7 @@ async function renderVendasSection(){
   const start=month+'-01';
   const end=new Date(y,m,0).toISOString().slice(0,10);
   const groupIds=getGroupAccountIds(acct);
-  const{data:items}=await sb.from('sale_items').select('*').in('account_id',groupIds).gte('date',start).lte('date',end);
+  const items=await fetchAllSaleItems(groupIds,start,end);
   if(myRenderId!==_vendasRenderId)return;
   const rows=items||[];
   const feitoMes=rows.reduce((s,it)=>s+parseFloat(it.venda_bruta||0),0);
@@ -2154,17 +2167,19 @@ function renderDiaADiaTable(rows,groupAccts){
   }
   const colCount=2+groupAccts.length;
   const w=(100/colCount).toFixed(2)+'%';
-  const cellStyle=`width:${w};padding:10px 6px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis`;
-  const thStyle=`width:${w};font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:left;padding:8px 6px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis`;
-  tbl.innerHTML=`<tr><th style="${thStyle}">Dia</th><th style="${thStyle}">Total</th>`+groupAccts.map(a=>`<th style="${thStyle}">${a.name}</th>`).join('')+'</tr>'+
+  const cellStyleLeft=`width:${w};padding:10px 6px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left`;
+  const cellStyleCenter=`width:${w};padding:10px 6px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center`;
+  const thStyleLeft=`width:${w};font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:left;padding:8px 6px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis`;
+  const thStyleCenter=`width:${w};font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:center;padding:8px 6px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis`;
+  tbl.innerHTML=`<tr><th style="${thStyleLeft}">Dia</th><th style="${thStyleCenter}">Total</th>`+groupAccts.map(a=>`<th style="${thStyleCenter}">${a.name}</th>`).join('')+'</tr>'+
     dates.map(d=>{
       const perAcct=byDate[d]||{};
       const total=Object.values(perAcct).reduce((s,v)=>s+v,0);
       const dLabel=d.split('-').reverse().slice(0,2).join('/');
       return '<tr>'+
-        `<td style="${cellStyle};font-weight:500;color:var(--text)">${dLabel}</td>`+
-        `<td style="${cellStyle};color:var(--yellow)">${fmt(total)}</td>`+
-        groupAccts.map(a=>`<td style="${cellStyle};color:var(--text)">${fmt(perAcct[a.id]||0)}</td>`).join('')+
+        `<td style="${cellStyleLeft};font-weight:500;color:var(--text)">${dLabel}</td>`+
+        `<td style="${cellStyleCenter};color:var(--yellow)">${fmt(total)}</td>`+
+        groupAccts.map(a=>`<td style="${cellStyleCenter};color:var(--text)">${fmt(perAcct[a.id]||0)}</td>`).join('')+
         '</tr>';
     }).join('');
 }
@@ -2182,7 +2197,7 @@ async function renderCanalTable(){
   const btnHoje=document.getElementById('canal-btn-hoje');
   if(btnHoje)btnHoje.textContent=latestDate?latestDate.split('-').reverse().slice(0,2).join('/'):'Último dia';
 
-  const{data:items}=await sb.from('sale_items').select('*').in('account_id',groupIds).gte('date',startStr).lte('date',endStr);
+  const items=await fetchAllSaleItems(groupIds,startStr,endStr);
   const rows=items||[];
 
   const canalAgg={};
@@ -2212,7 +2227,7 @@ async function renderTop10Table(){
   const btnHoje=document.getElementById('top10-btn-hoje');
   if(btnHoje)btnHoje.textContent=latestDate?latestDate.split('-').reverse().slice(0,2).join('/'):'Último dia';
 
-  const{data:items}=await sb.from('sale_items').select('*').in('account_id',groupIds).gte('date',startStr).lte('date',endStr);
+  const items=await fetchAllSaleItems(groupIds,startStr,endStr);
   const rows=items||[];
 
   const prodAgg={};
