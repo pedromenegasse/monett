@@ -2179,9 +2179,14 @@ function renderDiaADiaTable(rows,groupAccts){
   const tbl=document.getElementById('diaadia-table');
   if(!tbl)return;
   const byDate={};
+  const hasVR={};
   rows.forEach(r=>{
     if(!byDate[r.date])byDate[r.date]={};
     byDate[r.date][r.account_id]=(byDate[r.date][r.account_id]||0)+parseFloat(r.venda_bruta||0);
+    if(r.sub_id==='Venda Bruta Retroativa'){
+      if(!hasVR[r.date])hasVR[r.date]={};
+      hasVR[r.date][r.account_id]=true;
+    }
   });
   const dates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
   if(!dates.length){
@@ -2203,9 +2208,20 @@ function renderDiaADiaTable(rows,groupAccts){
       return '<tr>'+
         `<td style="${cellStyleLeft};font-weight:500;color:var(--text)">${dLabel}</td>`+
         `<td style="${cellStyleCenter};color:var(--yellow)">${fmt(total)}</td>`+
-        groupAccts.map(a=>`<td style="${cellStyleCenter};color:var(--text)">${fmt(perAcct[a.id]||0)}</td>`).join('')+
+        groupAccts.map(a=>{
+          const val=perAcct[a.id]||0;
+          const canDelete=hasVR[d]&&hasVR[d][a.id];
+          const delBtn=canDelete?` <span onclick="deleteVendaRetroativaDia('${a.id}','${d}')" style="color:var(--red);cursor:pointer;font-size:11px" title="Apagar Venda Bruta Retroativa deste dia">✕</span>`:'';
+          return `<td style="${cellStyleCenter};color:var(--text)">${fmt(val)}${delBtn}</td>`;
+        }).join('')+
         '</tr>';
     }).join('');
+}
+async function deleteVendaRetroativaDia(acctId,date){
+  if(!confirm('Apagar a Venda Bruta Retroativa lançada em '+date.split('-').reverse().slice(0,2).join('/')+' pra essa conta?'))return;
+  await sb.from('sale_items').delete().eq('account_id',acctId).eq('date',date).eq('sub_id','Venda Bruta Retroativa');
+  showToast('Venda bruta retroativa removida!');
+  renderVendasSection();
 }
 async function renderCanalTable(){
   const acct=getActiveAcct();
@@ -2879,7 +2895,7 @@ function renderReguaRadial(meta,alvos,feitoMes,bonusPct){
   const fracFill=Math.min(feitoMes/metaMax,1);
   const angleFill=Math.PI-(fracFill*Math.PI);
   const fx=cx+r*Math.cos(angleFill),fy=cy-r*Math.sin(angleFill);
-  const largeArc=fracFill>0.5?1:0;
+  const largeArc=fracFill>=0.5?1:0;
   const maxTierDone=feitoMes>=metaMax;
   document.getElementById('regua-radial-fill').setAttribute('d',fracFill<=0?'M 60 170 A 130 130 0 0 1 60 170':`M 60 170 A ${r} ${r} 0 ${largeArc} 1 ${fx} ${fy}`);
   document.getElementById('regua-radial-fill').setAttribute('stroke',maxTierDone?'var(--accent2)':'var(--yellow)');
