@@ -222,8 +222,7 @@ let currentUser=null;
   .sub-modal .card-label{text-align:center}
   .day-header-mobile{display:none}
   @media(max-width:900px){
-    .regua-desktop{display:none!important}
-    .regua-mobile{display:flex!important}
+    .metas-progress-grid{grid-template-columns:1fr!important}
     #objetivo-cards{grid-template-columns:1fr!important}
     .card-vertical{display:none!important}
     .card-horizontal{display:flex!important}
@@ -613,32 +612,17 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:28px" id="objetivo-cards"></div>
-
-  <div class="regua-desktop">
-  <div style="position:relative;height:28px;margin-top:24px" id="regua-labels"></div>
-  <div style="position:relative;margin-bottom:56px">
-    <div style="display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--surface2)" id="regua-bar"></div>
-    <div style="position:absolute;top:0;left:0;right:0;height:100%;pointer-events:none" id="regua-lines"></div>
-    <div style="position:absolute;top:0;left:0;right:0;height:22px;pointer-events:none" id="regua-feito-label"></div>
-    <div style="position:relative;height:20px;margin-top:16px">
-      <span id="regua-faltam-label" style="position:absolute;left:0;top:0;font-size:13px;color:var(--muted);white-space:nowrap;font-family:'DM Mono',monospace">Faltam</span>
-      <div style="position:absolute;top:0;left:0;right:0" id="regua-falta"></div>
+  <div class="metas-progress-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;margin-bottom:28px">
+    <div style="display:grid;grid-template-columns:1fr;gap:12px" id="objetivo-cards"></div>
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <svg width="100%" viewBox="0 0 380 190" style="max-width:300px" id="regua-radial-svg">
+        <path d="M 60 170 A 130 130 0 0 1 320 170" fill="none" stroke="var(--surface2)" stroke-width="18" stroke-linecap="round"/>
+        <path id="regua-radial-fill" d="M 60 170 A 130 130 0 0 1 60 170" fill="none" stroke="var(--yellow)" stroke-width="18" stroke-linecap="round"/>
+        <g id="regua-radial-ticks"></g>
+        <text id="regua-radial-pct" x="190" y="160" text-anchor="middle" font-size="28" font-weight="500" fill="var(--text)" font-family="'DM Mono',monospace">0%</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;margin-top:1.75rem;width:100%;max-width:300px;font-family:'DM Mono',monospace" id="regua-radial-legend"></div>
     </div>
-    <div style="position:relative;height:20px;margin-top:4px">
-      <div style="position:absolute;top:0;left:0;right:0" id="regua-meta-valores"></div>
-    </div>
-  </div>
-  </div>
-
-  <div class="regua-mobile" style="display:none;flex-direction:column;align-items:center;margin-bottom:20px">
-    <svg width="100%" viewBox="0 0 380 190" style="max-width:280px" id="regua-radial-svg">
-      <path d="M 60 170 A 130 130 0 0 1 320 170" fill="none" stroke="var(--surface2)" stroke-width="18" stroke-linecap="round"/>
-      <path id="regua-radial-fill" d="M 60 170 A 130 130 0 0 1 60 170" fill="none" stroke="var(--yellow)" stroke-width="18" stroke-linecap="round"/>
-      <g id="regua-radial-ticks"></g>
-      <text id="regua-radial-pct" x="190" y="160" text-anchor="middle" font-size="28" font-weight="500" fill="var(--text)" font-family="'DM Mono',monospace">0%</text>
-    </svg>
-    <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;margin-top:1.75rem;width:100%;max-width:300px;font-family:'DM Mono',monospace" id="regua-radial-legend"></div>
   </div>
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden">
@@ -2131,18 +2115,10 @@ async function renderVendasSection(){
   const diaAtual=latestDay?parseInt(latestDay.split('-')[2]):1;
   const diasRestantes=Math.max(diasNoMes-diaAtual,1);
 
-  // Régua de bônus Shopee
+  // Régua de bônus Shopee (medidor radial)
   const meta=groupShopeeGoal;
   const tiers=[1.0,1.25,1.5],bonusPct=[1,2,3];
-  const faltamLabelEl=document.getElementById('regua-faltam-label');
   if(meta<=0){
-    if(faltamLabelEl)faltamLabelEl.style.display='none';
-    document.getElementById('regua-labels').innerHTML='';
-    document.getElementById('regua-bar').innerHTML='<div style="width:100%;height:100%;background:var(--surface2)"></div>';
-    document.getElementById('regua-lines').innerHTML='';
-    document.getElementById('regua-feito-label').innerHTML='';
-    document.getElementById('regua-falta').innerHTML='<div style="color:var(--muted);font-size:11px;font-family:\'DM Mono\',monospace">Defina a meta da Shopee acima para ver o progresso</div>';
-    document.getElementById('regua-meta-valores').innerHTML='';
     const bonusElEmpty=document.getElementById('bonus-a-receber');
     if(bonusElEmpty)bonusElEmpty.textContent=fmt(0);
     document.getElementById('regua-radial-pct').textContent='—';
@@ -2150,61 +2126,7 @@ async function renderVendasSection(){
     document.getElementById('regua-radial-ticks').innerHTML='';
     document.getElementById('regua-radial-legend').innerHTML='<div style="color:var(--muted);font-size:12px">Defina a meta da Shopee acima para ver o progresso</div>';
   } else {
-  if(faltamLabelEl)faltamLabelEl.style.display='';
   const alvos=tiers.map(t=>meta*t);
-  const metaMax=alvos[alvos.length-1]||1;
-  const reservedExtra=metaMax*0.18;
-  const maxAlvo=Math.max(metaMax+reservedExtra,feitoMes*1.05,1);
-  const maxTierDone=feitoMes>=metaMax;
-  document.getElementById('regua-bar').innerHTML=alvos.map((alvo,i)=>{
-    const prevAlvo=i===0?0:alvos[i-1];
-    const segRange=alvo-prevAlvo||1;
-    const segFeito=Math.min(Math.max(feitoMes-prevAlvo,0),segRange);
-    const pct=segFeito/segRange*100;
-    const done=feitoMes>=alvo;
-    const color=done?'var(--accent2)':'var(--yellow)';
-    const widthPct=segRange/maxAlvo*100;
-    return `<div style="width:${widthPct}%;height:100%;position:relative;background:var(--surface2)"><div style="width:${pct}%;height:100%;background:${color}"></div></div>`;
-  }).join('')+(function(){
-    const extraRange=maxAlvo-metaMax;
-    if(extraRange<=0)return'';
-    const extraFeito=Math.min(Math.max(feitoMes-metaMax,0),extraRange);
-    const pct=extraFeito/extraRange*100;
-    const widthPct=extraRange/maxAlvo*100;
-    return `<div style="width:${widthPct}%;height:100%;position:relative;background:var(--surface2)"><div style="width:${pct}%;height:100%;background:linear-gradient(90deg,var(--accent2),#7dffc4)"></div></div>`;
-  })();
-  const feitoPctGlobal=Math.min(feitoMes/maxAlvo*100,100);
-  const feitoAtEnd=feitoPctGlobal>85;
-  document.getElementById('regua-feito-label').innerHTML=feitoMes>0?`<div style="position:absolute;left:${feitoPctGlobal}%;top:0;height:22px;display:flex;align-items:center;padding:0 8px;${feitoAtEnd?'margin-right:-8px':'margin-left:-8px'};white-space:nowrap;font-size:12px;color:#0d0f14;font-weight:500;background:${maxTierDone?'var(--accent2)':'var(--yellow)'};border-radius:6px;${feitoAtEnd?'transform:translateX(-100%)':''}">${abbrevFmt(feitoMes)}</div>`:'';
-  document.getElementById('regua-labels').innerHTML=alvos.map((alvo,i)=>{
-    const leftPct=alvo/maxAlvo*100;
-    const done=feitoMes>=alvo;
-    const c=done?'var(--accent2)':'var(--muted)';
-    return `<div style="position:absolute;left:${leftPct}%;top:0;white-space:nowrap;padding-left:8px;font-size:13px;color:${c};font-family:'DM Mono',monospace">+${bonusPct[i]}%</div>`;
-  }).join('');
-  document.getElementById('regua-lines').innerHTML=alvos.map((alvo,i)=>{
-    const leftPct=alvo/maxAlvo*100;
-    const done=feitoMes>=alvo;
-    const c=done?'var(--accent2)':'var(--muted)';
-    return `<div style="position:absolute;left:${leftPct}%;top:-32px;bottom:-60px;width:1px;background:${c};transform:translateX(-1px)"></div>`;
-  }).join('');
-  if(maxTierDone){
-    const extra=feitoMes-metaMax;
-    document.getElementById('regua-falta').innerHTML=`<span style="color:var(--accent2);font-size:13px;font-family:'DM Mono',monospace">Meta Máxima Superada</span> <span style="color:var(--muted)">|</span> <span style="color:var(--accent2);font-size:13px;font-family:'DM Mono',monospace">+${abbrevFmt(extra)}</span>`;
-    document.getElementById('regua-meta-valores').innerHTML='';
-  } else {
-  document.getElementById('regua-falta').innerHTML=alvos.map((alvo,i)=>{
-    const leftPct=alvo/maxAlvo*100;
-    const done=feitoMes>=alvo;
-    const falta=Math.max(alvo-feitoMes,0);
-    return `<div style="position:absolute;left:${leftPct}%;top:0;white-space:nowrap;padding-left:8px;font-size:13px;color:${done?'var(--accent2)':'var(--muted)'};font-family:'DM Mono',monospace">${done?'Batido':abbrevFmt(falta)}</div>`;
-  }).join('');
-  document.getElementById('regua-meta-valores').innerHTML=alvos.map((alvo,i)=>{
-    const leftPct=alvo/maxAlvo*100;
-    return `<div style="position:absolute;left:${leftPct}%;top:0;white-space:nowrap;padding-left:8px;font-size:13px;color:var(--yellow);font-family:'DM Mono',monospace">${abbrevFmt(alvo)}</div>`;
-  }).join('');
-  }
-
   renderReguaRadial(meta,alvos,feitoMes,bonusPct);
 
   let bonusAtual=0;
@@ -2224,15 +2146,15 @@ async function renderVendasSection(){
   if(cardsEl)cardsEl.innerHTML=cardsData.map(c=>`
     <div>
       <div style="font-size:11px;color:var(--yellow);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;font-family:'DM Mono',monospace">${c.label}</div>
-      <div class="card-vertical" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px">
-        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">Dia</span><span style="font-size:16px;font-weight:500;color:var(--yellow);font-family:'DM Mono',monospace">${fmt(c.dia)}</span></div>
+      <div class="card-vertical" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-family:'DM Mono',monospace">
+        <div style="display:grid;grid-template-columns:32px 1fr 20px 74px;align-items:baseline"><span style="font-size:10px;color:var(--muted)">Dia</span><span></span><span style="font-size:16px;font-weight:500;color:var(--yellow);text-align:right">R$</span><span style="font-size:16px;font-weight:500;color:var(--yellow);text-align:right">${abbrevNum(c.dia)}</span></div>
         <hr style="border:none;border-top:1px solid var(--border);margin:4px 0">
-        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">Mês</span><span style="font-size:16px;font-weight:500;color:var(--muted);font-family:'DM Mono',monospace">${fmt(c.mes)}</span></div>
+        <div style="display:grid;grid-template-columns:32px 1fr 20px 74px;align-items:baseline"><span style="font-size:10px;color:var(--muted)">Mês</span><span></span><span style="font-size:16px;font-weight:500;color:var(--muted);text-align:right">R$</span><span style="font-size:16px;font-weight:500;color:var(--muted);text-align:right">${abbrevNum(c.mes)}</span></div>
       </div>
       <div class="card-horizontal" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;align-items:center">
-        <div style="flex:1"><div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">Dia</div><div style="font-size:15px;color:var(--yellow);font-family:'DM Mono',monospace;margin-top:2px">${fmt(c.dia)}</div></div>
+        <div style="flex:1"><div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">Dia</div><div style="font-size:15px;color:var(--yellow);font-family:'DM Mono',monospace;margin-top:2px">${abbrevFmt(c.dia)}</div></div>
         <div style="width:1px;height:28px;background:var(--border);margin:0 12px"></div>
-        <div style="flex:1"><div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">Mês</div><div style="font-size:15px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px">${fmt(c.mes)}</div></div>
+        <div style="flex:1"><div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">Mês</div><div style="font-size:15px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px">${abbrevFmt(c.mes)}</div></div>
       </div>
     </div>`).join('');
 
@@ -2912,9 +2834,14 @@ function importFile(e){
 
 function fmt(v){return'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function abbrevFmt(v){
-  if(v>=1000000)return'R$ '+(v/1000000).toFixed(2)+'M';
-  if(v>=1000)return'R$ '+(v/1000).toFixed(1)+'mil';
-  return'R$ '+v.toLocaleString('pt-BR',{maximumFractionDigits:0});
+  if(v>=1000000)return'R$'+(v/1000000).toFixed(2)+'M';
+  if(v>=1000)return'R$'+(v/1000).toFixed(1)+'K';
+  return'R$'+v.toLocaleString('pt-BR',{maximumFractionDigits:0});
+}
+function abbrevNum(v){
+  if(v>=1000000)return(v/1000000).toFixed(2)+'M';
+  if(v>=1000)return(v/1000).toFixed(1)+'K';
+  return v.toLocaleString('pt-BR',{maximumFractionDigits:0});
 }
 function renderReguaRadial(meta,alvos,feitoMes,bonusPct){
   const svg=document.getElementById('regua-radial-svg');
