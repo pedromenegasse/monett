@@ -2163,11 +2163,11 @@ async function renderVendasSection(){
     const valColor=c.dynamicColor||'var(--yellow)';
     return `
     <div>
-      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;font-family:'DM Mono',monospace">${c.label}</div>
-      <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;align-items:center">
-        <div style="flex:1;display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:11px;color:var(--text);font-family:'DM Mono',monospace">Dia</span><span style="font-size:15px;color:${valColor};font-family:'DM Mono',monospace">${abbrevFmt(c.dia)}</span></div>
-        <div style="width:1px;height:20px;background:var(--border);margin:0 12px"></div>
-        <div style="flex:1;display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:11px;color:var(--text);font-family:'DM Mono',monospace">Mês</span><span style="font-size:15px;color:${valColor};font-family:'DM Mono',monospace">${abbrevFmt(c.mes)}</span></div>
+      <div style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;font-family:'DM Mono',monospace">${c.label}</div>
+      <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:18px 20px;align-items:center">
+        <div style="flex:1;display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:13px;color:var(--text);font-family:'DM Mono',monospace">Dia</span><span style="font-size:18px;color:${valColor};font-family:'DM Mono',monospace">${abbrevFmt(c.dia)}</span></div>
+        <div style="width:1px;height:26px;background:var(--border);margin:0 12px"></div>
+        <div style="flex:1;display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:13px;color:var(--text);font-family:'DM Mono',monospace">Mês</span><span style="font-size:18px;color:${valColor};font-family:'DM Mono',monospace">${abbrevFmt(c.mes)}</span></div>
       </div>
     </div>`;
   }).join('');
