@@ -227,12 +227,7 @@ let currentUser=null;
     #objetivo-cards{grid-template-columns:1fr!important}
     .card-vertical{display:none!important}
     .card-horizontal{display:flex!important}
-    .meta100-title{width:100%}
-    .meta100-inputrow{width:100%!important;display:flex!important;justify-content:space-between!important;box-sizing:border-box!important}
-    .meta100-valuebox{flex:1;min-width:0}
-    .meta100-valuebox input{width:100%!important;min-width:0}
-    .meta100-btn,#bonus-a-receber{min-width:104px;justify-content:center}
-    .meta100-bonus{width:100%!important;margin-left:0!important;display:flex!important;justify-content:space-between!important;box-sizing:border-box!important}
+    #bonus-a-receber{min-width:80px;justify-content:center;display:inline-flex}
     #bd-header-summary{font-size:14px!important;width:auto!important}
     .sub-modal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
     #sub-modal-table{min-width:unset!important;font-size:9px}
@@ -589,33 +584,31 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden">
     <h2 onclick="toggleVendasSub('metas')" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-size:15px;padding:18px 20px;margin:0">
-      <span id="metas-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">+</span> Metas
+      <span id="metas-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">+</span>
+      <span>Metas</span>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace">
+        <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Bônus a receber</span>
+        <span id="bonus-a-receber" style="background:rgba(59,240,160,0.16);color:var(--accent2);font-size:13px;font-weight:500;padding:3px 10px;border-radius:6px">R$ 0,00</span>
+      </span>
     </h2>
     <div id="metas-sub-body" style="display:none;padding:0 16px 16px">
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
-        <span class="meta100-title" style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-family:'DM Mono',monospace">Objetivo mensal</span>
-        <span class="meta100-inputrow" style="display:flex;align-items:center;gap:12px">
-          <span class="meta100-valuebox" style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <span style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-family:'DM Mono',monospace">Objetivo mensal</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
             <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
-            <input type="text" id="inp-objetivo-mensal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:140px;text-align:center;outline:none">
+            <input type="text" id="inp-objetivo-mensal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:110px;text-align:center;outline:none">
           </span>
-          <button class="btn-sm meta100-btn" onclick="saveObjetivoMensal()" style="height:32px;display:inline-flex;align-items:center;box-sizing:border-box">Salvar</button>
         </span>
-      </div>
-
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <span class="meta100-title" style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-family:'DM Mono',monospace">Meta 100%</span>
-        <span class="meta100-inputrow" style="display:flex;align-items:center;gap:12px">
-          <span class="meta100-valuebox" style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
+        <span style="width:1px;height:24px;background:var(--border)"></span>
+        <span style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-family:'DM Mono',monospace">Meta 100%</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
             <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
-            <input type="text" id="inp-shopee-goal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:140px;text-align:center;outline:none">
+            <input type="text" id="inp-shopee-goal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:110px;text-align:center;outline:none">
           </span>
-          <button class="btn-sm meta100-btn" onclick="saveShopeeGoal()" style="height:32px;display:inline-flex;align-items:center;box-sizing:border-box">Salvar</button>
         </span>
-        <span class="meta100-bonus" style="margin-left:auto;display:flex;align-items:center;gap:6px">
-          <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace">Bônus a receber</span>
-          <span id="bonus-a-receber" style="background:rgba(59,240,160,0.16);color:var(--accent2);font-size:14px;font-weight:500;padding:0 12px;border-radius:6px;font-family:'DM Mono',monospace;height:32px;display:inline-flex;align-items:center;box-sizing:border-box">R$ 0,00</span>
-        </span>
+        <button class="btn-sm" onclick="saveMetas()" style="margin-left:auto;height:32px;display:inline-flex;align-items:center;box-sizing:border-box">Salvar</button>
       </div>
     </div>
   </div>
@@ -2093,6 +2086,19 @@ async function saveObjetivoMensal(){
   const val=parseNum(document.getElementById('inp-objetivo-mensal').value||'0');
   const groupIds=getGroupAccountIds(acct);
   await Promise.all(groupIds.map(id=>saveAccountGoal(id,'objetivoMensal',val)));
+  renderVendasSection();
+}
+async function saveMetas(){
+  const acct=getActiveAcct();
+  if(!acct)return;
+  const valShopee=parseNum(document.getElementById('inp-shopee-goal').value||'0');
+  const valObjetivo=parseNum(document.getElementById('inp-objetivo-mensal').value||'0');
+  const groupIds=getGroupAccountIds(acct);
+  await Promise.all([
+    ...groupIds.map(id=>saveAccountGoal(id,'shopeeGoal',valShopee)),
+    ...groupIds.map(id=>saveAccountGoal(id,'objetivoMensal',valObjetivo))
+  ]);
+  showToast('Metas salvas!');
   renderVendasSection();
 }
 let _vendasRenderId=0;
