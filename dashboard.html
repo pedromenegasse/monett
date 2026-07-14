@@ -2236,6 +2236,9 @@ async function renderCanalTable(){
   if(canalEl)canalEl.innerHTML='<tr><th style="text-align:left"></th><th style="text-align:center">Pedidos</th><th style="text-align:center">Comissão</th><th style="text-align:center">Vendas brutas</th></tr>'+
     (canalList.length?canalList.map(d=>`<tr><td style="font-weight:500;text-align:left">${d.canal}</td><td style="color:var(--text);text-align:center">${d.pedidos.toLocaleString('pt-BR')}</td><td style="color:var(--yellow);text-align:center">${fmt(d.comissao)}</td><td style="text-align:center">${fmt(d.venda)}</td></tr>`).join(''):'<tr><td style="color:var(--muted)">Nenhum dado neste período.</td></tr>');
 }
+let _top10Data=[];
+let _top10SortCol='comissao';
+let _top10SortDir='desc';
 async function renderTop10Table(){
   const acct=getActiveAcct();
   if(!acct)return;
@@ -2262,9 +2265,32 @@ async function renderTop10Table(){
     prodAgg[p].comissao+=parseFloat(r.comissao||0);
     if(!prodAgg[p].shopId&&r.shop_id){prodAgg[p].shopId=r.shop_id;prodAgg[p].itemId=r.item_id||'';}
   });
-  const top10=Object.values(prodAgg).sort((a,b)=>b.comissao-a.comissao).slice(0,10);
+  _top10Data=Object.values(prodAgg);
+  renderTop10Sorted();
+}
+function sortTop10Table(col){
+  if(_top10SortCol===col){_top10SortDir=_top10SortDir==='desc'?'asc':'desc';}
+  else{_top10SortCol=col;_top10SortDir='desc';}
+  renderTop10Sorted();
+}
+function renderTop10Sorted(){
+  const col=_top10SortCol,dir=_top10SortDir;
+  const sorted=[..._top10Data].sort((a,b)=>{
+    const av=col==='produto'?a.produto.toLowerCase():a[col];
+    const bv=col==='produto'?b.produto.toLowerCase():b[col];
+    if(av<bv)return dir==='asc'?-1:1;
+    if(av>bv)return dir==='asc'?1:-1;
+    return 0;
+  });
+  const top10=sorted.slice(0,10);
+  const arrow=c=>_top10SortCol===c?(_top10SortDir==='desc'?' ↓':' ↑'):'';
   const topEl=document.getElementById('top10-table');
-  if(topEl)topEl.innerHTML='<tr><th style="text-align:left">Produtos</th><th style="text-align:center">Itens</th><th style="text-align:center">Comissão</th><th style="text-align:center">Venda Bruta</th></tr>'+
+  if(topEl)topEl.innerHTML=`<tr>
+    <th style="text-align:left">Produtos</th>
+    <th style="text-align:center;cursor:pointer;user-select:none" onclick="sortTop10Table('itens')">Itens${arrow('itens')}</th>
+    <th style="text-align:center;cursor:pointer;user-select:none" onclick="sortTop10Table('comissao')">Comissão${arrow('comissao')}</th>
+    <th style="text-align:center;cursor:pointer;user-select:none" onclick="sortTop10Table('venda')">Venda Bruta${arrow('venda')}</th>
+  </tr>`+
     (top10.length?top10.map((p,i)=>{
       const link=p.shopId&&p.itemId?`https://shopee.com.br/product/${p.shopId}/${p.itemId}`:null;
       const nomeHtml=link?`<a href="${link}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${p.produto}</a>`:p.produto;
