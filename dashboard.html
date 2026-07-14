@@ -648,8 +648,10 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
 #canal-table,#top10-table{table-layout:fixed}
 #canal-table th,#top10-table th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:left;padding:8px 6px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #canal-table td,#top10-table td{padding:10px 6px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#canal-table th:first-child,#canal-table td:first-child,#top10-table th:first-child,#top10-table td:first-child{width:34%}
-#canal-table th:not(:first-child),#canal-table td:not(:first-child),#top10-table th:not(:first-child),#top10-table td:not(:first-child){width:22%}
+#canal-table th:first-child,#canal-table td:first-child{width:20%;text-align:left}
+#canal-table th:not(:first-child),#canal-table td:not(:first-child){width:26.66%}
+#top10-table th:first-child,#top10-table td:first-child{width:34%}
+#top10-table th:not(:first-child),#top10-table td:not(:first-child){width:22%}
 </style>
 <div id="section-financeiro" class="nav-panel" data-section="financeiro" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px">
   <div id="bd-section">
@@ -837,7 +839,8 @@ async function saveSaleItems(acctId,date,items){
   const rows=items.map(it=>({
     account_id:acctId,user_id:currentUser.id,date,
     produto:it.produto,canal:it.canal||null,qtd:it.qtd,
-    venda_bruta:it.vendaBruta,comissao:it.comissao,sub_id:it.sub||null
+    venda_bruta:it.vendaBruta,comissao:it.comissao,sub_id:it.sub||null,
+    shop_id:it.shopId||null,item_id:it.itemId||null
   }));
   const chunkSize=300;
   let failedChunks=0;
@@ -1727,6 +1730,8 @@ function parse2x1(rawInput){
   const compraIdx=headers.findIndex(h=>h.includes('Valor de Compra'));
   const atribIdx=headers.findIndex(h=>h.includes('atribuição')||h.includes('atribuicao'));
   const nomeItemIdx=headers.findIndex(h=>h.includes('Nome do Item'));
+  const shopIdIdx=headers.findIndex(h=>h.includes('ID da loja'));
+  const itemIdIdx=headers.findIndex(h=>h.trim()==='ID do item');
   const canalIdx=headers.findIndex(h=>h.trim()==='Canal');
   const qtdIdx=headers.findIndex(h=>h.trim()==='Qtd');
   const comissaoItemIdx=headers.findIndex(h=>h.includes('Comissão total do item'));
@@ -1761,7 +1766,9 @@ function parse2x1(rawInput){
           canal:canalIdx>=0?(cols[canalIdx]||'').trim():'',
           qtd:qtdIdx>=0?(parseInt(cols[qtdIdx])||1):1,
           vendaBruta:compraVal,
-          comissao:comissaoItemIdx>=0?parseNum(cols[comissaoItemIdx]||'0'):0
+          comissao:comissaoItemIdx>=0?parseNum(cols[comissaoItemIdx]||'0'):0,
+          shopId:shopIdIdx>=0?(cols[shopIdIdx]||'').trim():'',
+          itemId:itemIdIdx>=0?(cols[itemIdIdx]||'').trim():''
         });
       }
     }
@@ -2211,7 +2218,7 @@ async function renderCanalTable(){
   const canalList=Object.values(canalAgg).sort((a,b)=>b.venda-a.venda);
   const canalEl=document.getElementById('canal-table');
   if(canalEl)canalEl.innerHTML='<tr><th></th><th>Pedidos</th><th>Vendas brutas</th><th>Comissão</th></tr>'+
-    (canalList.length?canalList.map(d=>`<tr><td style="font-weight:500">${d.canal}</td><td style="color:var(--muted)">${d.pedidos.toLocaleString('pt-BR')}</td><td>${fmt(d.venda)}</td><td style="color:var(--yellow)">${fmt(d.comissao)}</td></tr>`).join(''):'<tr><td style="color:var(--muted)">Nenhum dado neste período.</td></tr>');
+    (canalList.length?canalList.map(d=>`<tr><td style="font-weight:500">${d.canal}</td><td style="color:var(--text)">${d.pedidos.toLocaleString('pt-BR')}</td><td>${fmt(d.venda)}</td><td style="color:var(--yellow)">${fmt(d.comissao)}</td></tr>`).join(''):'<tr><td style="color:var(--muted)">Nenhum dado neste período.</td></tr>');
 }
 async function renderTop10Table(){
   const acct=getActiveAcct();
@@ -2234,15 +2241,20 @@ async function renderTop10Table(){
   rows.forEach(r=>{
     if(r.sub_id==='Venda Bruta Retroativa')return;
     const p=r.produto;
-    if(!prodAgg[p])prodAgg[p]={produto:p,itens:0,venda:0,comissao:0};
+    if(!prodAgg[p])prodAgg[p]={produto:p,itens:0,venda:0,comissao:0,shopId:r.shop_id||'',itemId:r.item_id||''};
     prodAgg[p].itens+=r.qtd||1;
     prodAgg[p].venda+=parseFloat(r.venda_bruta||0);
     prodAgg[p].comissao+=parseFloat(r.comissao||0);
+    if(!prodAgg[p].shopId&&r.shop_id){prodAgg[p].shopId=r.shop_id;prodAgg[p].itemId=r.item_id||'';}
   });
   const top10=Object.values(prodAgg).sort((a,b)=>b.venda-a.venda).slice(0,10);
   const topEl=document.getElementById('top10-table');
   if(topEl)topEl.innerHTML='<tr><th style="text-align:left">Produtos</th><th style="text-align:center">Itens</th><th style="text-align:center">Comissão</th><th style="text-align:center">Venda Bruta</th></tr>'+
-    (top10.length?top10.map((p,i)=>`<tr><td style="font-weight:500;text-align:left">${i+1}. ${p.produto}</td><td style="color:var(--muted);text-align:center">${p.itens}</td><td style="color:var(--yellow);text-align:center">${fmt(p.comissao)}</td><td style="text-align:center">${fmt(p.venda)}</td></tr>`).join(''):'<tr><td style="color:var(--muted)">Nenhum dado neste período.</td></tr>');
+    (top10.length?top10.map((p,i)=>{
+      const link=p.shopId&&p.itemId?`https://shopee.com.br/product/${p.shopId}/${p.itemId}`:null;
+      const nomeHtml=link?`<a href="${link}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${p.produto}</a>`:p.produto;
+      return `<tr><td style="font-weight:500;text-align:left"><span style="color:var(--yellow)">${i+1}.</span> ${nomeHtml}</td><td style="color:var(--text);text-align:center">${p.itens}</td><td style="color:var(--yellow);text-align:center">${fmt(p.comissao)}</td><td style="text-align:center">${fmt(p.venda)}</td></tr>`;
+    }).join(''):'<tr><td style="color:var(--muted)">Nenhum dado neste período.</td></tr>');
 }
 async function renderVendasTables(){
   await renderCanalTable();
