@@ -2173,11 +2173,12 @@ function renderDiaADiaTable(rows,groupAccts){
     return;
   }
   const colCount=2+groupAccts.length;
-  const w=(100/colCount).toFixed(2)+'%';
-  const cellStyleLeft=`width:${w};padding:10px 6px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left`;
-  const cellStyleCenter=`width:${w};padding:10px 6px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center`;
-  const thStyleLeft=`width:${w};font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:left;padding:8px 6px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis`;
-  const thStyleCenter=`width:${w};font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:center;padding:8px 6px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis`;
+  const wDia='19%';
+  const wOthers=((100-19)/(colCount-1)).toFixed(2)+'%';
+  const cellStyleLeft=`width:${wDia};padding:10px 6px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left`;
+  const cellStyleCenter=`width:${wOthers};padding:10px 6px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center`;
+  const thStyleLeft=`width:${wDia};font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:left;padding:8px 6px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis`;
+  const thStyleCenter=`width:${wOthers};font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:center;padding:8px 6px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis`;
   tbl.innerHTML=`<tr><th style="${thStyleLeft}">Dia</th><th style="${thStyleCenter}">Total</th>`+groupAccts.map(a=>`<th style="${thStyleCenter}">${a.name}</th>`).join('')+'</tr>'+
     dates.map(d=>{
       const perAcct=byDate[d]||{};
@@ -2217,8 +2218,8 @@ async function renderCanalTable(){
   });
   const canalList=Object.values(canalAgg).sort((a,b)=>b.venda-a.venda);
   const canalEl=document.getElementById('canal-table');
-  if(canalEl)canalEl.innerHTML='<tr><th></th><th>Pedidos</th><th>Vendas brutas</th><th>Comissão</th></tr>'+
-    (canalList.length?canalList.map(d=>`<tr><td style="font-weight:500">${d.canal}</td><td style="color:var(--text)">${d.pedidos.toLocaleString('pt-BR')}</td><td>${fmt(d.venda)}</td><td style="color:var(--yellow)">${fmt(d.comissao)}</td></tr>`).join(''):'<tr><td style="color:var(--muted)">Nenhum dado neste período.</td></tr>');
+  if(canalEl)canalEl.innerHTML='<tr><th style="text-align:left"></th><th style="text-align:center">Pedidos</th><th style="text-align:center">Comissão</th><th style="text-align:center">Vendas brutas</th></tr>'+
+    (canalList.length?canalList.map(d=>`<tr><td style="font-weight:500;text-align:left">${d.canal}</td><td style="color:var(--text);text-align:center">${d.pedidos.toLocaleString('pt-BR')}</td><td style="color:var(--yellow);text-align:center">${fmt(d.comissao)}</td><td style="text-align:center">${fmt(d.venda)}</td></tr>`).join(''):'<tr><td style="color:var(--muted)">Nenhum dado neste período.</td></tr>');
 }
 async function renderTop10Table(){
   const acct=getActiveAcct();
