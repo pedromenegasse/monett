@@ -307,8 +307,8 @@ let currentUser=null;
 <!-- ISS BAR -->
 <div id="iss-bar" style="display:flex;align-items:center;flex-wrap:wrap;gap:10px">
   <span class="iss-meta">
-    <span>Taxa Meta (investimento): <b>13,85% fixo</b></span>
-    <span><span class="iss-pipe">&nbsp;|&nbsp;</span>ISS (deduzido da venda): <input type="text" id="iss-inp" value="6,00" inputmode="decimal" style="background:var(--surface2);border:1px solid var(--border-strong,#3a3a38);border-radius:4px;color:var(--yellow);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;padding:2px 4px;width:56px;text-align:center;outline:none"> <span style="color:var(--yellow);font-family:'DM Mono',monospace;font-size:11px;font-weight:700">%</span></span>
+    <span>Taxa Meta (investimento): <input type="text" id="meta-taxa-inp" value="13,85" inputmode="decimal" style="background:var(--surface2);border:1px solid var(--border-strong,#3a3a38);border-radius:4px;color:var(--yellow);font-family:'DM Mono',monospace;font-size:11px;font-weight:400;padding:2px 4px;width:56px;text-align:center;outline:none"> <span style="color:var(--yellow);font-family:'DM Mono',monospace;font-size:11px;font-weight:400">%</span></span>
+    <span><span class="iss-pipe">&nbsp;|&nbsp;</span>ISS (deduzido da venda): <input type="text" id="iss-inp" value="6,00" inputmode="decimal" style="background:var(--surface2);border:1px solid var(--border-strong,#3a3a38);border-radius:4px;color:var(--yellow);font-family:'DM Mono',monospace;font-size:11px;font-weight:400;padding:2px 4px;width:56px;text-align:center;outline:none"> <span style="color:var(--yellow);font-family:'DM Mono',monospace;font-size:11px;font-weight:400">%</span></span>
   </span>
   <button class="btn-sm" onclick="saveISS()">Salvar</button>
 </div>
@@ -750,7 +750,6 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
 <div id="toast">✓</div>
 
 <script>
-const META_TAX = 0.1385;
 const SK_ACTIVE = 'tp_active_acct_v1';
 const PALETTE = ['#c6f135','#3bf0a0','#ffd166','#ff6b9d','#60a5fa','#f97316','#a78bfa','#34d399','#fb7185','#38bdf8'];
 
@@ -817,6 +816,16 @@ function getISS(month){
   const stored=localStorage.getItem(key);
   if(stored!=null)return parseFloat(stored);
   return a.iss;
+}
+function getMetaTaxa(month){
+  const a=getActiveAcct();
+  if(!a)return 13.85;
+  const m=month||getActiveMonth();
+  const groupKey=a.grupo?('grupo_'+a.grupo.toLowerCase()):a.id;
+  const key='metataxa_'+groupKey+'_'+m;
+  const stored=localStorage.getItem(key);
+  if(stored!=null)return parseFloat(stored);
+  return 13.85;
 }
 
 /* ── DAILY DATA (Supabase) ── */
@@ -1058,6 +1067,7 @@ async function confirmAddAccount(){
   _accounts.push(acct);
   setActiveAcct(acct.id);
   document.getElementById('iss-inp').value='6,00';
+  document.getElementById('meta-taxa-inp').value='13,85';
   closeModal();
   renderAccountTabs();
   await renderAll();
@@ -1124,6 +1134,8 @@ async function switchAccount(id){
   renderAccountTabs();
   const iss=getISS();
   document.getElementById('iss-inp').value=parseFloat(iss).toFixed(2).replace('.',',');
+  const metaTaxa=getMetaTaxa();
+  document.getElementById('meta-taxa-inp').value=parseFloat(metaTaxa).toFixed(2).replace('.',',');
   // reset summary cards before loading new account data
   const sc=document.getElementById('s-saldo');
   sc.textContent='R$ 0,00';sc.className='card-value cv-green';sc.dataset.raw='0';
@@ -1153,14 +1165,18 @@ function stepISS(delta){
 async function saveISS(){
   const raw=document.getElementById('iss-inp').value.replace(',','.');
   const v=parseFloat(raw);
-  if(isNaN(v)||v<0||v>100){alert('Valor inválido');return;}
+  if(isNaN(v)||v<0||v>100){alert('Valor de ISS inválido');return;}
+  const rawMeta=document.getElementById('meta-taxa-inp').value.replace(',','.');
+  const vMeta=parseFloat(rawMeta);
+  if(isNaN(vMeta)||vMeta<0||vMeta>100){alert('Valor de Taxa Meta inválido');return;}
   const acct=getActiveAcct();
   if(!acct)return;
   const month=getActiveMonth();
-  // Save month-specific ISS to localStorage — shared across accounts in the same group
+  // Save month-specific ISS and Taxa Meta to localStorage — shared across accounts in the same group
   const groupKey=acct.grupo?('grupo_'+acct.grupo.toLowerCase()):acct.id;
   localStorage.setItem('iss_'+groupKey+'_'+month, v);
-  showToast('ISS '+month+' → '+fmtPct(v)+(acct.grupo?' (grupo '+acct.grupo+')':''));
+  localStorage.setItem('metataxa_'+groupKey+'_'+month, vMeta);
+  showToast('ISS '+month+' → '+fmtPct(v)+' | Taxa Meta → '+fmtPct(vMeta)+(acct.grupo?' (grupo '+acct.grupo+')':''));
   await renderAll();
 }
 function fmtPct(v){return v.toFixed(2).replace('.',',')+' %';}
@@ -1182,8 +1198,10 @@ function parseNum(s){
 
 /* ── CALC ── */
 function calc(inv,venda,month){
-  const iss=getISS(month||getActiveMonth())/100;
-  const comMeta=inv*(1+META_TAX);
+  const m=month||getActiveMonth();
+  const iss=getISS(m)/100;
+  const metaTax=getMetaTaxa(m)/100;
+  const comMeta=inv*(1+metaTax);
   const menosISS=venda*(1-iss);
   const saldo=menosISS-comMeta;
   const roi=comMeta>0?menosISS/comMeta:null;
@@ -2499,6 +2517,9 @@ async function renderAll(){
   const issVal=getISS(activeMonth);
   const issInp=document.getElementById('iss-inp');
   if(issInp)issInp.value=parseFloat(issVal).toFixed(2).replace('.',',');
+  const metaTaxaVal=getMetaTaxa(activeMonth);
+  const metaTaxaInp=document.getElementById('meta-taxa-inp');
+  if(metaTaxaInp)metaTaxaInp.value=parseFloat(metaTaxaVal).toFixed(2).replace('.',',');
   await renderBD();
 }
 
@@ -2529,6 +2550,9 @@ async function switchMonth(m){
   const issVal=getISS(m);
   const issInp=document.getElementById('iss-inp');
   if(issInp)issInp.value=parseFloat(issVal).toFixed(2).replace('.',',');
+  const metaTaxaVal2=getMetaTaxa(m);
+  const metaTaxaInp2=document.getElementById('meta-taxa-inp');
+  if(metaTaxaInp2)metaTaxaInp2.value=parseFloat(metaTaxaVal2).toFixed(2).replace('.',',');
   await renderBD();
 }
 
@@ -2537,7 +2561,7 @@ function renderMonth(data,month){
   const days=Object.keys(md).sort();
   let totInv=0,totVenda=0;
   for(const day of days)for(const r of md[day]){totInv+=r.inv;totVenda+=r.venda;}
-  const totComMeta=totInv*(1+META_TAX);
+  const totComMeta=totInv*(1+getMetaTaxa(month)/100);
   const totMenosISS=totVenda*(1-(getISS(month)/100));
   const totSaldo=totMenosISS-totComMeta;
   const totROAS=totComMeta>0?totMenosISS/totComMeta:null;
@@ -2723,7 +2747,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','name')">Sub ID <span class="sort-ind" data-col="name"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','inv')">Investimento <span class="sort-ind" data-col="inv"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','venda')">Comissão <span class="sort-ind" data-col="venda"></span></th>
-          <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','meta')">+Meta (13,85%) <span class="sort-ind" data-col="meta"></span></th>
+          <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','meta')">+Meta (${fmtPct(getMetaTaxa())}) <span class="sort-ind" data-col="meta"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','iss')">−ISS (${fmtPct(getISS())}) <span class="sort-ind" data-col="iss"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','saldo')">Saldo/Dia <span class="sort-ind" data-col="saldo"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','roi')">ROAS <span class="sort-ind" data-col="roi"></span></th>
@@ -3348,6 +3372,8 @@ async function renderBDSaldo(){
   // Set ISS after accounts AND active account are confirmed
   const iss=getISS();
   document.getElementById('iss-inp').value=parseFloat(iss).toFixed(2).replace('.',',');
+  const metaTaxaInit=getMetaTaxa();
+  document.getElementById('meta-taxa-inp').value=parseFloat(metaTaxaInit).toFixed(2).replace('.',',');
   document.getElementById('inp-date').value=new Date().toISOString().slice(0,10);
   const savedMode=localStorage.getItem('tp_import_mode')||'3col';
   if(_bdSeparar){const t=document.getElementById('bd-separar-track');if(t)t.classList.add('on');}
