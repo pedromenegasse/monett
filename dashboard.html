@@ -223,6 +223,11 @@ let currentUser=null;
   @media(max-width:900px){
     .regua-desktop{display:none!important}
     .regua-mobile{display:flex!important}
+    #objetivo-cards{grid-template-columns:1fr!important}
+    .card-vertical{display:none!important}
+    .card-horizontal{display:flex!important}
+    .meta100-title{width:100%}
+    .meta100-bonus{width:100%!important;margin-left:0!important;justify-content:space-between}
     #bd-header-summary{font-size:14px!important;width:auto!important}
     .sub-modal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
     #sub-modal-table{min-width:unset!important;font-size:9px}
@@ -592,13 +597,13 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:28px" id="objetivo-cards"></div>
 
   <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
-    <span style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-family:'DM Mono',monospace">Meta 100%</span>
+    <span class="meta100-title" style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-family:'DM Mono',monospace">Meta 100%</span>
     <span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
       <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace">R$</span>
       <input type="text" id="inp-shopee-goal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:140px;text-align:center;outline:none">
     </span>
     <button class="btn-sm" onclick="saveShopeeGoal()">Salvar</button>
-    <span style="margin-left:auto;display:flex;align-items:center;gap:6px">
+    <span class="meta100-bonus" style="margin-left:auto;display:flex;align-items:center;gap:6px">
       <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace">Bônus a receber</span>
       <span id="bonus-a-receber" style="background:rgba(59,240,160,0.16);color:var(--accent2);font-size:14px;font-weight:500;padding:5px 12px;border-radius:6px;font-family:'DM Mono',monospace">R$ 0,00</span>
     </span>
@@ -640,7 +645,7 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
         <button data-p="7" class="mode-btn" onclick="setCanalPeriod('7')">7 dias</button>
         <button data-p="30" class="mode-btn" onclick="setCanalPeriod('30')">30 dias</button>
       </div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace" id="canal-table"></table>
+      <div class="day-table-wrap"><table style="width:100%;min-width:480px;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace" id="canal-table"></table></div>
     </div>
   </div>
 
@@ -654,7 +659,7 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
         <button data-p="7" class="mode-btn" onclick="setTop10Period('7')">7 dias</button>
         <button data-p="30" class="mode-btn" onclick="setTop10Period('30')">30 dias</button>
       </div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace" id="top10-table"></table>
+      <div class="day-table-wrap"><table style="width:100%;min-width:480px;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace" id="top10-table"></table></div>
     </div>
   </div>
 </div>
@@ -2185,10 +2190,15 @@ async function renderVendasSection(){
   if(cardsEl)cardsEl.innerHTML=cardsData.map(c=>`
     <div>
       <div style="font-size:11px;color:var(--yellow);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;font-family:'DM Mono',monospace">${c.label}</div>
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px">
+      <div class="card-vertical" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px">
         <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">Dia</span><span style="font-size:16px;font-weight:500;color:var(--yellow);font-family:'DM Mono',monospace">${fmt(c.dia)}</span></div>
         <hr style="border:none;border-top:1px solid var(--border);margin:4px 0">
         <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">Mês</span><span style="font-size:16px;font-weight:500;color:var(--muted);font-family:'DM Mono',monospace">${fmt(c.mes)}</span></div>
+      </div>
+      <div class="card-horizontal" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;align-items:center">
+        <div style="flex:1"><div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">Dia</div><div style="font-size:15px;color:var(--yellow);font-family:'DM Mono',monospace;margin-top:2px">${fmt(c.dia)}</div></div>
+        <div style="width:1px;height:28px;background:var(--border);margin:0 12px"></div>
+        <div style="flex:1"><div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">Mês</div><div style="font-size:15px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px">${fmt(c.mes)}</div></div>
       </div>
     </div>`).join('');
 
