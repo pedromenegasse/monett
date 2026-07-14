@@ -2247,7 +2247,7 @@ async function renderCanalTable(){
     canalAgg[c].venda+=parseFloat(r.venda_bruta||0);
     canalAgg[c].comissao+=parseFloat(r.comissao||0);
   });
-  const canalList=Object.values(canalAgg).sort((a,b)=>b.venda-a.venda);
+  const canalList=Object.values(canalAgg).sort((a,b)=>b.comissao-a.comissao);
   const canalEl=document.getElementById('canal-table');
   if(canalEl)canalEl.innerHTML='<tr><th style="text-align:left"></th><th style="text-align:center">Pedidos</th><th style="text-align:center">Comissão</th><th style="text-align:center">Vendas brutas</th></tr>'+
     (canalList.length?canalList.map(d=>`<tr><td style="font-weight:500;text-align:left">${d.canal}</td><td style="color:var(--text);text-align:center">${d.pedidos.toLocaleString('pt-BR')}</td><td style="color:var(--yellow);text-align:center">${fmt(d.comissao)}</td><td style="text-align:center">${fmt(d.venda)}</td></tr>`).join(''):'<tr><td style="color:var(--muted)">Nenhum dado neste período.</td></tr>');
