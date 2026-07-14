@@ -305,16 +305,12 @@ let currentUser=null;
 <div id="month-tabs"></div>
 
 <!-- ISS BAR -->
-<div id="iss-bar">
-  <label>ISS Nota Fiscal</label>
-  <div style="display:flex;align-items:center;gap:0;background:var(--surface2);border:1px solid var(--border);border-radius:6px;overflow:hidden;width:100px">
-    <button onclick="stepISS(-0.01)" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:5px 7px;font-size:14px;line-height:1">−</button>
-    <input type="text" id="iss-inp" value="6,00" inputmode="decimal" style="background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;padding:5px 0;width:50px;text-align:center;outline:none">
-    <button onclick="stepISS(0.01)" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:5px 7px;font-size:14px;line-height:1">+</button>
-  </div>
-  <span class="iss-pct">%</span>
+<div id="iss-bar" style="display:flex;align-items:center;flex-wrap:wrap;gap:10px">
+  <span class="iss-meta">
+    <span>Taxa Meta (investimento): <b>13,85% fixo</b></span>
+    <span><span class="iss-pipe">&nbsp;|&nbsp;</span>ISS (deduzido da venda): <input type="text" id="iss-inp" value="6,00" inputmode="decimal" style="background:none;border:none;border-bottom:1px solid var(--border);color:var(--yellow);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;padding:0 1px;width:34px;text-align:center;outline:none">%</span>
+  </span>
   <button class="btn-sm" onclick="saveISS()">Salvar</button>
-  <span class="iss-meta"><span>Taxa Meta (investimento): <b>13,85% fixo</b></span><span><span class="iss-pipe">&nbsp;|&nbsp;</span>ISS (deduzido da venda): <b id="iss-display">9,79%</b></span></span>
 </div>
 
 <!-- SUMMARY -->
@@ -1062,7 +1058,6 @@ async function confirmAddAccount(){
   _accounts.push(acct);
   setActiveAcct(acct.id);
   document.getElementById('iss-inp').value='6,00';
-  document.getElementById('iss-display').textContent=fmtPct(6);
   closeModal();
   renderAccountTabs();
   await renderAll();
@@ -1129,7 +1124,6 @@ async function switchAccount(id){
   renderAccountTabs();
   const iss=getISS();
   document.getElementById('iss-inp').value=parseFloat(iss).toFixed(2).replace('.',',');
-  document.getElementById('iss-display').textContent=fmtPct(iss);
   // reset summary cards before loading new account data
   const sc=document.getElementById('s-saldo');
   sc.textContent='R$ 0,00';sc.className='card-value cv-green';sc.dataset.raw='0';
@@ -1166,7 +1160,6 @@ async function saveISS(){
   // Save month-specific ISS to localStorage — shared across accounts in the same group
   const groupKey=acct.grupo?('grupo_'+acct.grupo.toLowerCase()):acct.id;
   localStorage.setItem('iss_'+groupKey+'_'+month, v);
-  document.getElementById('iss-display').textContent=fmtPct(v);
   showToast('ISS '+month+' → '+fmtPct(v)+(acct.grupo?' (grupo '+acct.grupo+')':''));
   await renderAll();
 }
@@ -2505,9 +2498,7 @@ async function renderAll(){
   // Update ISS display for active month
   const issVal=getISS(activeMonth);
   const issInp=document.getElementById('iss-inp');
-  const issDisp=document.getElementById('iss-display');
   if(issInp)issInp.value=parseFloat(issVal).toFixed(2).replace('.',',');
-  if(issDisp)issDisp.textContent=fmtPct(issVal);
   await renderBD();
 }
 
@@ -2537,9 +2528,7 @@ async function switchMonth(m){
   // Update ISS field to reflect the newly active month's saved value
   const issVal=getISS(m);
   const issInp=document.getElementById('iss-inp');
-  const issDisp=document.getElementById('iss-display');
   if(issInp)issInp.value=parseFloat(issVal).toFixed(2).replace('.',',');
-  if(issDisp)issDisp.textContent=fmtPct(issVal);
   await renderBD();
 }
 
@@ -3359,7 +3348,6 @@ async function renderBDSaldo(){
   // Set ISS after accounts AND active account are confirmed
   const iss=getISS();
   document.getElementById('iss-inp').value=parseFloat(iss).toFixed(2).replace('.',',');
-  document.getElementById('iss-display').textContent=fmtPct(iss);
   document.getElementById('inp-date').value=new Date().toISOString().slice(0,10);
   const savedMode=localStorage.getItem('tp_import_mode')||'3col';
   if(_bdSeparar){const t=document.getElementById('bd-separar-track');if(t)t.classList.add('on');}
