@@ -882,7 +882,11 @@ async function saveSaleItems(acctId,date,items){
     alert('Atenção: esperava salvar '+rows.length+' itens de venda em '+date+', mas só '+count+' ficaram no banco. Tente reimportar essa data.');
   }
 }
+let _saleItemsCache={};
+function clearSaleItemsCache(){_saleItemsCache={};_latestSaleDateCache={};}
 async function fetchAllSaleItems(groupIds,startStr,endStr){
+  const cacheKey=groupIds.join(',')+'|'+startStr+'|'+endStr;
+  if(_saleItemsCache[cacheKey])return _saleItemsCache[cacheKey];
   let allData=[];
   let from=0;
   const pageSize=1000;
@@ -893,7 +897,17 @@ async function fetchAllSaleItems(groupIds,startStr,endStr){
     if(page.length<pageSize)break;
     from+=pageSize;
   }
+  _saleItemsCache[cacheKey]=allData;
   return allData;
+}
+let _latestSaleDateCache={};
+async function getLatestSaleDate(groupIds){
+  const key=groupIds.join(',');
+  if(_latestSaleDateCache[key]!==undefined)return _latestSaleDateCache[key];
+  const{data:latestRows}=await sb.from('sale_items').select('date').in('account_id',groupIds).order('date',{ascending:false}).limit(1);
+  const result=latestRows&&latestRows[0]?latestRows[0].date:null;
+  _latestSaleDateCache[key]=result;
+  return result;
 }
 async function saveAccountGoal(acctId,field,value){
   const col=field==='shopeeGoal'?'shopee_goal':'objetivo_mensal';
@@ -2086,6 +2100,7 @@ async function saveMetas(){
 let _vendasRenderId=0;
 async function renderVendasSection(){
   const myRenderId=++_vendasRenderId;
+  clearSaleItemsCache();
   const acct=getActiveAcct();
   if(!acct)return;
   const groupAccts=_accounts.filter(a=>getGroupAccountIds(acct).includes(a.id));
@@ -2135,21 +2150,27 @@ async function renderVendasSection(){
 
   // Cards Feito/Objetivo/Falta
   const objetivoMensal=groupObjetivoMensal;
+  const feitoDiaVal=diaAtual>0?feitoMes/diaAtual:0;
+  const objetivoDiaVal=objetivoMensal/diasNoMes;
+  const feitoAcimaMedia=feitoDiaVal>=objetivoDiaVal;
   const cardsData=[
-    {label:'Feito',dia:diaAtual>0?feitoMes/diaAtual:0,mes:feitoMes},
-    {label:'Objetivo',dia:objetivoMensal/diasNoMes,mes:objetivoMensal},
-    {label:'Falta',dia:Math.max(objetivoMensal-feitoMes,0)/diasRestantes,mes:Math.max(objetivoMensal-feitoMes,0)}
+    {label:'Feito',dia:feitoDiaVal,mes:feitoMes,dynamicColor:feitoAcimaMedia?'var(--accent2)':'var(--red)'},
+    {label:'Objetivo',dia:objetivoDiaVal,mes:objetivoMensal,dynamicColor:null},
+    {label:'Falta',dia:Math.max(objetivoMensal-feitoMes,0)/diasRestantes,mes:Math.max(objetivoMensal-feitoMes,0),dynamicColor:null}
   ];
   const cardsEl=document.getElementById('objetivo-cards');
-  if(cardsEl)cardsEl.innerHTML=cardsData.map(c=>`
+  if(cardsEl)cardsEl.innerHTML=cardsData.map(c=>{
+    const valColor=c.dynamicColor||'var(--yellow)';
+    return `
     <div>
-      <div style="font-size:11px;color:var(--yellow);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;font-family:'DM Mono',monospace">${c.label}</div>
-      <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;align-items:center">
-        <div style="flex:1"><div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">Dia</div><div style="font-size:15px;color:var(--yellow);font-family:'DM Mono',monospace;margin-top:2px">${abbrevFmt(c.dia)}</div></div>
-        <div style="width:1px;height:28px;background:var(--border);margin:0 12px"></div>
-        <div style="flex:1"><div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">Mês</div><div style="font-size:15px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px">${abbrevFmt(c.mes)}</div></div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;font-family:'DM Mono',monospace">${c.label}</div>
+      <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;align-items:center">
+        <div style="flex:1;display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:11px;color:var(--text);font-family:'DM Mono',monospace">Dia</span><span style="font-size:15px;color:${valColor};font-family:'DM Mono',monospace">${abbrevFmt(c.dia)}</span></div>
+        <div style="width:1px;height:20px;background:var(--border);margin:0 12px"></div>
+        <div style="flex:1;display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:11px;color:var(--text);font-family:'DM Mono',monospace">Mês</span><span style="font-size:15px;color:${valColor};font-family:'DM Mono',monospace">${abbrevFmt(c.mes)}</span></div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   await renderVendasTables();
   renderDiaADiaTable(rows,groupAccts);
@@ -2191,8 +2212,7 @@ async function renderCanalTable(){
   if(!acct)return;
   const groupIds=getGroupAccountIds(acct);
   const days=_canalPeriod==='hoje'?1:parseInt(_canalPeriod);
-  const{data:latestRows}=await sb.from('sale_items').select('date').in('account_id',groupIds).order('date',{ascending:false}).limit(1);
-  const latestDate=latestRows&&latestRows[0]?latestRows[0].date:null;
+  const latestDate=await getLatestSaleDate(groupIds);
   const anchor=latestDate?new Date(latestDate+'T00:00:00'):(()=>{const t=new Date();t.setHours(0,0,0,0);return t;})();
   const cutoff=new Date(anchor);cutoff.setDate(cutoff.getDate()-(days-1));
   const startStr=cutoff.toISOString().slice(0,10);
@@ -2221,8 +2241,7 @@ async function renderTop10Table(){
   if(!acct)return;
   const groupIds=getGroupAccountIds(acct);
   const days=_top10Period==='hoje'?1:parseInt(_top10Period);
-  const{data:latestRows}=await sb.from('sale_items').select('date').in('account_id',groupIds).order('date',{ascending:false}).limit(1);
-  const latestDate=latestRows&&latestRows[0]?latestRows[0].date:null;
+  const latestDate=await getLatestSaleDate(groupIds);
   const anchor=latestDate?new Date(latestDate+'T00:00:00'):(()=>{const t=new Date();t.setHours(0,0,0,0);return t;})();
   const cutoff=new Date(anchor);cutoff.setDate(cutoff.getDate()-(days-1));
   const startStr=cutoff.toISOString().slice(0,10);
