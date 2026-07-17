@@ -865,10 +865,25 @@ async function saveRows(acctId,date,rows){
   await sb.from('daily_data').upsert(upserts,{onConflict:'account_id,date,sub_id'});
   invalidateCache(acctId);
 }
-async function saveSaleItems(acctId,date,items){
+async function saveSaleItems(acctId,date,items,mode){
   if(!items||!items.length)return;
-  // Replace any existing items for this account/date to avoid duplicating on re-import
-  await sb.from('sale_items').delete().eq('account_id',acctId).eq('date',date);
+  mode=mode||'substituir';
+  if(mode==='substituir'){
+    // Substitui tudo: apaga todos os itens de venda do dia antes de inserir os novos
+    await sb.from('sale_items').delete().eq('account_id',acctId).eq('date',date);
+  } else {
+    // Somar: mantém intactos os sub IDs que não estão sendo enviados agora;
+    // só limpa (pra evitar duplicar) os sub IDs que estão no lote atual
+    const subs=[...new Set(items.map(it=>it.sub||null))];
+    const withSub=subs.filter(s=>s!==null);
+    const hasNoSub=subs.includes(null);
+    if(withSub.length){
+      await sb.from('sale_items').delete().eq('account_id',acctId).eq('date',date).in('sub_id',withSub);
+    }
+    if(hasNoSub){
+      await sb.from('sale_items').delete().eq('account_id',acctId).eq('date',date).is('sub_id',null);
+    }
+  }
   const rows=items.map(it=>({
     account_id:acctId,user_id:currentUser.id,date,
     produto:it.produto,canal:it.canal||null,qtd:it.qtd,
@@ -895,9 +910,34 @@ async function saveSaleItems(acctId,date,items){
     return;
   }
   const{count}=await sb.from('sale_items').select('id',{count:'exact',head:true}).eq('account_id',acctId).eq('date',date);
-  if(count!=null&&count<rows.length){
+  if(mode==='substituir'&&count!=null&&count<rows.length){
     alert('Atenção: esperava salvar '+rows.length+' itens de venda em '+date+', mas só '+count+' ficaram no banco. Tente reimportar essa data.');
   }
+}
+// Modal de escolha: somar aos dados existentes do dia ou substituir tudo
+function askSaveMode(existingCount,subsLabel){
+  return new Promise(resolve=>{
+    const bg=document.createElement('div');
+    bg.className='sub-modal-bg';
+    bg.style.zIndex='500';
+    bg.innerHTML=`<div class="sub-modal" style="max-width:440px;text-align:left" onclick="event.stopPropagation()">
+      <div class="sub-modal-header" style="margin-bottom:12px"><h3>Já existem vendas nesse dia</h3></div>
+      <p style="font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);margin:0 0 20px;line-height:1.5">
+        Já há ${existingCount} item(ns) de venda salvos nessa data. O que fazer com <b>${subsLabel}</b>?
+      </p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button id="asm-somar" class="sub-modal-close" style="padding:12px;border-color:var(--accent2);color:var(--accent2);text-align:left">➕ <b>Somar</b> — mantém as vendas dos outros sub IDs e só atualiza este</button>
+        <button id="asm-substituir" class="sub-modal-close" style="padding:12px;border-color:var(--red);color:var(--red);text-align:left">🗑️ <b>Substituir tudo</b> — apaga as vendas do dia inteiro e lança só o que está na tela</button>
+        <button id="asm-cancelar" class="sub-modal-close" style="padding:10px;text-align:center">Cancelar</button>
+      </div>
+    </div>`;
+    document.body.appendChild(bg);
+    const close=v=>{document.body.removeChild(bg);resolve(v);};
+    bg.querySelector('#asm-somar').onclick=()=>close('somar');
+    bg.querySelector('#asm-substituir').onclick=()=>close('substituir');
+    bg.querySelector('#asm-cancelar').onclick=()=>close(null);
+    bg.onclick=()=>close(null);
+  });
 }
 let _saleItemsCache={};
 function clearSaleItemsCache(){_saleItemsCache={};_latestSaleDateCache={};}
@@ -1959,7 +1999,23 @@ async function importData(){
   // respeita as linhas que o usuário apagou manualmente antes de "Adicionar"
   const finalSubs=new Set(rows.map(r=>r.name.toLowerCase()));
   const saleItemsToSave=_saleItemsBuffer.filter(it=>!it.sub||finalSubs.has(it.sub.toLowerCase()));
-  if(saleItemsToSave.length)await saveSaleItems(acct.id,dt,saleItemsToSave);
+  if(saleItemsToSave.length){
+    const{count:existingCount}=await sb.from('sale_items').select('id',{count:'exact',head:true}).eq('account_id',acct.id).eq('date',dt);
+    let mode='substituir';
+    if(existingCount>0){
+      const subsLabel=[...new Set(saleItemsToSave.map(it=>it.sub||'Sem Sub Id'))].join(', ');
+      const chosen=await askSaveMode(existingCount,subsLabel);
+      if(chosen===null){
+        showToast('Itens de venda não foram alterados.');
+        delete _data[acct.id];
+        await renderAll();
+        renderCliquesSection();
+        return;
+      }
+      mode=chosen;
+    }
+    await saveSaleItems(acct.id,dt,saleItemsToSave,mode);
+  }
   delete _data[acct.id]; // force full cache clear
   const freshCheck=await loadData(acct.id);
   // Switch to the month of the inserted date
@@ -2191,13 +2247,14 @@ async function renderVendasSection(){
   const cardsEl=document.getElementById('objetivo-cards');
   if(cardsEl)cardsEl.innerHTML=cardsData.map(c=>{
     const valColor=c.dynamicColor||'var(--yellow)';
+    const roundMode=c.label==='Feito'?'floor':'ceil'; // Feito nunca arredonda pra cima; Objetivo/Falta nunca arredonda pra baixo
     return `
     <div>
       <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;font-family:'DM Mono',monospace">${c.label}</div>
       <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:18px 20px;align-items:center">
-        <div style="flex:1;display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:15px;color:var(--text);font-family:'DM Mono',monospace">Dia</span><span style="font-size:15px;color:${valColor};font-family:'DM Mono',monospace">${abbrevFmt(c.dia)}</span></div>
+        <div style="flex:1;display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:15px;color:var(--text);font-family:'DM Mono',monospace">Dia</span><span style="font-size:15px;color:${valColor};font-family:'DM Mono',monospace">${abbrevFmt(c.dia,roundMode)}</span></div>
         <div style="width:1px;height:18px;background:var(--border);margin:0 12px"></div>
-        <div style="flex:1;display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:15px;color:var(--text);font-family:'DM Mono',monospace">Mês</span><span style="font-size:15px;color:${valColor};font-family:'DM Mono',monospace">${abbrevFmt(c.mes)}</span></div>
+        <div style="flex:1;display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:15px;color:var(--text);font-family:'DM Mono',monospace">Mês</span><span style="font-size:15px;color:${valColor};font-family:'DM Mono',monospace">${abbrevFmt(c.mes,roundMode)}</span></div>
       </div>
     </div>`;
   }).join('');
@@ -2909,10 +2966,18 @@ function importFile(e){
 }
 
 function fmt(v){return'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
-function abbrevFmt(v){
-  if(v>=1000000)return'R$'+(v/1000000).toFixed(2)+'M';
-  if(v>=1000)return'R$'+(v/1000).toFixed(1)+'K';
-  return'R$'+v.toLocaleString('pt-BR',{maximumFractionDigits:0});
+function abbrevFmt(v,mode){
+  // mode: 'floor' (nunca arredonda pra cima), 'ceil' (nunca arredonda pra baixo), padrão = arredondamento normal
+  const rnd=(n,decimals)=>{
+    const factor=Math.pow(10,decimals);
+    if(mode==='floor')return Math.floor(n*factor)/factor;
+    if(mode==='ceil')return Math.ceil(n*factor)/factor;
+    return Math.round(n*factor)/factor;
+  };
+  if(v>=1000000)return'R$'+rnd(v/1000000,2).toFixed(2)+'M';
+  if(v>=1000)return'R$'+rnd(v/1000,1).toFixed(1)+'K';
+  const whole=mode==='floor'?Math.floor(v):mode==='ceil'?Math.ceil(v):Math.round(v);
+  return'R$'+whole.toLocaleString('pt-BR',{maximumFractionDigits:0});
 }
 
 function renderReguaRadial(meta,alvos,feitoMes,bonusPct){
@@ -2948,7 +3013,7 @@ function renderReguaRadial(meta,alvos,feitoMes,bonusPct){
     const falta=Math.max(alvo-feitoMes,0);
     return `<div style="display:flex;align-items:center;justify-content:space-between">
       <span style="color:var(--text)">${tiers[i]}% <span style="color:var(--muted)">| ${abbrevFmt(alvo)}</span></span>
-      <span style="color:${done?'var(--accent2)':'var(--muted)'}">${done?'Alcançado':'Faltam '+abbrevFmt(falta)}</span>
+      <span style="color:${done?'var(--accent2)':'var(--muted)'}">${done?'Alcançado':'Faltam '+abbrevFmt(falta,'ceil')}</span>
     </div>`;
   }).join('');
 }
