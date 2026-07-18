@@ -940,7 +940,7 @@ function askSaveMode(existingCount,subsLabel){
   });
 }
 let _saleItemsCache={};
-function clearSaleItemsCache(){_saleItemsCache={};_latestSaleDateCache={};}
+function clearSaleItemsCache(){_saleItemsCache={};_latestSaleDateCache={};_saleItemsSlimCache={};}
 async function fetchAllSaleItems(groupIds,startStr,endStr){
   const cacheKey=groupIds.join(',')+'|'+startStr+'|'+endStr;
   if(_saleItemsCache[cacheKey])return _saleItemsCache[cacheKey];
@@ -968,6 +968,41 @@ async function fetchAllSaleItems(groupIds,startStr,endStr){
     from+=pageSize;
   }
   _saleItemsCache[cacheKey]=allData;
+  return allData;
+}
+// Versão enxuta: só os 4 campos usados pelos cards Feito/Objetivo/Falta, régua de bônus
+// e tabela Dia a Dia (date, account_id, venda_bruta, sub_id). Usada no lugar de
+// fetchAllSaleItems() quando o período é o mês inteiro (a busca mais pesada), pra
+// trafegar bem menos dado — mesmos números, resposta mais rápida.
+let _saleItemsSlimCache={};
+function clearSaleItemsSlimCache(){_saleItemsSlimCache={};}
+async function fetchSaleItemsSlim(groupIds,startStr,endStr){
+  const cacheKey=groupIds.join(',')+'|'+startStr+'|'+endStr;
+  if(_saleItemsSlimCache[cacheKey])return _saleItemsSlimCache[cacheKey];
+  let allData=[];
+  let from=0;
+  const pageSize=1000;
+  while(true){
+    let page=null,error=null,ok=false;
+    for(let attempt=0;attempt<3&&!ok;attempt++){
+      const res=await sb.from('sale_items').select('date,account_id,venda_bruta,sub_id').in('account_id',groupIds).gte('date',startStr).lte('date',endStr).range(from,from+pageSize-1);
+      page=res.data;error=res.error;
+      if(!error){ok=true;}
+      else{
+        console.error('Erro ao carregar itens de venda (tentativa '+(attempt+1)+'):',error);
+        await new Promise(r=>setTimeout(r,600));
+      }
+    }
+    if(!ok){
+      alert('Não foi possível carregar todos os dados de vendas (falha de conexão). Atualize a página para tentar novamente.');
+      return allData;
+    }
+    if(!page||page.length===0)break;
+    allData=[...allData,...page];
+    if(page.length<pageSize)break;
+    from+=pageSize;
+  }
+  _saleItemsSlimCache[cacheKey]=allData;
   return allData;
 }
 let _latestSaleDateCache={};
@@ -2211,7 +2246,7 @@ async function renderVendasSection(){
   const start=month+'-01';
   const end=new Date(y,m,0).toISOString().slice(0,10);
   const groupIds=getGroupAccountIds(acct);
-  const items=await fetchAllSaleItems(groupIds,start,end);
+  const items=await fetchSaleItemsSlim(groupIds,start,end);
   if(myRenderId!==_vendasRenderId)return;
   const rows=items||[];
   const feitoMes=rows.reduce((s,it)=>s+parseFloat(it.venda_bruta||0),0);
