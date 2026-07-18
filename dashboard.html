@@ -1219,8 +1219,13 @@ async function switchAccount(id){
   const bdList=document.getElementById('bd-list');
   if(bdList)bdList.innerHTML='';
   await renderAll();
-  renderCliquesSection();
-  renderVendasSection();
+  const activeSection=localStorage.getItem('tp_active_section')||'resultados';
+  // Só busca/renderiza a aba que está visível agora. As outras abas (Cliques/Vendas)
+  // continuam buscando dados 100% atualizados sozinhas assim que o usuário clicar nelas
+  // (switchSection já faz isso) — nenhum dado fica desatualizado, só evitamos buscar
+  // 3 abas de uma vez quando só 1 está na tela.
+  if(activeSection==='cliques')renderCliquesSection();
+  if(activeSection==='vendas')renderVendasSection();
 }
 
 /* ── ISS ── */
@@ -2261,6 +2266,7 @@ async function renderVendasSection(){
   }).join('');
 
   await renderVendasTables();
+  if(myRenderId!==_vendasRenderId)return; // conta/mês trocou durante o carregamento acima
   renderDiaADiaTable(rows,groupAccts);
 }
 function renderDiaADiaTable(rows,groupAccts){
@@ -2312,11 +2318,13 @@ async function deleteVendaRetroativaDia(acctId,date){
   renderVendasSection();
 }
 async function renderCanalTable(){
+  const myRenderId=_vendasRenderId;
   const acct=getActiveAcct();
   if(!acct)return;
   const groupIds=getGroupAccountIds(acct);
   const days=_canalPeriod==='hoje'?1:parseInt(_canalPeriod);
   const latestDate=await getLatestSaleDate(groupIds);
+  if(myRenderId!==_vendasRenderId)return; // uma troca de conta/mês mais recente já está em andamento
   const anchor=latestDate?new Date(latestDate+'T00:00:00'):(()=>{const t=new Date();t.setHours(0,0,0,0);return t;})();
   const cutoff=new Date(anchor);cutoff.setDate(cutoff.getDate()-(days-1));
   const startStr=cutoff.toISOString().slice(0,10);
@@ -2325,6 +2333,7 @@ async function renderCanalTable(){
   if(btnHoje)btnHoje.textContent=latestDate?latestDate.split('-').reverse().slice(0,2).join('/'):'Último dia';
 
   const items=await fetchAllSaleItems(groupIds,startStr,endStr);
+  if(myRenderId!==_vendasRenderId)return;
   const rows=items||[];
 
   const canalAgg={};
@@ -2343,11 +2352,13 @@ async function renderCanalTable(){
 let _top10Data=[];
 let _top10SortCol='comissao';
 async function renderTop10Table(){
+  const myRenderId=_vendasRenderId;
   const acct=getActiveAcct();
   if(!acct)return;
   const groupIds=getGroupAccountIds(acct);
   const days=_top10Period==='hoje'?1:parseInt(_top10Period);
   const latestDate=await getLatestSaleDate(groupIds);
+  if(myRenderId!==_vendasRenderId)return;
   const anchor=latestDate?new Date(latestDate+'T00:00:00'):(()=>{const t=new Date();t.setHours(0,0,0,0);return t;})();
   const cutoff=new Date(anchor);cutoff.setDate(cutoff.getDate()-(days-1));
   const startStr=cutoff.toISOString().slice(0,10);
@@ -2356,6 +2367,7 @@ async function renderTop10Table(){
   if(btnHoje)btnHoje.textContent=latestDate?latestDate.split('-').reverse().slice(0,2).join('/'):'Último dia';
 
   const items=await fetchAllSaleItems(groupIds,startStr,endStr);
+  if(myRenderId!==_vendasRenderId)return;
   const rows=items||[];
 
   const prodAgg={};
@@ -2628,6 +2640,7 @@ async function switchMonth(m){
 }
 
 function renderMonth(data,month){
+  _dayBuildCache={};
   const md=data[month]||{};
   const days=Object.keys(md).sort();
   let totInv=0,totVenda=0;
@@ -2691,25 +2704,8 @@ function syncChevronWidths(){
   }
 }
 
-function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
-  const [y,m,d]=day.split('-');
-  const dateLabel=`${d}/${m}/${y}`;
-  let dayInv=0,dayVenda=0;
-  for(const r of rows){dayInv+=r.inv;dayVenda+=r.venda;}
-  const dayCalc=calc(dayInv,dayVenda,month);
-  const sc=dayCalc.saldo>=0?'pos':'neg';
-  const crMap={};for(const o of curRanking)crMap[o.name]=o.rank;
-  const sortedRows=[...rows].sort((a,b)=>(crMap[a.name]||999)-(crMap[b.name]||999));
-  // build a display rank map: sequential 1,2,3... among rows present today, ordered by global rank
-  const displayRankMap={};
-  sortedRows.forEach((r,i)=>displayRankMap[r.name]=i+1);
-  const acct=getActiveAcct();
-  const dayId='day-'+day.replace(/-/g,'');
-  const collapsed=isLatest?'':' collapsed';
-  const openCls=isLatest?' open':'';
-  const tableDisplay=isLatest?'':'display:none';
-
-  const tbody=sortedRows.map(r=>{
+function buildDayTbodyRows(day,sortedRows,crMap,displayRankMap,prevRankMap,cumSaldo,month){
+  return sortedRows.map(r=>{
     const c=calc(r.inv,r.venda,month);
     const curR=displayRankMap[r.name]; // sequential display rank
     const curGlobal=crMap[r.name]||999;
@@ -2752,6 +2748,32 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
       <td>${deleteBtn}</td>
     </tr>`;
   }).join('');
+}
+// Guarda os dados completos de cada dia fechado pra montar a tabela sob demanda
+// (só a construção do HTML é adiada — os dados em si já estão 100% carregados na memória)
+let _dayBuildCache={};
+function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
+  const [y,m,d]=day.split('-');
+  const dateLabel=`${d}/${m}/${y}`;
+  let dayInv=0,dayVenda=0;
+  for(const r of rows){dayInv+=r.inv;dayVenda+=r.venda;}
+  const dayCalc=calc(dayInv,dayVenda,month);
+  const sc=dayCalc.saldo>=0?'pos':'neg';
+  const crMap={};for(const o of curRanking)crMap[o.name]=o.rank;
+  const sortedRows=[...rows].sort((a,b)=>(crMap[a.name]||999)-(crMap[b.name]||999));
+  // build a display rank map: sequential 1,2,3... among rows present today, ordered by global rank
+  const displayRankMap={};
+  sortedRows.forEach((r,i)=>displayRankMap[r.name]=i+1);
+  const acct=getActiveAcct();
+  const dayId='day-'+day.replace(/-/g,'');
+  const collapsed=isLatest?'':' collapsed';
+  const openCls=isLatest?' open':'';
+  const tableDisplay=isLatest?'':'display:none';
+
+  const tbody=isLatest?buildDayTbodyRows(day,sortedRows,crMap,displayRankMap,prevRankMap,cumSaldo,month):'';
+  if(!isLatest){
+    _dayBuildCache[dayId]={day,sortedRows,crMap,displayRankMap,prevRankMap,cumSaldo,month};
+  }
 
   const thStyle='cursor:pointer;user-select:none;transition:color .15s';
   const thHover='onmouseover="this.style.color=\'#e8ecf4\'" onmouseout="this.style.color=\'\'"';
@@ -2802,7 +2824,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
       </div>
     </div>
     <div class="day-table-wrap" style="${tableDisplay}">
-      <table id="tbl-${dayId}">
+      <table id="tbl-${dayId}" data-lazy="${isLatest?'false':'true'}">
         <thead>
         <tr class="totals-row" onclick="toggleDay(this)">
           <td><span class="chevron">▾</span></td>
@@ -2846,6 +2868,15 @@ function toggleDay(h){
   b.classList.toggle('open',!c);
   w.style.display=c?'none':'';
   if(!c){
+    const tbl=b.querySelector('table[data-lazy="true"]');
+    if(tbl){
+      const cache=_dayBuildCache[b.id];
+      if(cache){
+        const tbody=tbl.querySelector('tbody');
+        if(tbody)tbody.innerHTML=buildDayTbodyRows(cache.day,cache.sortedRows,cache.crMap,cache.displayRankMap,cache.prevRankMap,cache.cumSaldo,cache.month);
+      }
+      tbl.dataset.lazy='false';
+    }
     const cb=b.querySelector('.ios-toggle input');
     if(cb)toggleAtivos(b.id,cb.checked);
   }
