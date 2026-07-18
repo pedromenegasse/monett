@@ -2125,6 +2125,7 @@ function switchSection(id){
   localStorage.setItem('tp_active_section',id);
   if(id==='cliques')renderCliquesSection();
   if(id==='vendas')renderVendasSection();
+  if(id==='resultados')requestAnimationFrame(()=>requestAnimationFrame(syncChevronWidths));
 }
 function initSectionNav(){
   renderSectionNav();
@@ -2667,13 +2668,6 @@ function renderMonth(data,month){
   // sync all chevron widths using the first visible table as reference,
   // waiting for the custom font to finish loading so the measurement is
   // accurate on first paint (not just on later re-renders)
-  const syncChevronWidths=()=>{
-    const refTh=document.querySelector('.day-block thead th:first-child');
-    if(refTh){
-      const w=refTh.offsetWidth+'px';
-      document.querySelectorAll('.day-header-left>.chevron').forEach(chev=>chev.style.width=w);
-    }
-  };
   if(document.fonts&&document.fonts.ready){
     document.fonts.ready.then(()=>requestAnimationFrame(syncChevronWidths));
   } else {
@@ -2685,6 +2679,16 @@ function renderMonth(data,month){
     const cb=document.querySelector('#'+latestId+' .ios-toggle input');
     if(cb)toggleAtivos(latestId,cb.checked);
   });
+}
+// Sincroniza a largura dos chevrons/setas de ranking com a primeira coluna da tabela.
+// Precisa ser re-chamada sempre que a aba "Resultados Diários" ficar visível de novo,
+// já que medir offsetWidth com o painel em display:none sempre retorna 0.
+function syncChevronWidths(){
+  const refTh=document.querySelector('.day-block thead th:first-child');
+  if(refTh){
+    const w=refTh.offsetWidth+'px';
+    document.querySelectorAll('.day-header-left>.chevron').forEach(chev=>chev.style.width=w);
+  }
 }
 
 function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
