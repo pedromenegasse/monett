@@ -520,6 +520,18 @@ let currentUser=null;
         <th style="cursor:pointer;user-select:none" onclick="sortCliquesTable('conversao')">Conversão <span class="sort-ind" id="cli-sort-conversao"></span></th>
         <th class="cli-grp-l" style="cursor:pointer;user-select:none" onclick="sortCliquesTable('inv')">Investimento <span class="sort-ind" id="cli-sort-inv"></span></th>
         <th style="cursor:pointer;user-select:none" onclick="sortCliquesTable('saldo')">Saldo <span class="sort-ind" id="cli-sort-saldo"></span></th>
+      </tr>
+      <tr id="cliques-totals-row" style="background:var(--surface2);border-top:1px solid var(--border)">
+        <td style="font-weight:500;color:var(--yellow)">Total</td>
+        <td class="cli-pair-r" style="font-weight:500;color:var(--yellow)" id="clit-meta"></td>
+        <td class="cli-pair-l" style="color:var(--muted)">—</td>
+        <td class="cli-grp-l cli-pair-r" style="font-weight:500;color:var(--yellow)" id="clit-shopee"></td>
+        <td class="cli-pair-l" style="color:var(--muted)">—</td>
+        <td class="cli-grp-l" style="font-weight:500;color:var(--yellow)" id="clit-taxa"></td>
+        <td class="cli-grp-l" style="font-weight:500;color:var(--yellow)" id="clit-pedidos"></td>
+        <td style="font-weight:500;color:var(--yellow)" id="clit-conversao"></td>
+        <td class="cli-grp-l" style="font-weight:500;color:var(--yellow)" id="clit-inv"></td>
+        <td style="font-weight:500" id="clit-saldo"></td>
       </tr></thead>
       <tbody id="cliques-tbody"></tbody>
     </table></div>
@@ -2474,7 +2486,7 @@ async function renderCliquesSection(){
   const acct=getActiveAcct();
   _cliquesSortState={col:null,dir:0};
   document.querySelectorAll('#cliques-table .sort-ind').forEach(el=>el.textContent='');
-  if(!acct){tbody.innerHTML='';return;}
+  if(!acct){tbody.innerHTML='';const tr0=document.getElementById('cliques-totals-row');if(tr0)tr0.style.display='none';return;}
   const data=await loadData(acct.id);
   // Anchor "Último dia"/7/30 on the most recent date that actually has
   // cliques data imported, since click reports always lag a day behind.
@@ -2516,7 +2528,32 @@ async function renderCliquesSection(){
     cpcReal:r.shopee>0?r.inv/r.shopee:null,
     conversao:r.pedidos>0?r.shopee/r.pedidos:null
   }));
-  if(!rows.length){tbody.innerHTML='<tr><td style="padding:10px 6px;color:var(--muted)">Nenhum dado de cliques neste período.</td></tr>';return;}
+  if(!rows.length){
+    tbody.innerHTML='<tr><td style="padding:10px 6px;color:var(--muted)">Nenhum dado de cliques neste período.</td></tr>';
+    const totRow=document.getElementById('cliques-totals-row');
+    if(totRow)totRow.style.display='none';
+    return;
+  }
+  const totRow=document.getElementById('cliques-totals-row');
+  if(totRow){
+    totRow.style.display='';
+    const totMeta=rows.reduce((s,r)=>s+r.meta,0);
+    const totShopee=rows.reduce((s,r)=>s+r.shopee,0);
+    const totPedidos=rows.reduce((s,r)=>s+r.pedidos,0);
+    const totInv=rows.reduce((s,r)=>s+r.inv,0);
+    const totSaldo=rows.reduce((s,r)=>s+r.saldo,0);
+    const totTaxa=totMeta>0?Math.round(totShopee/totMeta*100):0;
+    const totConversao=totPedidos>0?totShopee/totPedidos:null;
+    document.getElementById('clit-meta').textContent=totMeta.toLocaleString('pt-BR');
+    document.getElementById('clit-shopee').textContent=totShopee.toLocaleString('pt-BR');
+    document.getElementById('clit-taxa').textContent=totTaxa+'%';
+    document.getElementById('clit-pedidos').textContent=totPedidos.toLocaleString('pt-BR');
+    document.getElementById('clit-conversao').textContent=totConversao==null?'—':totConversao.toFixed(1);
+    document.getElementById('clit-inv').textContent=fmt(totInv);
+    const saldoEl=document.getElementById('clit-saldo');
+    saldoEl.textContent=fmt(totSaldo);
+    saldoEl.style.color=totSaldo>=0?'var(--accent2)':'var(--red)';
+  }
   rows.sort((a,b)=>{
     const pa=a.saldo<0?0:1,pb=b.saldo<0?0:1;
     if(pa!==pb)return pa-pb;
