@@ -521,17 +521,17 @@ let currentUser=null;
         <th class="cli-grp-l" style="cursor:pointer;user-select:none" onclick="sortCliquesTable('inv')">Investimento <span class="sort-ind" id="cli-sort-inv"></span></th>
         <th style="cursor:pointer;user-select:none" onclick="sortCliquesTable('saldo')">Saldo <span class="sort-ind" id="cli-sort-saldo"></span></th>
       </tr>
-      <tr id="cliques-totals-row" style="background:var(--surface2);border-top:1px solid var(--border)">
-        <td style="font-weight:500;color:var(--yellow)">Total</td>
-        <td class="cli-pair-r" style="font-weight:500;color:var(--yellow)" id="clit-meta"></td>
-        <td class="cli-pair-l" style="color:var(--muted)">—</td>
-        <td class="cli-grp-l cli-pair-r" style="font-weight:500;color:var(--yellow)" id="clit-shopee"></td>
-        <td class="cli-pair-l" style="color:var(--muted)">—</td>
-        <td class="cli-grp-l" style="font-weight:500;color:var(--yellow)" id="clit-taxa"></td>
-        <td class="cli-grp-l" style="font-weight:500;color:var(--yellow)" id="clit-pedidos"></td>
-        <td style="font-weight:500;color:var(--yellow)" id="clit-conversao"></td>
-        <td class="cli-grp-l" style="font-weight:500;color:var(--yellow)" id="clit-inv"></td>
-        <td style="font-weight:500" id="clit-saldo"></td>
+      <tr id="cliques-totals-row" style="background:var(--surface2)">
+        <td style="font-weight:500;color:var(--yellow);border-top:1px solid rgba(232,201,122,.35);border-bottom:1px solid rgba(232,201,122,.35);border-left:1px solid rgba(232,201,122,.35);border-radius:8px 0 0 8px">Total</td>
+        <td class="cli-pair-r" style="font-weight:500;color:var(--yellow);border-top:1px solid rgba(232,201,122,.35);border-bottom:1px solid rgba(232,201,122,.35)" id="clit-meta"></td>
+        <td class="cli-pair-l" style="color:var(--muted);border-top:1px solid rgba(232,201,122,.35);border-bottom:1px solid rgba(232,201,122,.35)" id="clit-cpcMeta"></td>
+        <td class="cli-grp-l cli-pair-r" style="font-weight:500;color:var(--yellow);border-top:1px solid rgba(232,201,122,.35);border-bottom:1px solid rgba(232,201,122,.35)" id="clit-shopee"></td>
+        <td class="cli-pair-l" style="color:var(--muted);border-top:1px solid rgba(232,201,122,.35);border-bottom:1px solid rgba(232,201,122,.35)" id="clit-cpcReal"></td>
+        <td class="cli-grp-l" style="font-weight:500;color:var(--yellow);border-top:1px solid rgba(232,201,122,.35);border-bottom:1px solid rgba(232,201,122,.35)" id="clit-taxa"></td>
+        <td class="cli-grp-l" style="font-weight:500;color:var(--yellow);border-top:1px solid rgba(232,201,122,.35);border-bottom:1px solid rgba(232,201,122,.35)" id="clit-pedidos"></td>
+        <td style="font-weight:500;color:var(--yellow);border-top:1px solid rgba(232,201,122,.35);border-bottom:1px solid rgba(232,201,122,.35)" id="clit-conversao"></td>
+        <td class="cli-grp-l" style="font-weight:500;color:var(--yellow);border-top:1px solid rgba(232,201,122,.35);border-bottom:1px solid rgba(232,201,122,.35)" id="clit-inv"></td>
+        <td style="font-weight:500;border-top:1px solid rgba(232,201,122,.35);border-bottom:1px solid rgba(232,201,122,.35);border-right:1px solid rgba(232,201,122,.35);border-radius:0 8px 8px 0" id="clit-saldo"></td>
       </tr></thead>
       <tbody id="cliques-tbody"></tbody>
     </table></div>
@@ -2544,8 +2544,12 @@ async function renderCliquesSection(){
     const totSaldo=rows.reduce((s,r)=>s+r.saldo,0);
     const totTaxa=totMeta>0?Math.round(totShopee/totMeta*100):0;
     const totConversao=totPedidos>0?totShopee/totPedidos:null;
+    const totCpcMeta=totMeta>0?totInv/totMeta:null;
+    const totCpcReal=totShopee>0?totInv/totShopee:null;
     document.getElementById('clit-meta').textContent=totMeta.toLocaleString('pt-BR');
+    document.getElementById('clit-cpcMeta').textContent=totCpcMeta==null?'—':fmt(totCpcMeta);
     document.getElementById('clit-shopee').textContent=totShopee.toLocaleString('pt-BR');
+    document.getElementById('clit-cpcReal').textContent=totCpcReal==null?'—':fmt(totCpcReal);
     document.getElementById('clit-taxa').textContent=totTaxa+'%';
     document.getElementById('clit-pedidos').textContent=totPedidos.toLocaleString('pt-BR');
     document.getElementById('clit-conversao').textContent=totConversao==null?'—':totConversao.toFixed(1);
