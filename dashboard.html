@@ -2940,11 +2940,11 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
       <div style="display:flex;padding:0 14px 12px;gap:8px;align-items:flex-end" onclick="toggleDay(this.parentElement.querySelector('.mbl-row1'))">
         <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:3px 10px">
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">Vendas <b style="color:var(--text);font-weight:400">R$ ${Math.round(dayVendaBruta)}</b></div>
+          <div style="font-size:12px;color:var(--muted);white-space:nowrap">ROAS <b class="${roasClass}" style="font-weight:500">${dayRoas}</b></div>
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">Invest. <b style="color:var(--text);font-weight:400">R$ ${Math.round(dayInv)}</b></div>
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">Comissão <b style="color:var(--text);font-weight:400">R$ ${Math.round(dayVenda)}</b></div>
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">+Meta <b style="color:var(--text);font-weight:400">R$ ${Math.round(dayCalc.comMeta)}</b></div>
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">−ISS <b style="color:var(--text);font-weight:400">R$ ${Math.round(dayCalc.menosISS)}</b></div>
-          <div style="font-size:12px;color:var(--muted);white-space:nowrap">ROAS <b class="${roasClass}" style="font-weight:500">${dayRoas}</b></div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0">
           <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace">Saldo</span>
@@ -3198,18 +3198,22 @@ async function openSubModal(name){
   const md=data[month]||{};
   const days=Object.keys(md).sort();
   if(!days.length)return;
-  let totInv=0,totVenda=0,totSaldo=0,totMeta=0,totISS=0,count=0;
+  const vbMap=await fetchVendaBrutaPorDia(acct.id,month);
+  const nameKey=name.toLowerCase();
+  let totInv=0,totVenda=0,totSaldo=0,totMeta=0,totISS=0,totVendaBruta=0,count=0;
   const rows=[...days].reverse().map((day,idx)=>{
     const r=md[day].find(x=>x.name===name);
     if(!r)return'';
     const [y,m,d]=day.split('-');
     const lbl=`${d}/${m}`;
     const c=calc(r.inv,r.venda,month);
-    totInv+=r.inv;totVenda+=r.venda;totSaldo+=c.saldo;count++;
+    const vendaBruta=(vbMap[day]&&vbMap[day][nameKey])||0;
+    totInv+=r.inv;totVenda+=r.venda;totSaldo+=c.saldo;totVendaBruta+=vendaBruta;count++;
     const sc=c.saldo>=0?'color:var(--accent2)':'color:var(--red)';
     const rc=c.roi!==null?(c.roi>=1.5?'color:var(--gold-text)':c.roi<0.1?'color:var(--bord-text)':c.roi>=1?'color:var(--accent2)':'color:var(--red)'):'color:var(--muted)';
-    return`<tr data-idx="${idx}" data-date="${day}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roas="${c.roi??-999}">
+    return`<tr data-idx="${idx}" data-date="${day}" data-vendabruta="${vendaBruta}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roas="${c.roi??-999}">
       <td>${lbl}</td>
+      <td>${fmt(vendaBruta)}</td>
       <td>${fmt(r.inv)}</td>
       <td>${fmt(r.venda)}</td>
       <td>${fmt(c.comMeta)}</td>
@@ -3241,6 +3245,7 @@ async function openSubModal(name){
   const thH='onmouseover="this.style.color=\'#e8ecf4\'" onmouseout="this.style.color=\'\'"';
   document.getElementById('sub-modal-thead').innerHTML=`<tr>
       <th style="${thS}" ${thH} onclick="sortSubModal('date')">Data <span class="sort-ind" id="sms-date"></span></th>
+      <th style="${thS}" ${thH} onclick="sortSubModal('vendabruta')">Vendas <span class="sort-ind" id="sms-vendabruta"></span></th>
       <th style="${thS}" ${thH} onclick="sortSubModal('inv')">Investimento <span class="sort-ind" id="sms-inv"></span></th>
       <th style="${thS}" ${thH} onclick="sortSubModal('venda')">Comissão <span class="sort-ind" id="sms-venda"></span></th>
       <th style="${thS}" ${thH} onclick="sortSubModal('meta')">+Meta <span class="sort-ind" id="sms-meta"></span></th>
@@ -3271,7 +3276,7 @@ function sortSubModal(col){
   if(!tbody)return;
   const trs=[...tbody.querySelectorAll('tr')];
   // update indicators
-  ['date','inv','meta','venda','iss','saldo','roas'].forEach(c=>{
+  ['date','vendabruta','inv','meta','venda','iss','saldo','roas'].forEach(c=>{
     const el=document.getElementById('sms-'+c);
     if(c==='date') el&&(el.textContent=(col==='date'&&dir===1)?'↓':'');
     else el&&(el.textContent=(c===col&&dir===1)?'↓':(c===col&&dir===-1)?'↑':'');
@@ -3303,6 +3308,7 @@ async function openRankModal(){
   const md=data[month]||{};
   const days=Object.keys(md).sort();
   if(!days.length){alert('Sem dados neste mês.');return;}
+  const vbMap=await fetchVendaBrutaPorDia(acct.id,month);
 
   // accumulate totals per sub ID
   const acc={};
@@ -3310,16 +3316,17 @@ async function openRankModal(){
   const lastDayActive=new Set((md[lastDay]||[]).filter(r=>r.inv>0).map(r=>r.name));
   for(const day of days){
     for(const r of md[day]){
-      if(!acc[r.name])acc[r.name]={inv:0,venda:0};
+      if(!acc[r.name])acc[r.name]={inv:0,venda:0,vendaBruta:0};
       acc[r.name].inv+=r.inv;
       acc[r.name].venda+=r.venda;
+      acc[r.name].vendaBruta+=(vbMap[day]&&vbMap[day][r.name.toLowerCase()])||0;
     }
   }
 
   // sort by saldo desc
   const ranked=Object.entries(acc).map(([name,t])=>{
     const c=calc(t.inv,t.venda,month);
-    return{name,inv:t.inv,venda:t.venda,comMeta:c.comMeta,menosISS:c.menosISS,saldo:c.saldo,roi:c.roi};
+    return{name,inv:t.inv,venda:t.venda,vendaBruta:t.vendaBruta,comMeta:c.comMeta,menosISS:c.menosISS,saldo:c.saldo,roi:c.roi};
   }).sort((a,b)=>b.saldo-a.saldo);
 
   // month totals
@@ -3359,9 +3366,10 @@ async function openRankModal(){
     const sc=r.saldo>=0?'color:var(--accent2)':'color:var(--red)';
     const rc=r.roi!==null?(r.roi>=1.5?'color:var(--gold-text)':r.roi<0.1?'color:var(--bord-text)':r.roi>=1?'color:var(--accent2)':'color:var(--red)'):'color:var(--muted)';
     const isLastDayActive=lastDayActive.has(r.name);
-    return`<tr data-rank="${i}" data-inv="${r.inv}" data-meta="${r.comMeta}" data-venda="${r.venda}" data-iss="${r.menosISS}" data-saldo="${r.saldo}" data-roi="${r.roi??-999}" data-name="${r.name}" data-lastday="${isLastDayActive?1:0}">
+    return`<tr data-rank="${i}" data-vendabruta="${r.vendaBruta}" data-inv="${r.inv}" data-meta="${r.comMeta}" data-venda="${r.venda}" data-iss="${r.menosISS}" data-saldo="${r.saldo}" data-roi="${r.roi??-999}" data-name="${r.name}" data-lastday="${isLastDayActive?1:0}">
       <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:600">${i+1}</td>
       <td style="text-align:left;font-family:'DM Sans',sans-serif">${r.name}</td>
+      <td>${fmt(r.vendaBruta)}</td>
       <td>${fmt(r.inv)}</td>
       <td>${fmt(r.venda)}</td>
       <td>${fmt(r.comMeta)}</td>
@@ -3376,18 +3384,20 @@ async function openRankModal(){
   document.getElementById('rank-modal-title').textContent='🏆 Ranking — '+mesNome.charAt(0).toUpperCase()+mesNome.slice(1);
   document.getElementById('rank-modal-table').innerHTML=`
     <colgroup>
-      <col style="width:60px">
-      <col style="width:18%">
+      <col style="width:50px">
+      <col style="width:16%">
+      <col style="width:12%">
+      <col style="width:12%">
+      <col style="width:12%">
+      <col style="width:12%">
+      <col style="width:12%">
+      <col style="width:7%">
       <col style="width:13%">
-      <col style="width:13%">
-      <col style="width:13%">
-      <col style="width:13%">
-      <col style="width:8%">
-      <col style="width:14%">
     </colgroup>
     <thead><tr>
       <th>Rank</th>
       <th style="${thS};text-align:left" ${thH} onclick="sortRankModal('name')">Sub ID <span class="sort-ind" id="rms-name"></span></th>
+      <th style="${thS}" ${thH} onclick="sortRankModal('vendabruta')">Vendas <span class="sort-ind" id="rms-vendabruta"></span></th>
       <th style="${thS}" ${thH} onclick="sortRankModal('inv')">Investimento <span class="sort-ind" id="rms-inv"></span></th>
       <th style="${thS}" ${thH} onclick="sortRankModal('venda')">Comissão <span class="sort-ind" id="rms-venda"></span></th>
       <th style="${thS}" ${thH} onclick="sortRankModal('meta')">+Meta <span class="sort-ind" id="rms-meta"></span></th>
@@ -3432,7 +3442,7 @@ function sortRankModal(col){
     else{dir=1;}
   }
   _rankSortState.col=col;_rankSortState.dir=dir;
-  ['rank','inv','meta','venda','iss','roi','saldo','name'].forEach(c=>{
+  ['rank','inv','meta','venda','iss','roi','saldo','name','vendabruta'].forEach(c=>{
     const el=document.getElementById('rms-'+c);
     if(c==='saldo') el&&(el.textContent=(col==='saldo'&&dir===1)?'↓':'');
     else el&&(el.textContent=(c===col&&dir===1)?'↓':(c===col&&dir===-1)?'↑':'');
