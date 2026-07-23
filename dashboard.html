@@ -155,16 +155,16 @@ let currentUser=null;
   tr.roi-gold td{background:var(--gold-bg)}
   tr.roi-gold{outline:1px solid var(--gold-border);outline-offset:-1px}
   tr.roi-gold td:nth-child(2){color:var(--gold-text);font-weight:600}
-  tr.roi-gold td:nth-child(8){color:var(--gold-text);font-weight:600}
+  tr.roi-gold td:nth-child(9){color:var(--gold-text);font-weight:600}
   tr.roi-bord td{background:var(--bord-bg)}
   tr.roi-bord{outline:1px solid var(--bord-border);outline-offset:-1px}
   tr.roi-bord td:nth-child(2){color:var(--bord-text);font-weight:600}
-  tr.roi-bord td:nth-child(8){color:var(--bord-text);font-weight:600}
+  tr.roi-bord td:nth-child(9){color:var(--bord-text);font-weight:600}
   @keyframes blink-purple{0%,100%{background:rgba(90,30,140,0.22)}50%{background:rgba(90,30,140,0.70)}}
   tr.roi-blink td{animation:blink-purple 1s ease-in-out infinite}
   tr.roi-blink{outline:2px solid var(--bord-border);outline-offset:-1px}
   tr.roi-blink td:nth-child(2){color:var(--bord-text);font-weight:700}
-  tr.roi-blink td:nth-child(8){color:var(--bord-text);font-weight:700}
+  tr.roi-blink td:nth-child(9){color:var(--bord-text);font-weight:700}
   /* iOS toggle */
   .ios-toggle{position:relative;display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
   .ios-toggle input{display:none}
@@ -315,7 +315,7 @@ let currentUser=null;
     <div class="card-value cv-yellow" style="font-size:18px" id="s-invmeta">R$ 0,00</div>
   </div>
   <div class="card" style="text-align:center">
-    <div class="card-label">Venda</div>
+    <div class="card-label">Comissão</div>
     <div class="card-value cv-muted" style="font-size:18px;margin:6px 0 4px" id="s-vendabruta">R$ 0,00</div>
     <hr style="border:none;border-top:1px solid var(--border);margin:6px 0">
     <div class="card-value cv-accent" style="font-size:18px" id="s-venda">R$ 0,00</div>
@@ -865,7 +865,7 @@ function buildDataResult(data){
   }
   return result;
 }
-function invalidateCache(acctId){delete _data[acctId];}
+function invalidateCache(acctId){delete _data[acctId];clearVendaBrutaCache();}
 async function saveRows(acctId,date,rows){
   const upserts=rows.map(r=>{
     const row={account_id:acctId,user_id:currentUser.id,date,sub_id:r.name,investimento:r.inv,venda:r.venda};
@@ -1026,6 +1026,50 @@ async function getLatestSaleDate(groupIds){
   _latestSaleDateCache[key]=result;
   return result;
 }
+// Vendas brutas por sub id/dia, pra coluna "Vendas" de Resultados Diários.
+// Escopo: só a conta única (não o grupo) e só o mês visível, pra manter leve.
+let _vendaBrutaCache={};
+function clearVendaBrutaCache(){_vendaBrutaCache={};}
+async function fetchVendaBrutaPorDia(acctId,month){
+  if(!acctId)return{};
+  const key=acctId+'|'+month;
+  if(_vendaBrutaCache[key])return _vendaBrutaCache[key];
+  const[y,m]=month.split('-').map(Number);
+  const startStr=month+'-01';
+  const lastDay=new Date(y,m,0).getDate();
+  const endStr=month+'-'+String(lastDay).padStart(2,'0');
+  let allData=[];
+  let from=0;
+  const pageSize=1000;
+  while(true){
+    let page=null,error=null,ok=false;
+    for(let attempt=0;attempt<3&&!ok;attempt++){
+      const res=await sb.from('sale_items').select('date,sub_id,venda_bruta').eq('account_id',acctId).gte('date',startStr).lte('date',endStr).range(from,from+pageSize-1);
+      page=res.data;error=res.error;
+      if(!error){ok=true;}
+      else{
+        console.error('Erro ao carregar vendas brutas (tentativa '+(attempt+1)+'):',error);
+        await new Promise(r=>setTimeout(r,600));
+      }
+    }
+    if(!ok){
+      console.error('Falha ao carregar vendas brutas do mês '+month+' após 3 tentativas.');
+      break; // não cacheia resultado parcial
+    }
+    if(!page||page.length===0)break;
+    allData=[...allData,...page];
+    if(page.length<pageSize)break;
+    from+=pageSize;
+  }
+  const map={};
+  for(const row of allData){
+    const sub=(row.sub_id||'').toLowerCase();
+    if(!map[row.date])map[row.date]={};
+    map[row.date][sub]=(map[row.date][sub]||0)+parseFloat(row.venda_bruta||0);
+  }
+  _vendaBrutaCache[key]=map;
+  return map;
+}
 async function saveAccountGoal(acctId,field,value){
   const col=field==='shopeeGoal'?'shopee_goal':'objetivo_mensal';
   await sb.from('user_accounts').update({[col]:value}).eq('id',acctId);
@@ -1053,6 +1097,7 @@ async function saveVRItem(acctId,date,valor){
     produto:'Venda Bruta Retroativa',canal:null,qtd:1,
     venda_bruta:valor,comissao:0,sub_id:'Venda Bruta Retroativa'
   });
+  clearVendaBrutaCache();
 }
 async function saveVRDia(){
   const acct=getActiveAcct();
@@ -2069,6 +2114,7 @@ async function importData(){
     await saveSaleItems(acct.id,dt,saleItemsToSave,mode);
   }
   delete _data[acct.id]; // force full cache clear
+  clearVendaBrutaCache();
   const freshCheck=await loadData(acct.id);
   // Switch to the month of the inserted date
   const insertedMonth=dt.slice(0,7);
@@ -2671,7 +2717,7 @@ async function renderAll(){
   const currentActive=getActiveMonth();
   const activeMonth=(months.includes(currentActive)?currentActive:(months.length?months[0]:curMonthKey()));
   renderMonthTabs(months,acct,activeMonth);
-  renderMonth(data,activeMonth);
+  await renderMonth(data,activeMonth,acct.id);
   // Update ISS display for active month
   const issVal=getISS(activeMonth);
   const issInp=document.getElementById('iss-inp');
@@ -2703,7 +2749,7 @@ function renderMonthTabs(months,acct,activeMonth){
 async function switchMonth(m){
   document.querySelectorAll('#month-tabs .tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.month===m));
   const acct=getActiveAcct();
-  if(acct){const data=await loadData(acct.id);renderMonth(data,m);}
+  if(acct){const data=await loadData(acct.id);await renderMonth(data,m,acct.id);}
   renderCliquesSection();
   // Update ISS field to reflect the newly active month's saved value
   const issVal=getISS(m);
@@ -2715,7 +2761,7 @@ async function switchMonth(m){
   await renderBD();
 }
 
-function renderMonth(data,month){
+async function renderMonth(data,month,acctId){
   _dayBuildCache={};
   const md=data[month]||{};
   const days=Object.keys(md).sort();
@@ -2744,6 +2790,7 @@ function renderMonth(data,month){
   const latestDay=days[days.length-1];
   // collect all sub IDs seen in the month
   const allNames=[...new Set(days.flatMap(d=>md[d].map(r=>r.name)))];
+  const vbMap=await fetchVendaBrutaPorDia(acctId,month);
   container.innerHTML=[...days].reverse().map(day=>{
     const dayIdx=days.indexOf(day);
     const curRankArr=buildRanking(md,days,dayIdx,month);
@@ -2751,7 +2798,11 @@ function renderMonth(data,month){
     const cumSaldo={};for(const o of curRankArr)cumSaldo[o.name]=o.saldo;
     const isLatest=day===latestDay;
     const dayMap={};for(const r of md[day])dayMap[r.name]=r;
-    const fullRows=allNames.map(name=>dayMap[name]||{name,inv:0,venda:0,missing:true});
+    const dayVb=vbMap[day]||{};
+    const fullRows=allNames.map(name=>{
+      const base=dayMap[name]||{name,inv:0,venda:0,missing:true};
+      return{...base,vendaBruta:dayVb[name.toLowerCase()]||0};
+    });
     return renderDay(day,fullRows,curRankArr,prevRank,cumSaldo,isLatest,month);
   }).join('');
   // sync all chevron widths using the first visible table as reference,
@@ -2813,9 +2864,10 @@ function buildDayTbodyRows(day,sortedRows,crMap,displayRankMap,prevRankMap,cumSa
     const missingStyle=isMissing?'opacity:0.35':'';
     const deleteBtn=isMissing?'':` <button class="btn-x" onclick="deleteRow('${day}','${r.name.replace(/'/g,"\\'")}')">✕</button>`;
     const isZeroInv=!isMissing&&Number(r.inv)===0;
-    return`<tr class="${rowClass}" style="${missingStyle}" data-missing="${isMissing}" data-zero-inv="${isZeroInv}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roi="${c.roi??-999}" data-acum="${acum}" data-name="${r.name}">
+    return`<tr class="${rowClass}" style="${missingStyle}" data-missing="${isMissing}" data-zero-inv="${isZeroInv}" data-venda-bruta="${r.vendaBruta||0}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roi="${c.roi??-999}" data-acum="${acum}" data-name="${r.name}">
       <td>${rankCell}</td>
       <td onclick="openSubModal('${r.name.replace(/'/g,"\\'")}');event.stopPropagation()" style="cursor:pointer;${isMissing?'opacity:0.35':''}">${r.name}</td>
+      <td>${fmt(r.vendaBruta||0)}</td>
       <td>${fmt(r.inv)}</td><td>${fmt(r.venda)}</td>
       <td>${fmt(c.comMeta)}</td><td>${fmt(c.menosISS)}</td>
       <td class="${sClass}">${fmt(c.saldo)}</td>
@@ -2831,8 +2883,8 @@ let _dayBuildCache={};
 function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
   const [y,m,d]=day.split('-');
   const dateLabel=`${d}/${m}/${y}`;
-  let dayInv=0,dayVenda=0;
-  for(const r of rows){dayInv+=r.inv;dayVenda+=r.venda;}
+  let dayInv=0,dayVenda=0,dayVendaBruta=0;
+  for(const r of rows){dayInv+=r.inv;dayVenda+=r.venda;dayVendaBruta+=r.vendaBruta||0;}
   const dayCalc=calc(dayInv,dayVenda,month);
   const sc=dayCalc.saldo>=0?'pos':'neg';
   const crMap={};for(const o of curRanking)crMap[o.name]=o.rank;
@@ -2865,7 +2917,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
         <span class="chevron">▾</span>
         <span class="day-date">${dateLabel}</span>
         <div class="day-totals">
-          <div class="day-totals-row"><span>Invest. <b>${fmt(dayInv)}</b></span><span>Comissão <b>${fmt(dayVenda)}</b></span><span>ROAS <b class="${roasClass}">${dayRoas}</b></span></div>
+          <div class="day-totals-row"><span>Vendas <b>${fmt(dayVendaBruta)}</b></span><span>Invest. <b>${fmt(dayInv)}</b></span><span>Comissão <b>${fmt(dayVenda)}</b></span><span>ROAS <b class="${roasClass}">${dayRoas}</b></span></div>
           <div class="day-totals-row"><span>+Meta <b>${fmt(dayCalc.comMeta)}</b></span><span>−ISS <b>${fmt(dayCalc.menosISS)}</b></span></div>
         </div>
       </div>
@@ -2887,6 +2939,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
       </div>
       <div style="display:flex;padding:0 14px 12px;gap:8px;align-items:flex-end" onclick="toggleDay(this.parentElement.querySelector('.mbl-row1'))">
         <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:3px 10px">
+          <div style="font-size:12px;color:var(--muted);white-space:nowrap">Vendas <b style="color:var(--text);font-weight:400">R$ ${Math.round(dayVendaBruta)}</b></div>
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">Invest. <b style="color:var(--text);font-weight:400">R$ ${Math.round(dayInv)}</b></div>
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">Comissão <b style="color:var(--text);font-weight:400">R$ ${Math.round(dayVenda)}</b></div>
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">+Meta <b style="color:var(--text);font-weight:400">R$ ${Math.round(dayCalc.comMeta)}</b></div>
@@ -2905,6 +2958,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
         <tr class="totals-row" onclick="toggleDay(this)">
           <td><span class="chevron">▾</span></td>
           <td><span class="day-date">${dateLabel}</span></td>
+          <td>${fmt(dayVendaBruta)}</td>
           <td>${fmt(dayInv)}</td>
           <td>${fmt(dayVenda)}</td>
           <td>${fmt(dayCalc.comMeta)}</td>
@@ -2917,6 +2971,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
         <tr>
           <th style="cursor:pointer;user-select:none;transition:color .15s" onmouseover="this.style.color='#e8ecf4'" onmouseout="this.style.color=''" onclick="openRankModal()">Rank 🏆</th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','name')">Sub ID <span class="sort-ind" data-col="name"></span></th>
+          <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','vendaBruta')">Vendas <span class="sort-ind" data-col="vendaBruta"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','inv')">Investimento <span class="sort-ind" data-col="inv"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','venda')">Comissão <span class="sort-ind" data-col="venda"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','meta')">+Meta (${fmtPct(getMetaTaxa())}) <span class="sort-ind" data-col="meta"></span></th>
