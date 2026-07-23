@@ -2826,8 +2826,12 @@ async function renderMonth(data,month,acctId){
 function syncChevronWidths(){
   const refTh=document.querySelector('.day-block thead th:first-child');
   if(refTh){
-    const w=refTh.offsetWidth+'px';
-    document.querySelectorAll('.day-header-left>.chevron').forEach(chev=>chev.style.width=w);
+    const w=refTh.offsetWidth;
+    // Só aplica se a medida for plausível. Medir com o painel escondido (ou
+    // antes dos dados chegarem) sempre retorna 0/quase-0, e aplicar isso
+    // quebra o alinhamento — é melhor não fazer nada e deixar o CSS padrão
+    // (54px) valendo até uma medição válida acontecer.
+    if(w>10)document.querySelectorAll('.day-header-left>.chevron').forEach(chev=>chev.style.width=w+'px');
   }
 }
 
