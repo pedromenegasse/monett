@@ -143,6 +143,7 @@ let currentUser=null;
   .day-saldo{font-family:'DM Mono',monospace;font-size:14px;font-weight:500}
   .chevron{transition:transform .2s;display:inline-block;font-size:12px}
   .collapsed .chevron{transform:rotate(-90deg)}
+  @keyframes tp-spin{to{transform:rotate(360deg)}}
   .day-table-wrap{overflow-x:auto}
   table{width:100%;border-collapse:collapse;font-size:13px}
   th{padding:9px 13px;text-align:center;font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
@@ -2304,6 +2305,8 @@ async function renderVendasSection(){
   const start=month+'-01';
   const end=new Date(y,m,0).toISOString().slice(0,10);
   const groupIds=getGroupAccountIds(acct);
+  const diaadiaElStart=document.getElementById('diaadia-table');
+  if(diaadiaElStart)diaadiaElStart.innerHTML=loadingSpinnerHtml('Carregando vendas...');
   const items=await fetchSaleItemsSlim(groupIds,start,end);
   if(myRenderId!==_vendasRenderId)return;
   const rows=items||[];
@@ -2414,6 +2417,8 @@ async function renderCanalTable(){
   const myRenderId=_vendasRenderId;
   const acct=getActiveAcct();
   if(!acct)return;
+  const canalElStart=document.getElementById('canal-table');
+  if(canalElStart)canalElStart.innerHTML=loadingSpinnerHtml('Carregando canais...');
   const groupIds=getGroupAccountIds(acct);
   const days=_canalPeriod==='hoje'?1:parseInt(_canalPeriod);
   const latestDate=await getLatestSaleDate(groupIds);
@@ -2448,6 +2453,8 @@ async function renderTop10Table(){
   const myRenderId=_vendasRenderId;
   const acct=getActiveAcct();
   if(!acct)return;
+  const top10ElStart=document.getElementById('top10-table');
+  if(top10ElStart)top10ElStart.innerHTML=loadingSpinnerHtml('Carregando produtos...');
   const groupIds=getGroupAccountIds(acct);
   const days=_top10Period==='hoje'?1:parseInt(_top10Period);
   const latestDate=await getLatestSaleDate(groupIds);
@@ -2533,6 +2540,9 @@ async function renderCliquesSection(){
   _cliquesSortState={col:null,dir:0};
   document.querySelectorAll('#cliques-table .sort-ind').forEach(el=>el.textContent='');
   if(!acct){tbody.innerHTML='';const tr0=document.getElementById('cliques-totals-row');if(tr0)tr0.style.display='none';return;}
+  const tr0start=document.getElementById('cliques-totals-row');
+  if(tr0start)tr0start.style.display='none';
+  tbody.innerHTML='<tr><td colspan="10">'+loadingSpinnerHtml('Carregando cliques...')+'</td></tr>';
   const data=await loadData(acct.id);
   // Anchor "Último dia"/7/30 on the most recent date that actually has
   // cliques data imported, since click reports always lag a day behind.
@@ -2790,6 +2800,7 @@ async function renderMonth(data,month,acctId){
   const latestDay=days[days.length-1];
   // collect all sub IDs seen in the month
   const allNames=[...new Set(days.flatMap(d=>md[d].map(r=>r.name)))];
+  container.innerHTML=loadingSpinnerHtml('Carregando dados diários...');
   const vbMap=await fetchVendaBrutaPorDia(acctId,month);
   container.innerHTML=[...days].reverse().map(day=>{
     const dayIdx=days.indexOf(day);
@@ -3136,6 +3147,14 @@ function importFile(e){
 }
 
 function fmt(v){return'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+// Spinner reutilizável pra mostrar enquanto uma busca ao banco está em andamento,
+// pra não parecer que a tela travou no dado antigo.
+function loadingSpinnerHtml(text){
+  return`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:12px">
+    <div style="width:26px;height:26px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--yellow);animation:tp-spin 0.8s linear infinite"></div>
+    <div style="color:var(--muted);font-size:13px;font-family:'DM Mono',monospace">${text}</div>
+  </div>`;
+}
 function abbrevFmt(v,mode){
   // mode: 'floor' (nunca arredonda pra cima), 'ceil' (nunca arredonda pra baixo), padrão = arredondamento normal
   const rnd=(n,decimals)=>{
