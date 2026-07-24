@@ -2996,7 +2996,6 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','acum')">Saldo Mês <span class="sort-ind" data-col="acum"></span></th>
           <th style="text-align:center">
             <label class="ios-toggle" style="justify-content:center;flex-direction:row;align-items:center;gap:6px" onclick="event.stopPropagation()">
-              <span style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:400">Ativos</span>
               <input type="checkbox" checked onchange="toggleAtivos('${dayId}',this.checked)">
               <span class="ios-track"><span class="ios-thumb"></span></span>
             </label>
@@ -3678,7 +3677,7 @@ async function renderBDSaldo(){
       <button class="sub-modal-close" onclick="closeSubModal()">✕ Fechar</button>
     </div>
     <div class="sub-modal-cards" id="sub-modal-cards"></div>
-    <div class="sub-modal-scroll" style="flex:1;min-height:0"><table id="sub-modal-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:520px"><thead id="sub-modal-thead"></thead><tbody id="sub-modal-tbody"></tbody></table></div>
+    <div class="sub-modal-scroll" style="flex:1;min-height:0"><table id="sub-modal-table" style="width:100%;border-collapse:collapse;font-size:13px"><thead id="sub-modal-thead"></thead><tbody id="sub-modal-tbody"></tbody></table></div>
   </div>
 </div>
 
@@ -3698,7 +3697,7 @@ async function renderBDSaldo(){
       </div>
     </div>
     <div class="sub-modal-cards" id="rank-modal-cards"></div>
-    <div style="overflow-x:auto;width:100%"><table id="rank-modal-table" style="width:100%;min-width:800px"></table></div>
+    <div style="overflow-x:auto;width:100%"><table id="rank-modal-table" style="width:100%"></table></div>
   </div>
 </div>
 
