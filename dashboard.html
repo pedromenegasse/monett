@@ -206,7 +206,7 @@ let currentUser=null;
   .sub-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
   .sub-modal-header h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent);margin:0}
   .sub-modal-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
-  .sub-modal-scroll{overflow-y:auto;overflow-x:visible;flex:1;scrollbar-color:var(--border) transparent;min-height:0}
+  .sub-modal-scroll{overflow-y:auto;overflow-x:visible;flex:1;scrollbar-color:var(--border) transparent;min-height:0;scrollbar-gutter:stable}
   .sub-modal-scroll::-webkit-scrollbar{width:6px}
   .sub-modal-scroll::-webkit-scrollbar-track{background:transparent}
   .sub-modal-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -345,12 +345,13 @@ let currentUser=null;
   <div id="import-body" style="margin-top:12px">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
     <div class="mode-toggle" style="margin-bottom:0;height:36px">
-      <button class="mode-btn active" id="mode-btn-3col" onclick="setMode('3col')" style="height:36px">3×</button>
+      <button class="mode-btn" id="mode-btn-cliques" onclick="setMode('cliques')" style="height:36px">Cliques</button>
       <button class="mode-btn" id="mode-btn-2x1" onclick="setMode('2x1')" style="height:36px">Auto</button>
+      <button class="mode-btn active" id="mode-btn-3col" onclick="setMode('3col')" style="height:36px">3×</button>
       <button class="mode-btn" id="mode-btn-1col" onclick="setMode('1col')" style="height:36px">1×</button>
     </div>
     <input type="date" id="inp-date" style="height:36px;padding:0 12px">
-    <button class="btn-import" onclick="importData()" style="height:36px;padding:0 20px">Adicionar</button>
+    <button class="btn-import" id="btn-import-main" onclick="importData()" style="height:36px;padding:0 20px">Adicionar</button>
     <div id="inp-2x1-totais" style="display:none;align-items:center;gap:8px;font-family:'DM Mono',monospace;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 10px;height:36px;min-width:320px;flex:1;justify-content:space-between;white-space:nowrap">
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Pedidos</span><span id="tot-pedidos" style="font-size:12px;color:var(--text);font-weight:500;line-height:1.2">—</span></div>
@@ -383,6 +384,31 @@ let currentUser=null;
     </div>
   </div>
   <div class="import-scroll">
+  <!-- Cliques: atualizar só cliques_shopee em dias já lançados -->
+  <div id="mode-cliques" style="display:none">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Adicione aqui os cliques dos dias em que o Investimento/Comissão já foram lançados.</div>
+    <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Cliques — Shopee (CSV)</label>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <label id="inp-cliquesonly-label" style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        <span style="font-size:14px">↑</span> <span id="inp-cliquesonly-filename">Selecionar arquivo CSV</span>
+        <input type="file" id="inp-cliquesonly-file" accept=".csv" style="display:none" onchange="loadCliquesOnlyFile(this)">
+      </label>
+      <span id="inp-cliquesonly-status" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted)"></span>
+      <button id="inp-cliquesonly-clear" class="btn-x" onclick="clearCliquesOnlyFile()" style="display:none">✕</button>
+    </div>
+    <div id="cliquesonly-results" style="display:none">
+      <div style="font-size:10px;color:var(--accent2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px" id="cliquesonly-reconhecidos-label">✓ Reconhecidos</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;font-family:'DM Mono',monospace">
+        <thead><tr>
+          <th style="text-align:left;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:6px 8px;font-weight:500;border-bottom:1px solid var(--border)">Sub ID</th>
+          <th style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:6px 8px;font-weight:500;border-bottom:1px solid var(--border)">Cliques Shopee</th>
+        </tr></thead>
+        <tbody id="cliquesonly-reconhecidos-tbody"></tbody>
+      </table>
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px" id="cliquesonly-ignorados-label">✕ Ignorados — Sem dados nessa conta</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px" id="cliquesonly-ignorados-list"></div>
+    </div>
+  </div>
   <!-- 3 colunas -->
   <div id="mode-3col" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
     <div>
@@ -1376,12 +1402,17 @@ function calc(inv,venda,month){
 
 /* ── IMPORT MODE ── */
 function setMode(m){
+  document.getElementById('mode-cliques').style.display=m==='cliques'?'block':'none';
   document.getElementById('mode-3col').style.display=m==='3col'?'grid':'none';
   document.getElementById('mode-2x1').style.display=m==='2x1'?'block':'none';
   document.getElementById('mode-1col').style.display=m==='1col'?'block':'none';
+  document.getElementById('mode-btn-cliques').classList.toggle('active',m==='cliques');
   document.getElementById('mode-btn-3col').classList.toggle('active',m==='3col');
   document.getElementById('mode-btn-2x1').classList.toggle('active',m==='2x1');
   document.getElementById('mode-btn-1col').classList.toggle('active',m==='1col');
+  const btn=document.getElementById('btn-import-main');
+  if(m==='cliques'){btn.textContent='Atualizar';btn.onclick=updateCliquesOnly;}
+  else{btn.textContent='Adicionar';btn.onclick=importData;}
   localStorage.setItem('tp_import_mode',m);
 }
 
@@ -1883,6 +1914,103 @@ function clearCliqueFile(){
   const grid=document.getElementById('grid-2x1');if(grid)grid.style.gridTemplateColumns='1fr 1fr 1fr auto';
   const balao=document.getElementById('tot-cliques-balao');if(balao)balao.style.display='none';
   const el=document.getElementById('inp-2x1-cliques');if(el)el.innerHTML='';
+}
+
+/* ── Modo Cliques (atualiza só cliques_shopee em dias já lançados) ── */
+let _cliquesOnlyMap=new Map(); // sub_id (como veio no CSV) -> contagem de cliques
+function loadCliquesOnlyFile(input){
+  const file=input.files[0];
+  if(!file)return;
+  document.getElementById('inp-cliquesonly-filename').textContent=file.name;
+  const reader=new FileReader();
+  reader.onload=e=>parseCliquesOnlyCSV(e.target.result);
+  reader.readAsText(file,'UTF-8');
+}
+function parseCliquesOnlyCSV(raw){
+  const lines=raw.trim().replace(/^\uFEFF/,'').split('\n').filter(l=>l.trim());
+  if(lines.length<2)return;
+  const sep=lines[0].includes('	')?'	':',';
+  const headers=lines[0].split(sep).map(h=>h.replace(/"/g,'').trim());
+  const subIdx=headers.findIndex(h=>h.toLowerCase().includes('sub_id')||h.toLowerCase().includes('sub id'));
+  if(subIdx<0){alert('Não encontrei a coluna de Sub ID nesse arquivo.');return;}
+  _cliquesOnlyMap=new Map();
+  for(let i=1;i<lines.length;i++){
+    const cols=lines[i].split(sep).map(c=>c.replace(/"/g,'').trim());
+    const sub=(cols[subIdx]||'').split('----')[0].trim();
+    if(sub)_cliquesOnlyMap.set(sub,(_cliquesOnlyMap.get(sub)||0)+1);
+  }
+  const st=document.getElementById('inp-cliquesonly-status');
+  if(st)st.textContent=`✓ ${_cliquesOnlyMap.size} sub ids no arquivo`;
+  const btn=document.getElementById('inp-cliquesonly-clear');
+  if(btn)btn.style.display='';
+  renderCliquesOnlyPreview();
+}
+function clearCliquesOnlyFile(){
+  _cliquesOnlyMap=new Map();
+  const f=document.getElementById('inp-cliquesonly-file');if(f)f.value='';
+  const fn=document.getElementById('inp-cliquesonly-filename');if(fn)fn.textContent='Selecionar arquivo CSV';
+  const st=document.getElementById('inp-cliquesonly-status');if(st)st.textContent='';
+  const btn=document.getElementById('inp-cliquesonly-clear');if(btn)btn.style.display='none';
+  const res=document.getElementById('cliquesonly-results');if(res)res.style.display='none';
+}
+async function getKnownSubIdsForAccount(acctId){
+  const data=await loadData(acctId);
+  const known=new Set();
+  for(const month in data)for(const day in data[month])for(const r of data[month][day])known.add(r.name.toLowerCase());
+  return known;
+}
+async function renderCliquesOnlyPreview(){
+  const acct=getActiveAcct();
+  if(!acct||!_cliquesOnlyMap.size)return;
+  const known=await getKnownSubIdsForAccount(acct.id);
+  const recognized=[],ignored=[];
+  for(const[sub,count]of _cliquesOnlyMap){
+    if(known.has(sub.toLowerCase()))recognized.push({name:sub,shopee:count});
+    else ignored.push(sub);
+  }
+  recognized.sort((a,b)=>b.shopee-a.shopee);
+  document.getElementById('cliquesonly-reconhecidos-label').textContent=`✓ Reconhecidos (${recognized.length})`;
+  document.getElementById('cliquesonly-reconhecidos-tbody').innerHTML=recognized.map(r=>
+    `<tr><td style="padding:7px 8px;color:var(--text)">${r.name}</td><td style="padding:7px 8px;text-align:center;color:var(--text)">${r.shopee.toLocaleString('pt-BR')}</td></tr>`
+  ).join('')||'<tr><td style="padding:7px 8px;color:var(--muted)" colspan="2">Nenhum sub ID reconhecido nessa conta.</td></tr>';
+  document.getElementById('cliquesonly-ignorados-label').textContent=`✕ Ignorados (${ignored.length}) — Sem dados nessa conta`;
+  document.getElementById('cliquesonly-ignorados-list').innerHTML=ignored.map(name=>
+    `<span style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--muted)">${name}</span>`
+  ).join('');
+  document.getElementById('cliquesonly-results').style.display='block';
+}
+async function updateCliquesOnly(){
+  const acct=getActiveAcct();
+  if(!acct){alert('Selecione uma conta primeiro.');return;}
+  if(!_cliquesOnlyMap.size){alert('Selecione o arquivo de Cliques-Shopee primeiro.');return;}
+  const date=document.getElementById('inp-date').value;
+  if(!date){alert('Selecione a data.');return;}
+  const known=await getKnownSubIdsForAccount(acct.id);
+  const recognized=[];
+  for(const[sub,count]of _cliquesOnlyMap){
+    if(known.has(sub.toLowerCase()))recognized.push({name:sub,shopee:count});
+  }
+  if(!recognized.length){alert('Nenhum sub ID desse arquivo já existe nessa conta.');return;}
+  const btn=document.getElementById('btn-import-main');
+  btn.disabled=true;btn.textContent='Atualizando...';
+  try{
+    const{data:existingRows}=await sb.from('daily_data').select('sub_id').eq('account_id',acct.id).eq('date',date).in('sub_id',recognized.map(r=>r.name));
+    const existingSet=new Set((existingRows||[]).map(r=>r.sub_id));
+    const upserts=recognized.map(r=>{
+      const row={account_id:acct.id,user_id:currentUser.id,date,sub_id:r.name,cliques_shopee:r.shopee};
+      if(!existingSet.has(r.name)){row.investimento=0;row.venda=0;}
+      return row;
+    });
+    await sb.from('daily_data').upsert(upserts,{onConflict:'account_id,date,sub_id'});
+    invalidateCache(acct.id);
+    showToast(`Cliques atualizados: ${recognized.length} sub ID(s)`);
+    clearCliquesOnlyFile();
+    await renderAll();
+  }catch(e){
+    console.error(e);
+    alert('Erro ao atualizar cliques. Tenta de novo.');
+  }
+  btn.disabled=false;btn.textContent='Atualizar';
 }
 
 function clearMetaFile(){
