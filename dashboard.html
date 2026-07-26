@@ -396,17 +396,29 @@ let currentUser=null;
       <span id="inp-cliquesonly-status" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted)"></span>
       <button id="inp-cliquesonly-clear" class="btn-x" onclick="clearCliquesOnlyFile()" style="display:none">✕</button>
     </div>
-    <div id="cliquesonly-results" style="display:none">
-      <div style="font-size:10px;color:var(--accent2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px" id="cliquesonly-reconhecidos-label">✓ Reconhecidos</div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;font-family:'DM Mono',monospace">
-        <thead><tr>
-          <th style="text-align:left;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:6px 8px;font-weight:500;border-bottom:1px solid var(--border)">Sub ID</th>
-          <th style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:6px 8px;font-weight:500;border-bottom:1px solid var(--border)">Cliques Shopee</th>
-        </tr></thead>
-        <tbody id="cliquesonly-reconhecidos-tbody"></tbody>
-      </table>
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px" id="cliquesonly-ignorados-label">✕ Ignorados — Sem dados nessa conta</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px" id="cliquesonly-ignorados-list"></div>
+    <div id="cliquesonly-results" style="display:none;grid-template-columns:1fr 1fr;gap:20px">
+      <div>
+        <div style="font-size:10px;color:var(--accent2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px" id="cliquesonly-reconhecidos-label">✓ Reconhecidos</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace">
+          <thead><tr>
+            <th style="text-align:left;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:6px 4px;font-weight:500;border-bottom:1px solid var(--border)">Sub ID</th>
+            <th style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:6px 4px;font-weight:500;border-bottom:1px solid var(--border);text-align:right">Cliques</th>
+            <th style="width:34px;border-bottom:1px solid var(--border)"></th>
+          </tr></thead>
+          <tbody id="cliquesonly-reconhecidos-tbody"></tbody>
+        </table>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px" id="cliquesonly-ignorados-label">✕ Ignorados — Sem dados nessa conta</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace">
+          <thead><tr>
+            <th style="text-align:left;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:6px 4px;font-weight:500;border-bottom:1px solid var(--border)">Sub ID</th>
+            <th style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:6px 4px;font-weight:500;border-bottom:1px solid var(--border);text-align:right">Cliques</th>
+            <th style="width:34px;border-bottom:1px solid var(--border)"></th>
+          </tr></thead>
+          <tbody id="cliquesonly-ignorados-tbody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
   <!-- 3 colunas -->
@@ -1411,7 +1423,7 @@ function setMode(m){
   document.getElementById('mode-btn-2x1').classList.toggle('active',m==='2x1');
   document.getElementById('mode-btn-1col').classList.toggle('active',m==='1col');
   const btn=document.getElementById('btn-import-main');
-  if(m==='cliques'){btn.textContent='Atualizar';btn.onclick=updateCliquesOnly;}
+  if(m==='cliques'){btn.textContent='Adicionar';btn.onclick=updateCliquesOnly;}
   else{btn.textContent='Adicionar';btn.onclick=importData;}
   localStorage.setItem('tp_import_mode',m);
 }
@@ -1947,6 +1959,7 @@ function parseCliquesOnlyCSV(raw){
 }
 function clearCliquesOnlyFile(){
   _cliquesOnlyMap=new Map();
+  _cliquesOnlyRecognized=[];_cliquesOnlyIgnored=[];
   const f=document.getElementById('inp-cliquesonly-file');if(f)f.value='';
   const fn=document.getElementById('inp-cliquesonly-filename');if(fn)fn.textContent='Selecionar arquivo CSV';
   const st=document.getElementById('inp-cliquesonly-status');if(st)st.textContent='';
@@ -1959,25 +1972,47 @@ async function getKnownSubIdsForAccount(acctId){
   for(const month in data)for(const day in data[month])for(const r of data[month][day])known.add(r.name.toLowerCase());
   return known;
 }
+let _cliquesOnlyRecognized=[]; // [{name,shopee}] - serão salvos ao clicar Adicionar
+let _cliquesOnlyIgnored=[];    // [{name,shopee}] - ficam de fora
 async function renderCliquesOnlyPreview(){
   const acct=getActiveAcct();
   if(!acct||!_cliquesOnlyMap.size)return;
   const known=await getKnownSubIdsForAccount(acct.id);
-  const recognized=[],ignored=[];
+  _cliquesOnlyRecognized=[];_cliquesOnlyIgnored=[];
   for(const[sub,count]of _cliquesOnlyMap){
-    if(known.has(sub.toLowerCase()))recognized.push({name:sub,shopee:count});
-    else ignored.push(sub);
+    if(known.has(sub.toLowerCase()))_cliquesOnlyRecognized.push({name:sub,shopee:count});
+    else _cliquesOnlyIgnored.push({name:sub,shopee:count});
   }
-  recognized.sort((a,b)=>b.shopee-a.shopee);
-  document.getElementById('cliquesonly-reconhecidos-label').textContent=`✓ Reconhecidos (${recognized.length})`;
-  document.getElementById('cliquesonly-reconhecidos-tbody').innerHTML=recognized.map(r=>
-    `<tr><td style="padding:7px 8px;color:var(--text)">${r.name}</td><td style="padding:7px 8px;text-align:center;color:var(--text)">${r.shopee.toLocaleString('pt-BR')}</td></tr>`
-  ).join('')||'<tr><td style="padding:7px 8px;color:var(--muted)" colspan="2">Nenhum sub ID reconhecido nessa conta.</td></tr>';
-  document.getElementById('cliquesonly-ignorados-label').textContent=`✕ Ignorados (${ignored.length}) — Sem dados nessa conta`;
-  document.getElementById('cliquesonly-ignorados-list').innerHTML=ignored.map(name=>
-    `<span style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--muted)">${name}</span>`
-  ).join('');
-  document.getElementById('cliquesonly-results').style.display='block';
+  _cliquesOnlyRecognized.sort((a,b)=>b.shopee-a.shopee);
+  _cliquesOnlyIgnored.sort((a,b)=>b.shopee-a.shopee);
+  renderCliquesOnlyTables();
+  document.getElementById('cliquesonly-results').style.display='grid';
+}
+function renderCliquesOnlyTables(){
+  document.getElementById('cliquesonly-reconhecidos-label').textContent=`✓ Reconhecidos (${_cliquesOnlyRecognized.length})`;
+  document.getElementById('cliquesonly-reconhecidos-tbody').innerHTML=_cliquesOnlyRecognized.map(r=>
+    `<tr><td style="padding:7px 4px;color:var(--text)">${r.name}</td><td style="padding:7px 4px;text-align:right;color:var(--text)">${r.shopee.toLocaleString('pt-BR')}</td><td style="padding:7px 4px;text-align:center"><button class="btn-x" style="width:24px;height:24px;font-size:11px" onclick="moveCliquesOnly('${r.name.replace(/'/g,"\\'")}','ignore')">✕</button></td></tr>`
+  ).join('')||'<tr><td style="padding:7px 4px;color:var(--muted)" colspan="3">Nenhum sub ID reconhecido nessa conta.</td></tr>';
+  document.getElementById('cliquesonly-ignorados-label').textContent=`✕ Ignorados (${_cliquesOnlyIgnored.length}) — Sem dados nessa conta`;
+  document.getElementById('cliquesonly-ignorados-tbody').innerHTML=_cliquesOnlyIgnored.map(r=>
+    `<tr><td style="padding:7px 4px;color:var(--muted)">${r.name}</td><td style="padding:7px 4px;text-align:right;color:var(--muted)">${r.shopee.toLocaleString('pt-BR')}</td><td style="padding:7px 4px;text-align:center"><button class="btn-x" style="width:24px;height:24px;font-size:11px;background:rgba(59,240,160,0.12);border-color:rgba(59,240,160,0.35);color:var(--accent2)" onclick="moveCliquesOnly('${r.name.replace(/'/g,"\\'")}','recognize')">✓</button></td></tr>`
+  ).join('')||'<tr><td style="padding:7px 4px;color:var(--muted)" colspan="3">Nenhum sub ID ignorado.</td></tr>';
+}
+function moveCliquesOnly(name,direction){
+  if(direction==='ignore'){
+    const idx=_cliquesOnlyRecognized.findIndex(r=>r.name===name);
+    if(idx<0)return;
+    const[item]=_cliquesOnlyRecognized.splice(idx,1);
+    _cliquesOnlyIgnored.push(item);
+    _cliquesOnlyIgnored.sort((a,b)=>b.shopee-a.shopee);
+  } else {
+    const idx=_cliquesOnlyIgnored.findIndex(r=>r.name===name);
+    if(idx<0)return;
+    const[item]=_cliquesOnlyIgnored.splice(idx,1);
+    _cliquesOnlyRecognized.push(item);
+    _cliquesOnlyRecognized.sort((a,b)=>b.shopee-a.shopee);
+  }
+  renderCliquesOnlyTables();
 }
 async function updateCliquesOnly(){
   const acct=getActiveAcct();
@@ -1985,14 +2020,10 @@ async function updateCliquesOnly(){
   if(!_cliquesOnlyMap.size){alert('Selecione o arquivo de Cliques-Shopee primeiro.');return;}
   const date=document.getElementById('inp-date').value;
   if(!date){alert('Selecione a data.');return;}
-  const known=await getKnownSubIdsForAccount(acct.id);
-  const recognized=[];
-  for(const[sub,count]of _cliquesOnlyMap){
-    if(known.has(sub.toLowerCase()))recognized.push({name:sub,shopee:count});
-  }
-  if(!recognized.length){alert('Nenhum sub ID desse arquivo já existe nessa conta.');return;}
+  const recognized=_cliquesOnlyRecognized;
+  if(!recognized.length){alert('Nenhum sub ID na lista de Reconhecidos.');return;}
   const btn=document.getElementById('btn-import-main');
-  btn.disabled=true;btn.textContent='Atualizando...';
+  btn.disabled=true;btn.textContent='Adicionando...';
   try{
     const{data:existingRows}=await sb.from('daily_data').select('sub_id').eq('account_id',acct.id).eq('date',date).in('sub_id',recognized.map(r=>r.name));
     const existingSet=new Set((existingRows||[]).map(r=>r.sub_id));
@@ -2010,7 +2041,7 @@ async function updateCliquesOnly(){
     console.error(e);
     alert('Erro ao atualizar cliques. Tenta de novo.');
   }
-  btn.disabled=false;btn.textContent='Atualizar';
+  btn.disabled=false;btn.textContent='Adicionar';
 }
 
 function clearMetaFile(){
