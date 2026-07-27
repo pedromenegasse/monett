@@ -1942,12 +1942,12 @@ function parseCliquesOnlyCSV(raw){
   const lines=raw.trim().replace(/^\uFEFF/,'').split('\n').filter(l=>l.trim());
   if(lines.length<2)return;
   const sep=lines[0].includes('	')?'	':',';
-  const headers=lines[0].split(sep).map(h=>h.replace(/"/g,'').trim());
+  const headers=parseCSVLine2(lines[0],sep).map(h=>h.trim());
   const subIdx=headers.findIndex(h=>h.toLowerCase().includes('sub_id')||h.toLowerCase().includes('sub id'));
   if(subIdx<0){alert('Não encontrei a coluna de Sub ID nesse arquivo.');return;}
   _cliquesOnlyMap=new Map();
   for(let i=1;i<lines.length;i++){
-    const cols=lines[i].split(sep).map(c=>c.replace(/"/g,'').trim());
+    const cols=parseCSVLine2(lines[i],sep);
     const sub=(cols[subIdx]||'').split('----')[0].trim();
     if(sub)_cliquesOnlyMap.set(sub,(_cliquesOnlyMap.get(sub)||0)+1);
   }
