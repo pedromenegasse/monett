@@ -99,6 +99,8 @@ let currentUser=null;
   input[type="date"]:focus{border-color:var(--accent)}
   .btn-import{background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:8px 20px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;box-sizing:border-box;line-height:normal}
   .btn-import:hover{background:var(--accent);color:#0d0f14}
+  .btn-import.loading{background:var(--accent);color:#0d0f14;pointer-events:none}
+  .btn-import.loading .btn-spinner{border-color:rgba(13,15,20,.3);border-top-color:#0d0f14}
   textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:10px 12px;outline:none;resize:vertical;width:100%;transition:border .15s}
   .ta-grow{resize:none!important;overflow:hidden!important;min-height:90px;line-height:1.8em;padding-top:10px;padding-bottom:10px}
   .ce-col{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;outline:none;min-height:90px;padding:0;overflow:hidden;cursor:text;transition:border .15s;box-sizing:border-box}
@@ -144,6 +146,8 @@ let currentUser=null;
   .chevron{transition:transform .2s;display:inline-block;font-size:12px}
   .collapsed .chevron{transform:rotate(-90deg)}
   @keyframes tp-spin{to{transform:rotate(360deg)}}
+  .btn-spinner{display:none;width:13px;height:13px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);animation:tp-spin .7s linear infinite;vertical-align:-2px;margin-right:7px}
+  .btn-spinner.show{display:inline-block}
   .day-table-wrap{overflow-x:auto}
   table{width:100%;border-collapse:collapse;font-size:13px}
   th{padding:9px 13px;text-align:center;font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
@@ -202,7 +206,7 @@ let currentUser=null;
   .color-pick.selected{border-color:var(--text)}
   /* SUB ID MODAL */
   .sub-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
-  .sub-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:fit-content;min-width:320px;max-width:calc(100vw - 40px);max-height:90vh;display:flex;flex-direction:column;overflow:auto}
+  .sub-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:fit-content;min-width:320px;max-width:calc(100vw - 40px);max-height:90vh;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
   .sub-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
   .sub-modal-header h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent);margin:0}
   .sub-modal-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
@@ -351,7 +355,7 @@ let currentUser=null;
       <button class="mode-btn" id="mode-btn-1col" onclick="setMode('1col')" style="height:36px">1×</button>
     </div>
     <input type="date" id="inp-date" style="height:36px;padding:0 12px">
-    <button class="btn-import" id="btn-import-main" onclick="importData()" style="height:36px;padding:0 20px">Adicionar</button>
+    <button class="btn-import" id="btn-import-main" onclick="importData()" style="height:36px;padding:0 20px"><span class="btn-spinner" id="btn-import-main-spinner"></span><span id="btn-import-main-label">Adicionar</span></button>
     <div id="inp-2x1-totais" style="display:none;align-items:center;gap:8px;font-family:'DM Mono',monospace;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 10px;height:36px;min-width:320px;flex:1;justify-content:space-between;white-space:nowrap">
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Pedidos</span><span id="tot-pedidos" style="font-size:12px;color:var(--text);font-weight:500;line-height:1.2">—</span></div>
@@ -727,7 +731,7 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
         </div>
         <input type="text" id="bd-desc" placeholder="Descrição" style="height:36px">
         <input type="text" id="bd-valor" placeholder="Valor" inputmode="decimal" style="height:36px;width:120px!important;max-width:120px!important">
-        <button class="btn-import" onclick="addBD()" style="height:36px;padding:0 20px;width:120px">Adicionar</button>
+        <button class="btn-import" id="btn-bd-add" onclick="addBD()" style="height:36px;padding:0 20px;width:120px"><span class="btn-spinner" id="btn-bd-add-spinner"></span><span>Adicionar</span></button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
           <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em" style="font-weight:400">Adicionar ao saldo do mês</span>
           <div class="toggle-wrap" onclick="toggleBDSeparar()">
@@ -1423,8 +1427,9 @@ function setMode(m){
   document.getElementById('mode-btn-2x1').classList.toggle('active',m==='2x1');
   document.getElementById('mode-btn-1col').classList.toggle('active',m==='1col');
   const btn=document.getElementById('btn-import-main');
-  if(m==='cliques'){btn.textContent='Adicionar';btn.onclick=updateCliquesOnly;}
-  else{btn.textContent='Adicionar';btn.onclick=importData;}
+  if(m==='cliques'){btn.onclick=updateCliquesOnly;}
+  else{btn.onclick=importData;}
+  document.getElementById('btn-import-main-label').textContent='Adicionar';
   localStorage.setItem('tp_import_mode',m);
 }
 
@@ -2022,8 +2027,7 @@ async function updateCliquesOnly(){
   if(!date){alert('Selecione a data.');return;}
   const recognized=_cliquesOnlyRecognized;
   if(!recognized.length){alert('Nenhum sub ID na lista de Reconhecidos.');return;}
-  const btn=document.getElementById('btn-import-main');
-  btn.disabled=true;btn.textContent='Adicionando...';
+  setBtnLoading('btn-import-main',true);
   try{
     const{data:existingRows}=await sb.from('daily_data').select('sub_id').eq('account_id',acct.id).eq('date',date).in('sub_id',recognized.map(r=>r.name));
     const existingSet=new Set((existingRows||[]).map(r=>r.sub_id));
@@ -2041,7 +2045,7 @@ async function updateCliquesOnly(){
     console.error(e);
     alert('Erro ao atualizar cliques. Tenta de novo.');
   }
-  btn.disabled=false;btn.textContent='Adicionar';
+  setBtnLoading('btn-import-main',false);
 }
 
 function clearMetaFile(){
@@ -2202,6 +2206,11 @@ function parse2x1(rawInput){
 
 /* ── IMPORT DAY ── */
 async function importData(){
+  setBtnLoading('btn-import-main',true);
+  try{ await importDataInner(); }
+  finally{ setBtnLoading('btn-import-main',false); }
+}
+async function importDataInner(){
   const acct=getActiveAcct();
   if(!acct){alert('Crie uma conta primeiro!');return;}
   document.getElementById('inp-date').blur();
@@ -3364,6 +3373,14 @@ function renderReguaRadial(meta,alvos,feitoMes,bonusPct){
     </div>`;
   }).join('');
 }
+// Mostra/esconde o spinner de carregamento dentro de um botão (id do botão + '-spinner'),
+// e desabilita o botão enquanto processa, pra ficar claro que o clique funcionou.
+function setBtnLoading(btnId,loading){
+  const btn=document.getElementById(btnId);
+  const spinner=document.getElementById(btnId+'-spinner');
+  if(btn){btn.disabled=loading;btn.classList.toggle('loading',loading);}
+  if(spinner)spinner.classList.toggle('show',loading);
+}
 function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg||'✓';t.classList.add('show');
@@ -3692,10 +3709,12 @@ async function addBD(){
   if(!desc){alert('Digite uma descrição!');return;}
   if(isNaN(valor)||valor<=0){alert('Valor inválido!');return;}
   const month=getActiveMonth();
+  setBtnLoading('btn-bd-add',true);
   await saveBD(acct.id,month,_bdTipo,desc,valor);
   document.getElementById('bd-desc').value='';
   document.getElementById('bd-valor').value='';
   await renderBD();
+  setBtnLoading('btn-bd-add',false);
 }
 
 async function removeBD(id){
