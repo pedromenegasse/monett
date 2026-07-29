@@ -101,6 +101,7 @@ let currentUser=null;
   .btn-import:hover{background:var(--accent);color:#0d0f14}
   .btn-import.loading{background:var(--accent);color:#0d0f14;pointer-events:none}
   .btn-import.loading .btn-spinner{border-color:rgba(13,15,20,.3);border-top-color:#0d0f14}
+  .btn-import.loading .btn-import-label{display:none}
   textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:10px 12px;outline:none;resize:vertical;width:100%;transition:border .15s}
   .ta-grow{resize:none!important;overflow:hidden!important;min-height:90px;line-height:1.8em;padding-top:10px;padding-bottom:10px}
   .ce-col{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;outline:none;min-height:90px;padding:0;overflow:hidden;cursor:text;transition:border .15s;box-sizing:border-box}
@@ -355,7 +356,7 @@ let currentUser=null;
       <button class="mode-btn" id="mode-btn-1col" onclick="setMode('1col')" style="height:36px">1×</button>
     </div>
     <input type="date" id="inp-date" style="height:36px;padding:0 12px">
-    <button class="btn-import" id="btn-import-main" onclick="importData()" style="height:36px;padding:0 20px"><span class="btn-spinner" id="btn-import-main-spinner"></span><span id="btn-import-main-label">Adicionar</span></button>
+    <button class="btn-import" id="btn-import-main" onclick="importData()" style="height:36px;padding:0 20px"><span class="btn-spinner" id="btn-import-main-spinner"></span><span class="btn-import-label" id="btn-import-main-label">Adicionar</span></button>
     <div id="inp-2x1-totais" style="display:none;align-items:center;gap:8px;font-family:'DM Mono',monospace;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 10px;height:36px;min-width:320px;flex:1;justify-content:space-between;white-space:nowrap">
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Pedidos</span><span id="tot-pedidos" style="font-size:12px;color:var(--text);font-weight:500;line-height:1.2">—</span></div>
@@ -731,7 +732,7 @@ tr.cli-blink td{animation:cli-blink-purple 1s ease-in-out infinite}
         </div>
         <input type="text" id="bd-desc" placeholder="Descrição" style="height:36px">
         <input type="text" id="bd-valor" placeholder="Valor" inputmode="decimal" style="height:36px;width:120px!important;max-width:120px!important">
-        <button class="btn-import" id="btn-bd-add" onclick="addBD()" style="height:36px;padding:0 20px;width:120px"><span class="btn-spinner" id="btn-bd-add-spinner"></span><span>Adicionar</span></button>
+        <button class="btn-import" id="btn-bd-add" onclick="addBD()" style="height:36px;padding:0 20px;width:120px"><span class="btn-spinner" id="btn-bd-add-spinner"></span><span class="btn-import-label">Adicionar</span></button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
           <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em" style="font-weight:400">Adicionar ao saldo do mês</span>
           <div class="toggle-wrap" onclick="toggleBDSeparar()">
@@ -1996,11 +1997,11 @@ async function renderCliquesOnlyPreview(){
 function renderCliquesOnlyTables(){
   document.getElementById('cliquesonly-reconhecidos-label').textContent=`✓ Reconhecidos (${_cliquesOnlyRecognized.length})`;
   document.getElementById('cliquesonly-reconhecidos-tbody').innerHTML=_cliquesOnlyRecognized.map(r=>
-    `<tr><td style="padding:7px 4px;color:var(--text)">${r.name}</td><td style="padding:7px 4px;text-align:right;color:var(--text)">${r.shopee.toLocaleString('pt-BR')}</td><td style="padding:7px 4px;text-align:center"><button class="btn-x" style="width:24px;height:24px;font-size:11px" onclick="moveCliquesOnly('${r.name.replace(/'/g,"\\'")}','ignore')">✕</button></td></tr>`
+    `<tr><td style="padding:7px 4px;color:var(--text);text-align:left">${r.name}</td><td style="padding:7px 4px;text-align:right;color:var(--text)">${r.shopee.toLocaleString('pt-BR')}</td><td style="padding:7px 4px;text-align:center"><button class="btn-x" style="width:24px;height:24px;font-size:11px" onclick="moveCliquesOnly('${r.name.replace(/'/g,"\\'")}','ignore')">✕</button></td></tr>`
   ).join('')||'<tr><td style="padding:7px 4px;color:var(--muted)" colspan="3">Nenhum sub ID reconhecido nessa conta.</td></tr>';
   document.getElementById('cliquesonly-ignorados-label').textContent=`✕ Ignorados (${_cliquesOnlyIgnored.length}) — Sem dados nessa conta`;
   document.getElementById('cliquesonly-ignorados-tbody').innerHTML=_cliquesOnlyIgnored.map(r=>
-    `<tr><td style="padding:7px 4px;color:var(--muted)">${r.name}</td><td style="padding:7px 4px;text-align:right;color:var(--muted)">${r.shopee.toLocaleString('pt-BR')}</td><td style="padding:7px 4px;text-align:center"><button class="btn-x" style="width:24px;height:24px;font-size:11px;background:rgba(59,240,160,0.12);border-color:rgba(59,240,160,0.35);color:var(--accent2)" onclick="moveCliquesOnly('${r.name.replace(/'/g,"\\'")}','recognize')">✓</button></td></tr>`
+    `<tr><td style="padding:7px 4px;color:var(--muted);text-align:left">${r.name}</td><td style="padding:7px 4px;text-align:right;color:var(--muted)">${r.shopee.toLocaleString('pt-BR')}</td><td style="padding:7px 4px;text-align:center"><button class="btn-x" style="width:24px;height:24px;font-size:11px;background:rgba(59,240,160,0.12);border-color:rgba(59,240,160,0.35);color:var(--accent2)" onclick="moveCliquesOnly('${r.name.replace(/'/g,"\\'")}','recognize')">✓</button></td></tr>`
   ).join('')||'<tr><td style="padding:7px 4px;color:var(--muted)" colspan="3">Nenhum sub ID ignorado.</td></tr>';
 }
 function moveCliquesOnly(name,direction){
@@ -2816,7 +2817,7 @@ async function renderCliquesSection(){
     tr.dataset.conversao=r.conversao==null?-1:r.conversao;
     const saldoColor=r.saldo>=0?'var(--accent2)':'var(--red)';
     tr.innerHTML=
-      '<td style="font-weight:500;color:'+c.text+'">'+r.name+'</td>'+
+      '<td style="font-weight:500;color:'+c.text+';text-align:left">'+r.name+'</td>'+
       '<td class="cli-pair-r" style="font-weight:500">'+r.meta.toLocaleString('pt-BR')+'</td>'+
       '<td class="cli-pair-l" style="color:var(--muted)">'+(r.cpcMeta==null?'—':fmt(r.cpcMeta))+'</td>'+
       '<td class="cli-grp-l cli-pair-r" style="font-weight:500;color:'+(semRetorno?'var(--red)':'var(--text)')+'">'+(semRetorno?'Sem':r.shopee.toLocaleString('pt-BR'))+'</td>'+
@@ -3054,7 +3055,7 @@ function buildDayTbodyRows(day,sortedRows,crMap,displayRankMap,prevRankMap,cumSa
       <td>${fmt(r.inv)}</td><td>${fmt(r.venda)}</td>
       <td>${fmt(c.comMeta)}</td><td>${fmt(c.menosISS)}</td>
       <td class="${sClass}">${fmt(c.saldo)}</td>
-      <td>${isMissing?'<span class="neu">—</span>':roiStr}</td>
+      <td${isMissing?'':` style="color:${roasColor(c.roi)}"`}>${isMissing?'<span class="neu">—</span>':roiStr}</td>
       <td class="${acumClass}" style="font-weight:500">${fmt(acum)}</td>
       <td>${deleteBtn}</td>
     </tr>`;
@@ -3090,7 +3091,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
   const thHover='onmouseover="this.style.color=\'#e8ecf4\'" onmouseout="this.style.color=\'\'"';
 
   const dayRoas=dayCalc.roi!==null?dayCalc.roi.toFixed(2):'—';
-  const roasClass=dayCalc.roi===null?'neu':dayCalc.roi>=1?'pos':'neg';
+  const dayRoasColor=roasColor(dayCalc.roi);
   const totMesSaldo=Object.values(cumSaldo).reduce((a,b)=>a+b,0);
   const totMesClass=totMesSaldo>=0?'pos':'neg';
 
@@ -3100,7 +3101,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
         <span class="chevron">▾</span>
         <span class="day-date">${dateLabel}</span>
         <div class="day-totals">
-          <div class="day-totals-row"><span>Vendas <b>${fmt(dayVendaBruta)}</b></span><span>Invest. <b>${fmt(dayInv)}</b></span><span>Comissão <b>${fmt(dayVenda)}</b></span><span>ROAS <b class="${roasClass}">${dayRoas}</b></span></div>
+          <div class="day-totals-row"><span>Vendas <b>${fmt(dayVendaBruta)}</b></span><span>Invest. <b>${fmt(dayInv)}</b></span><span>Comissão <b>${fmt(dayVenda)}</b></span><span>ROAS <b style="color:${dayRoasColor}">${dayRoas}</b></span></div>
           <div class="day-totals-row"><span>+Meta <b>${fmt(dayCalc.comMeta)}</b></span><span>−ISS <b>${fmt(dayCalc.menosISS)}</b></span></div>
         </div>
       </div>
@@ -3123,7 +3124,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
       <div style="display:flex;padding:0 14px 12px;gap:8px;align-items:flex-end" onclick="toggleDay(this.parentElement.querySelector('.mbl-row1'))">
         <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:3px 10px">
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">Vendas <b style="color:var(--text);font-weight:400">R$ ${Math.round(dayVendaBruta)}</b></div>
-          <div style="font-size:12px;color:var(--muted);white-space:nowrap">ROAS <b class="${roasClass}" style="font-weight:500">${dayRoas}</b></div>
+          <div style="font-size:12px;color:var(--muted);white-space:nowrap">ROAS <b style="font-weight:500;color:${dayRoasColor}">${dayRoas}</b></div>
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">Invest. <b style="color:var(--text);font-weight:400">R$ ${Math.round(dayInv)}</b></div>
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">Comissão <b style="color:var(--text);font-weight:400">R$ ${Math.round(dayVenda)}</b></div>
           <div style="font-size:12px;color:var(--muted);white-space:nowrap">+Meta <b style="color:var(--text);font-weight:400">R$ ${Math.round(dayCalc.comMeta)}</b></div>
@@ -3147,7 +3148,7 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
           <td>${fmt(dayCalc.comMeta)}</td>
           <td>${fmt(dayCalc.menosISS)}</td>
           <td class="${sc}">${fmt(dayCalc.saldo)}</td>
-          <td class="${roasClass}">${dayRoas}</td>
+          <td style="color:${dayRoasColor}">${dayRoas}</td>
           <td class="${totMesClass}">${fmt(totMesSaldo)}</td>
           <td><button class="btn-x" onclick="event.stopPropagation();deleteDay('${day}')">✕</button></td>
         </tr>
@@ -3313,6 +3314,16 @@ function importFile(e){
   e.target.value='';
 }
 
+// Cor padronizada da fonte do número de ROAS/ROI em todo o site (não mexe no fundo/destaque da linha).
+// 0–0,50 roxo | 0,51–0,99 vermelho | 1 branco | 1,01–1,50 verde | ≥1,51 amarelo
+function roasColor(roi){
+  if(roi==null)return'var(--muted)';
+  if(roi<=0.5)return'#c084fc';
+  if(roi<1)return'var(--red)';
+  if(roi<1.01)return'var(--text)';
+  if(roi<=1.5)return'var(--accent2)';
+  return'var(--yellow)';
+}
 function fmt(v){return'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 // Spinner reutilizável pra mostrar enquanto uma busca ao banco está em andamento,
 // pra não parecer que a tela travou no dado antigo.
@@ -3408,7 +3419,7 @@ async function openSubModal(name){
     const vendaBruta=(vbMap[day]&&vbMap[day][nameKey])||0;
     totInv+=r.inv;totVenda+=r.venda;totSaldo+=c.saldo;totVendaBruta+=vendaBruta;count++;
     const sc=c.saldo>=0?'color:var(--accent2)':'color:var(--red)';
-    const rc=c.roi!==null?(c.roi>=1.5?'color:var(--gold-text)':c.roi<0.1?'color:var(--bord-text)':c.roi>=1?'color:var(--accent2)':'color:var(--red)'):'color:var(--muted)';
+    const rc='color:'+roasColor(c.roi);
     return`<tr data-idx="${idx}" data-date="${day}" data-vendabruta="${vendaBruta}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roas="${c.roi??-999}">
       <td>${lbl}</td>
       <td>${fmt(vendaBruta)}</td>
@@ -3562,7 +3573,7 @@ async function openRankModal(){
 
   const rows=ranked.map((r,i)=>{
     const sc=r.saldo>=0?'color:var(--accent2)':'color:var(--red)';
-    const rc=r.roi!==null?(r.roi>=1.5?'color:var(--gold-text)':r.roi<0.1?'color:var(--bord-text)':r.roi>=1?'color:var(--accent2)':'color:var(--red)'):'color:var(--muted)';
+    const rc='color:'+roasColor(r.roi);
     const isLastDayActive=lastDayActive.has(r.name);
     return`<tr data-rank="${i}" data-vendabruta="${r.vendaBruta}" data-inv="${r.inv}" data-meta="${r.comMeta}" data-venda="${r.venda}" data-iss="${r.menosISS}" data-saldo="${r.saldo}" data-roi="${r.roi??-999}" data-name="${r.name}" data-lastday="${isLastDayActive?1:0}">
       <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:600">${i+1}</td>
