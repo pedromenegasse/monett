@@ -3138,6 +3138,11 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
     </div>
     <div class="day-table-wrap" style="${tableDisplay}">
       <table id="tbl-${dayId}" data-lazy="${isLatest?'false':'true'}">
+        <colgroup>
+          <col style="width:5%"><col style="width:16%"><col style="width:10%"><col style="width:10%">
+          <col style="width:10%"><col style="width:9%"><col style="width:9%"><col style="width:9%">
+          <col style="width:7%"><col style="width:10%"><col style="width:5%">
+        </colgroup>
         <thead>
         <tr class="totals-row" onclick="toggleDay(this)">
           <td><span class="chevron">▾</span></td>
@@ -3315,13 +3320,11 @@ function importFile(e){
 }
 
 // Cor padronizada da fonte do número de ROAS/ROI em todo o site (não mexe no fundo/destaque da linha).
-// 0–0,50 roxo | 0,51–0,99 vermelho | 1 branco | 1,01–1,50 verde | ≥1,51 amarelo
+// 0–0,50 roxo | 0,51–1,49 branco | ≥1,50 amarelo
 function roasColor(roi){
   if(roi==null)return'var(--muted)';
   if(roi<=0.5)return'#c084fc';
-  if(roi<1)return'var(--red)';
-  if(roi<1.01)return'var(--text)';
-  if(roi<=1.5)return'var(--accent2)';
+  if(roi<1.5)return'var(--text)';
   return'var(--yellow)';
 }
 function fmt(v){return'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
@@ -3389,7 +3392,14 @@ function renderReguaRadial(meta,alvos,feitoMes,bonusPct){
 function setBtnLoading(btnId,loading){
   const btn=document.getElementById(btnId);
   const spinner=document.getElementById(btnId+'-spinner');
-  if(btn){btn.disabled=loading;btn.classList.toggle('loading',loading);}
+  if(btn){
+    if(loading){
+      if(!btn.dataset.baseWidth)btn.dataset.baseWidth=btn.offsetWidth+'px';
+      btn.style.minWidth=btn.dataset.baseWidth;
+    }
+    btn.disabled=loading;
+    btn.classList.toggle('loading',loading);
+  }
   if(spinner)spinner.classList.toggle('show',loading);
 }
 function showToast(msg){
@@ -3450,6 +3460,13 @@ async function openSubModal(name){
     </div>
     <div class="card" style="text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center"><div class="card-label">Saldo Mês</div><div class="card-value ${totSc}" style="text-align:center">${fmt(totSaldo)}</div></div>
     <div class="card" style="text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center"><div class="card-label">ROAS Médio</div><div class="card-value ${totRc}" style="text-align:center">${totC.roi!==null?totC.roi.toFixed(2):'—'}</div></div>`;
+  if(!document.getElementById('sub-modal-colgroup')){
+    document.getElementById('sub-modal-table').insertAdjacentHTML('afterbegin',
+      `<colgroup id="sub-modal-colgroup">
+        <col style="width:10%"><col style="width:13%"><col style="width:13%"><col style="width:13%">
+        <col style="width:13%"><col style="width:13%"><col style="width:13%"><col style="width:12%">
+      </colgroup>`);
+  }
   const thS='cursor:pointer;user-select:none;transition:color .15s';
   const thH='onmouseover="this.style.color=\'#e8ecf4\'" onmouseout="this.style.color=\'\'"';
   document.getElementById('sub-modal-thead').innerHTML=`<tr>
@@ -3583,8 +3600,8 @@ async function openRankModal(){
       <td>${fmt(r.venda)}</td>
       <td>${fmt(r.comMeta)}</td>
       <td>${fmt(r.menosISS)}</td>
-      <td style="${rc};font-weight:600">${r.roi!==null?r.roi.toFixed(2):'—'}</td>
       <td style="${sc};font-weight:600">${fmt(r.saldo)}</td>
+      <td style="${rc};font-weight:600">${r.roi!==null?r.roi.toFixed(2):'—'}</td>
     </tr>`;
   }).join('');
 
@@ -3600,8 +3617,8 @@ async function openRankModal(){
       <col style="width:12%">
       <col style="width:12%">
       <col style="width:12%">
-      <col style="width:7%">
       <col style="width:13%">
+      <col style="width:7%">
     </colgroup>
     <thead><tr>
       <th>Rank</th>
@@ -3611,8 +3628,8 @@ async function openRankModal(){
       <th style="${thS}" ${thH} onclick="sortRankModal('venda')">Comissão <span class="sort-ind" id="rms-venda"></span></th>
       <th style="${thS}" ${thH} onclick="sortRankModal('meta')">+Meta <span class="sort-ind" id="rms-meta"></span></th>
       <th style="${thS}" ${thH} onclick="sortRankModal('iss')">−ISS <span class="sort-ind" id="rms-iss"></span></th>
-      <th style="${thS}" ${thH} onclick="sortRankModal('roi')">ROAS <span class="sort-ind" id="rms-roi"></span></th>
       <th style="${thS}" ${thH} onclick="sortRankModal('saldo')">Saldo Mês <span class="sort-ind" id="rms-saldo"></span></th>
+      <th style="${thS}" ${thH} onclick="sortRankModal('roi')">ROAS <span class="sort-ind" id="rms-roi"></span></th>
     </tr></thead>
     <tbody>${rows}</tbody>`;
   document.getElementById('rank-modal-bg').style.display='flex';
