@@ -2639,13 +2639,21 @@ async function renderTop10Table(){
   if(myRenderId!==_vendasRenderId)return;
   const rows=items||[];
 
+  // Passo 1: mapeia nome de produto -> ID, usando qualquer venda que já tenha ID salvo.
+  // Isso serve de ponte pras vendas antigas/incompletas do mesmo produto que não têm ID.
+  const nameToId={};
+  rows.forEach(r=>{
+    if(r.shop_id&&r.item_id&&r.produto&&!nameToId[r.produto]){
+      nameToId[r.produto]=r.shop_id+'|'+r.item_id;
+    }
+  });
   const prodAgg={};
   rows.forEach(r=>{
     if(r.sub_id==='Venda Bruta Retroativa')return;
-    // Agrupa pelo ID real do produto (loja+item) quando disponível, pra variações
-    // de digitação no título não separarem o mesmo produto em linhas diferentes.
-    // Só cai pro nome como chave se o item não tiver ID (dado antigo/incompleto).
-    const key=(r.shop_id&&r.item_id)?r.shop_id+'|'+r.item_id:r.produto;
+    // Agrupa pelo ID real do produto (loja+item) quando disponível — direto ou via
+    // ponte pelo nome — pra nem variação de digitação no título nem falta de ID
+    // em vendas antigas separarem o mesmo produto em linhas diferentes.
+    const key=(r.shop_id&&r.item_id)?r.shop_id+'|'+r.item_id:(nameToId[r.produto]||r.produto);
     const p=r.produto;
     if(!prodAgg[key])prodAgg[key]={produto:p,itens:0,venda:0,comissao:0,shopId:r.shop_id||'',itemId:r.item_id||''};
     prodAgg[key].itens+=r.qtd||1;
