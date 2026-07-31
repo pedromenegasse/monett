@@ -2642,12 +2642,16 @@ async function renderTop10Table(){
   const prodAgg={};
   rows.forEach(r=>{
     if(r.sub_id==='Venda Bruta Retroativa')return;
+    // Agrupa pelo ID real do produto (loja+item) quando disponível, pra variações
+    // de digitação no título não separarem o mesmo produto em linhas diferentes.
+    // Só cai pro nome como chave se o item não tiver ID (dado antigo/incompleto).
+    const key=(r.shop_id&&r.item_id)?r.shop_id+'|'+r.item_id:r.produto;
     const p=r.produto;
-    if(!prodAgg[p])prodAgg[p]={produto:p,itens:0,venda:0,comissao:0,shopId:r.shop_id||'',itemId:r.item_id||''};
-    prodAgg[p].itens+=r.qtd||1;
-    prodAgg[p].venda+=parseFloat(r.venda_bruta||0);
-    prodAgg[p].comissao+=parseFloat(r.comissao||0);
-    if(!prodAgg[p].shopId&&r.shop_id){prodAgg[p].shopId=r.shop_id;prodAgg[p].itemId=r.item_id||'';}
+    if(!prodAgg[key])prodAgg[key]={produto:p,itens:0,venda:0,comissao:0,shopId:r.shop_id||'',itemId:r.item_id||''};
+    prodAgg[key].itens+=r.qtd||1;
+    prodAgg[key].venda+=parseFloat(r.venda_bruta||0);
+    prodAgg[key].comissao+=parseFloat(r.comissao||0);
+    if(!prodAgg[key].shopId&&r.shop_id){prodAgg[key].shopId=r.shop_id;prodAgg[key].itemId=r.item_id||'';}
   });
   _top10Data=Object.values(prodAgg);
   renderTop10Sorted();
