@@ -3428,21 +3428,41 @@ async function openSubModal(name){
   const month=getActiveMonth();
   const md=data[month]||{};
   const days=Object.keys(md).sort();
-  if(!days.length)return;
   const vbMap=await fetchVendaBrutaPorDia(acct.id,month);
   const nameKey=name.toLowerCase();
+
+  // Se o mês atual ainda não tem o dia em questão + 7 dias anteriores (8 no total),
+  // completa com o fim do mês anterior só pra dar continuidade visual na tabela —
+  // não entra nos cards de total.
+  const JANELA=8;
+  let bridgeDays=[],bridgeMd={},bridgePrevMonth=null,bridgeVbMap={};
+  if(days.length<JANELA){
+    const[y,m]=month.split('-').map(Number);
+    const prevDate=new Date(y,m-2,1);
+    bridgePrevMonth=prevDate.getFullYear()+'-'+String(prevDate.getMonth()+1).padStart(2,'0');
+    bridgeMd=data[bridgePrevMonth]||{};
+    const prevDaysAll=Object.keys(bridgeMd).sort();
+    bridgeDays=prevDaysAll.slice(-(JANELA-days.length));
+    if(bridgeDays.length)bridgeVbMap=await fetchVendaBrutaPorDia(acct.id,bridgePrevMonth);
+  }
+  if(!days.length&&!bridgeDays.length)return;
+
   let totInv=0,totVenda=0,totSaldo=0,totMeta=0,totISS=0,totVendaBruta=0,count=0;
-  const rows=[...days].reverse().map((day,idx)=>{
-    const r=md[day].find(x=>x.name===name);
+  const buildRow=(day,idx,isBridge)=>{
+    const rowsSource=isBridge?bridgeMd:md;
+    const rowMonth=isBridge?bridgePrevMonth:month;
+    const r=rowsSource[day].find(x=>x.name===name);
     if(!r)return'';
     const [y,m,d]=day.split('-');
     const lbl=`${d}/${m}`;
-    const c=calc(r.inv,r.venda,month);
-    const vendaBruta=(vbMap[day]&&vbMap[day][nameKey])||0;
-    totInv+=r.inv;totVenda+=r.venda;totSaldo+=c.saldo;totVendaBruta+=vendaBruta;count++;
+    const c=calc(r.inv,r.venda,rowMonth);
+    const vMap=isBridge?bridgeVbMap:vbMap;
+    const vendaBruta=(vMap[day]&&vMap[day][nameKey])||0;
+    if(!isBridge){totInv+=r.inv;totVenda+=r.venda;totSaldo+=c.saldo;totVendaBruta+=vendaBruta;count++;}
     const sc=c.saldo>=0?'color:var(--accent2)':'color:var(--red)';
     const rc='color:'+roasColor(c.roi);
-    return`<tr data-idx="${idx}" data-date="${day}" data-vendabruta="${vendaBruta}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roas="${c.roi??-999}">
+    const bridgeStyle=isBridge?'opacity:0.55':'';
+    return`<tr data-idx="${idx}" data-date="${day}" style="${bridgeStyle}" data-vendabruta="${vendaBruta}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roas="${c.roi??-999}">
       <td>${lbl}</td>
       <td>${fmt(vendaBruta)}</td>
       <td>${fmt(r.inv)}</td>
@@ -3452,7 +3472,11 @@ async function openSubModal(name){
       <td style="${sc};font-weight:600">${fmt(c.saldo)}</td>
       <td style="${rc};font-weight:600">${c.roi!==null?c.roi.toFixed(2):'—'}</td>
     </tr>`;
-  }).join('');
+  };
+  const rows=[
+    ...[...days].reverse().map((day,idx)=>buildRow(day,idx,false)),
+    ...[...bridgeDays].reverse().map((day,idx)=>buildRow(day,days.length+idx,true))
+  ].join('');
   const totC=calc(totInv,totVenda,month);
   const totSc=totSaldo>=0?'cv-green':'cv-red';
   const totRc=totC.roi!==null?(totC.roi>=1?'cv-green':'cv-red'):'cv-muted';
