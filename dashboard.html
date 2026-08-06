@@ -540,6 +540,14 @@ let currentUser=null;
     </span>
   </h2>
   <div id="cliques-body" style="margin-top:12px;padding:0 18px 18px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden">
+      <h2 onclick="toggleVendasSub('cliquesdiaadia')" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-size:15px;padding:14px 16px;margin:0">
+        <span id="cliquesdiaadia-toggle-icon" style="color:var(--yellow);font-size:16px;display:inline-block">+</span> Dia a Dia
+      </h2>
+      <div id="cliquesdiaadia-sub-body" style="display:none;padding:0 16px 16px">
+        <div class="day-table-wrap"><table style="width:100%;border-collapse:collapse;font-size:13px;font-family:'DM Mono',monospace;table-layout:fixed" id="cliques-diaadia-table"></table></div>
+      </div>
+    </div>
     <div class="mode-toggle" id="cliques-period-toggle" style="margin-bottom:12px">
       <button data-p="hoje" id="cli-btn-hoje" class="mode-btn active" onclick="setCliquesPeriod('hoje')">Último dia</button>
       <button data-p="7" class="mode-btn" onclick="setCliquesPeriod('7')">7 dias</button>
@@ -2720,6 +2728,54 @@ function setCliquesPeriod(p){
   document.querySelectorAll('#cliques-period-toggle .mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
   renderCliquesSection();
 }
+function renderCliquesDiaADia(data,month){
+  const tbl=document.getElementById('cliques-diaadia-table');
+  if(!tbl)return;
+  const md=data[month]||{};
+  const byDay={};
+  for(const day of Object.keys(md)){
+    for(const r of md[day]){
+      if(r.cliquesMeta==null)continue;
+      if(!byDay[day])byDay[day]={meta:0,shopee:0,inv:0,pedidos:0,saldo:0};
+      byDay[day].meta+=r.cliquesMeta||0;
+      byDay[day].shopee+=r.cliquesShopee||0;
+      byDay[day].pedidos+=r.pedidos||0;
+      byDay[day].inv+=r.inv;
+      byDay[day].saldo+=calc(r.inv,r.venda,month).saldo;
+    }
+  }
+  const days=Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
+  if(!days.length){
+    tbl.innerHTML='<tr><td style="padding:10px 6px;color:var(--muted)">Nenhum dado de cliques neste mês.</td></tr>';
+    return;
+  }
+  const th=`font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:center;padding:8px 6px;font-weight:500;border-bottom:1px solid var(--border)`;
+  const td=`padding:9px 6px;text-align:center;border-bottom:1px solid var(--border)`;
+  tbl.innerHTML=`<tr>
+      <th style="${th};text-align:left">Dia</th>
+      <th style="${th}">Meta</th>
+      <th style="${th}">Shopee</th>
+      <th style="${th}">Taxa</th>
+      <th style="${th}">Pedidos</th>
+      <th style="${th}">Investimento</th>
+      <th style="${th}">Saldo</th>
+    </tr>`+
+    days.map(day=>{
+      const d=byDay[day];
+      const taxa=d.meta>0?Math.round(d.shopee/d.meta*100):0;
+      const dLabel=day.split('-').reverse().slice(0,2).join('/');
+      const saldoColor=d.saldo>=0?'var(--accent2)':'var(--red)';
+      return`<tr>
+        <td style="${td};text-align:left;font-weight:500;color:var(--text)">${dLabel}</td>
+        <td style="${td};color:var(--text)">${d.meta.toLocaleString('pt-BR')}</td>
+        <td style="${td};color:var(--text)">${d.shopee.toLocaleString('pt-BR')}</td>
+        <td style="${td};color:var(--yellow)">${taxa}%</td>
+        <td style="${td};color:var(--text)">${d.pedidos.toLocaleString('pt-BR')}</td>
+        <td style="${td};color:var(--text)">${fmt(d.inv)}</td>
+        <td style="${td};color:${saldoColor}">${fmt(d.saldo)}</td>
+      </tr>`;
+    }).join('');
+}
 async function renderCliquesSection(){
   const tbody=document.getElementById('cliques-tbody');
   const acct=getActiveAcct();
@@ -2730,6 +2786,7 @@ async function renderCliquesSection(){
   if(tr0start)tr0start.style.display='none';
   tbody.innerHTML='<tr><td colspan="10">'+loadingSpinnerHtml('Carregando cliques...')+'</td></tr>';
   const data=await loadData(acct.id);
+  renderCliquesDiaADia(data,getActiveMonth());
   // Anchor "Último dia"/7/30 on the most recent date that actually has
   // cliques data imported, since click reports always lag a day behind.
   let latestDay=null;
