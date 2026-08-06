@@ -913,7 +913,7 @@ function buildDataResult(data){
     const month=row.date.slice(0,7);
     if(!result[month])result[month]={};
     if(!result[month][row.date])result[month][row.date]=[];
-    result[month][row.date].push({name:row.sub_id,inv:parseFloat(row.investimento),venda:parseFloat(row.venda),cliquesMeta:row.cliques_meta==null?null:parseInt(row.cliques_meta),cliquesShopee:row.cliques_shopee==null?null:parseInt(row.cliques_shopee),pedidos:row.pedidos==null?null:parseInt(row.pedidos)});
+    result[month][row.date].push({name:row.sub_id,inv:parseFloat(row.investimento)||0,venda:parseFloat(row.venda)||0,cliquesMeta:row.cliques_meta==null?null:parseInt(row.cliques_meta),cliquesShopee:row.cliques_shopee==null?null:parseInt(row.cliques_shopee),pedidos:row.pedidos==null?null:parseInt(row.pedidos)});
   }
   return result;
 }
