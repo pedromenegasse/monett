@@ -1722,10 +1722,15 @@ function parseMetaCSV(raw){
   const headers=parseCSVLine2(lines[0],sep).map(h=>h.trim().replace(/"/g,''));
   const nomeIdx=headers.findIndex(h=>h.toLowerCase().includes('nome do an'));
   const campanhaIdx=headers.findIndex(h=>h.toLowerCase().includes('nome da campanha'));
-  const invIdx=headers.findIndex(h=>h.toLowerCase().includes('valor usado'));
+  const invIdx=headers.findIndex(h=>{
+    const hl=h.toLowerCase();
+    return hl.includes('valor usado')||hl.includes('valor gasto');
+  });
   if((nomeIdx<0&&campanhaIdx<0)||invIdx<0){
     const st=document.getElementById('inp-meta-status');
     if(st)st.textContent='Colunas não encontradas';
+    const clrBtn=document.getElementById('inp-meta-clear');
+    if(clrBtn)clrBtn.style.display='';
     return;
   }
   // Prefer an exact "Resultados"/"Resultado" header; avoid false matches like
