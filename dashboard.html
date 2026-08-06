@@ -919,11 +919,22 @@ function buildDataResult(data){
 }
 function invalidateCache(acctId){delete _data[acctId];clearVendaBrutaCache();}
 async function saveRows(acctId,date,rows){
+  // Busca os valores atuais de cliques/pedidos das linhas que já existem, pra não
+  // apagar esse dado quando essa chamada específica não estiver atualizando esses
+  // campos (o upsert do Supabase substitui a linha inteira nos campos que não mandamos).
+  const names=rows.map(r=>r.name);
+  const{data:existingRows}=await sb.from('daily_data').select('sub_id,cliques_meta,cliques_shopee,pedidos').eq('account_id',acctId).eq('date',date).in('sub_id',names);
+  const existingMap={};
+  (existingRows||[]).forEach(r=>{existingMap[r.sub_id]=r;});
   const upserts=rows.map(r=>{
+    const prev=existingMap[r.name];
     const row={account_id:acctId,user_id:currentUser.id,date,sub_id:r.name,investimento:r.inv,venda:r.venda};
-    if(r.cliquesMeta!=null)row.cliques_meta=r.cliquesMeta;
-    if(r.cliquesShopee!=null)row.cliques_shopee=r.cliquesShopee;
-    if(r.pedidos!=null)row.pedidos=r.pedidos;
+    const cm=r.cliquesMeta!=null?r.cliquesMeta:(prev?prev.cliques_meta:null);
+    const cs=r.cliquesShopee!=null?r.cliquesShopee:(prev?prev.cliques_shopee:null);
+    const pd=r.pedidos!=null?r.pedidos:(prev?prev.pedidos:null);
+    if(cm!=null)row.cliques_meta=cm;
+    if(cs!=null)row.cliques_shopee=cs;
+    if(pd!=null)row.pedidos=pd;
     return row;
   });
   await sb.from('daily_data').upsert(upserts,{onConflict:'account_id,date,sub_id'});
@@ -2043,11 +2054,23 @@ async function updateCliquesOnly(){
   if(!recognized.length){alert('Nenhum sub ID na lista de Reconhecidos.');return;}
   setBtnLoading('btn-import-main',true);
   try{
-    const{data:existingRows}=await sb.from('daily_data').select('sub_id').eq('account_id',acct.id).eq('date',date).in('sub_id',recognized.map(r=>r.name));
-    const existingSet=new Set((existingRows||[]).map(r=>r.sub_id));
+    // Supabase upsert substitui a linha inteira nos campos que não mandamos —
+    // por isso buscamos os valores atuais de cada linha existente e os
+    // re-enviamos junto, pra não apagar Investimento/Comissão/Cliques Meta.
+    const{data:existingRows}=await sb.from('daily_data').select('sub_id,investimento,venda,cliques_meta,pedidos').eq('account_id',acct.id).eq('date',date).in('sub_id',recognized.map(r=>r.name));
+    const existingMap={};
+    (existingRows||[]).forEach(r=>{existingMap[r.sub_id]=r;});
     const upserts=recognized.map(r=>{
+      const prev=existingMap[r.name];
       const row={account_id:acct.id,user_id:currentUser.id,date,sub_id:r.name,cliques_shopee:r.shopee};
-      if(!existingSet.has(r.name)){row.investimento=0;row.venda=0;}
+      if(prev){
+        row.investimento=prev.investimento;
+        row.venda=prev.venda;
+        if(prev.cliques_meta!=null)row.cliques_meta=prev.cliques_meta;
+        if(prev.pedidos!=null)row.pedidos=prev.pedidos;
+      } else {
+        row.investimento=0;row.venda=0;
+      }
       return row;
     });
     await sb.from('daily_data').upsert(upserts,{onConflict:'account_id,date,sub_id'});
