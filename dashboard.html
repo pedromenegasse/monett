@@ -2774,7 +2774,7 @@ function renderCliquesDiaADia(data,month){
   const byDay={};
   for(const day of Object.keys(md)){
     for(const r of md[day]){
-      if(r.cliquesMeta==null)continue;
+      if(r.cliquesMeta==null&&r.cliquesShopee==null)continue;
       if(!byDay[day])byDay[day]={meta:0,shopee:0,inv:0,pedidos:0,saldo:0};
       byDay[day].meta+=r.cliquesMeta||0;
       byDay[day].shopee+=r.cliquesShopee||0;
@@ -2831,7 +2831,7 @@ async function renderCliquesSection(){
   let latestDay=null;
   for(const month of Object.keys(data)){
     for(const day of Object.keys(data[month])){
-      if(data[month][day].some(r=>r.cliquesMeta!=null)){
+      if(data[month][day].some(r=>r.cliquesMeta!=null||r.cliquesShopee!=null)){
         if(!latestDay||day>latestDay)latestDay=day;
       }
     }
@@ -2847,7 +2847,7 @@ async function renderCliquesSection(){
       const d=new Date(day+'T00:00:00');
       if(d<cutoff||d>anchor)continue;
       for(const r of data[month][day]){
-        if(r.cliquesMeta==null)continue;
+        if(r.cliquesMeta==null&&r.cliquesShopee==null)continue;
         if(!agg[r.name])agg[r.name]={name:r.name,meta:0,shopee:0,inv:0,pedidos:0};
         agg[r.name].meta+=r.cliquesMeta||0;
         agg[r.name].shopee+=r.cliquesShopee||0;
