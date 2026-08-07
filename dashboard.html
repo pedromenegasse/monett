@@ -923,7 +923,12 @@ async function saveRows(acctId,date,rows){
   // apagar esse dado quando essa chamada específica não estiver atualizando esses
   // campos (o upsert do Supabase substitui a linha inteira nos campos que não mandamos).
   const names=rows.map(r=>r.name);
-  const{data:existingRows}=await sb.from('daily_data').select('sub_id,cliques_meta,cliques_shopee,pedidos').eq('account_id',acctId).eq('date',date).in('sub_id',names);
+  const{data:existingRows,error:selError}=await sb.from('daily_data').select('sub_id,cliques_meta,cliques_shopee,pedidos').eq('account_id',acctId).eq('date',date).in('sub_id',names);
+  if(selError){
+    console.error('Erro ao buscar linhas existentes:',selError);
+    alert('Erro ao consultar dados existentes: '+selError.message+'\n\nOs dados NÃO foram salvos. Tenta de novo.');
+    throw selError;
+  }
   const existingMap={};
   (existingRows||[]).forEach(r=>{existingMap[r.sub_id]=r;});
   const upserts=rows.map(r=>{
@@ -937,7 +942,12 @@ async function saveRows(acctId,date,rows){
     if(pd!=null)row.pedidos=pd;
     return row;
   });
-  await sb.from('daily_data').upsert(upserts,{onConflict:'account_id,date,sub_id'});
+  const{error:upsertError}=await sb.from('daily_data').upsert(upserts,{onConflict:'account_id,date,sub_id'});
+  if(upsertError){
+    console.error('Erro ao salvar Investimento/Comissão:',upsertError);
+    alert('Erro ao salvar Investimento/Comissão: '+upsertError.message+'\n\nOs dados NÃO foram salvos. Tenta de novo, e se persistir, me manda esse erro.');
+    throw upsertError;
+  }
   invalidateCache(acctId);
 }
 async function saveSaleItems(acctId,date,items,mode){
