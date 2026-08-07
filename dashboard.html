@@ -355,7 +355,7 @@ let currentUser=null;
       <button class="mode-btn active" id="mode-btn-3col" onclick="setMode('3col')" style="height:36px">3×</button>
       <button class="mode-btn" id="mode-btn-1col" onclick="setMode('1col')" style="height:36px">1×</button>
     </div>
-    <input type="date" id="inp-date" style="height:36px;padding:0 12px">
+    <input type="date" id="inp-date" style="height:36px;padding:0 12px" onchange="onCliquesOnlyDateChange()">
     <button class="btn-import" id="btn-import-main" onclick="importData()" style="height:36px;padding:0 20px"><span class="btn-spinner" id="btn-import-main-spinner"></span><span class="btn-import-label" id="btn-import-main-label">Adicionar</span></button>
     <div id="inp-2x1-totais" style="display:none;align-items:center;gap:8px;font-family:'DM Mono',monospace;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 10px;height:36px;min-width:320px;flex:1;justify-content:space-between;white-space:nowrap">
@@ -2007,23 +2007,41 @@ let _cliquesOnlyIgnored=[];    // [{name,shopee}] - ficam de fora
 async function renderCliquesOnlyPreview(){
   const acct=getActiveAcct();
   if(!acct||!_cliquesOnlyMap.size)return;
-  const known=await getKnownSubIdsForAccount(acct.id);
+  const date=document.getElementById('inp-date').value;
+  await classifyCliquesOnly(acct,date);
+  renderCliquesOnlyTables();
+  document.getElementById('cliquesonly-results').style.display='grid';
+}
+async function classifyCliquesOnly(acct,date){
+  // Só reconhece sub ids que JÁ têm uma linha lançada nesse dia específico —
+  // clique sozinho nunca cria linha nova, porque não sabemos se virou venda
+  // (essa informação só vem da planilha de Vendas, que esse modo não usa).
+  const names=[..._cliquesOnlyMap.keys()];
+  const{data:existingRows}=await sb.from('daily_data').select('sub_id').eq('account_id',acct.id).eq('date',date).in('sub_id',names);
+  const existingSet=new Set((existingRows||[]).map(r=>r.sub_id));
   _cliquesOnlyRecognized=[];_cliquesOnlyIgnored=[];
   for(const[sub,count]of _cliquesOnlyMap){
-    if(known.has(sub.toLowerCase()))_cliquesOnlyRecognized.push({name:sub,shopee:count});
+    if(existingSet.has(sub))_cliquesOnlyRecognized.push({name:sub,shopee:count});
     else _cliquesOnlyIgnored.push({name:sub,shopee:count});
   }
   _cliquesOnlyRecognized.sort((a,b)=>b.shopee-a.shopee);
   _cliquesOnlyIgnored.sort((a,b)=>b.shopee-a.shopee);
+}
+// Se o usuário trocar a data com o arquivo já carregado, reclassifica pra data nova
+async function onCliquesOnlyDateChange(){
+  if(!_cliquesOnlyMap.size)return;
+  const acct=getActiveAcct();
+  if(!acct)return;
+  const date=document.getElementById('inp-date').value;
+  await classifyCliquesOnly(acct,date);
   renderCliquesOnlyTables();
-  document.getElementById('cliquesonly-results').style.display='grid';
 }
 function renderCliquesOnlyTables(){
   document.getElementById('cliquesonly-reconhecidos-label').textContent=`✓ Reconhecidos (${_cliquesOnlyRecognized.length})`;
   document.getElementById('cliquesonly-reconhecidos-tbody').innerHTML=_cliquesOnlyRecognized.map(r=>
     `<tr><td style="padding:7px 4px;color:var(--text);text-align:left">${r.name}</td><td style="padding:7px 4px;text-align:right;color:var(--text)">${r.shopee.toLocaleString('pt-BR')}</td><td style="padding:7px 4px;text-align:center"><button class="btn-x" style="width:24px;height:24px;font-size:11px" onclick="moveCliquesOnly('${r.name.replace(/'/g,"\\'")}','ignore')">✕</button></td></tr>`
-  ).join('')||'<tr><td style="padding:7px 4px;color:var(--muted)" colspan="3">Nenhum sub ID reconhecido nessa conta.</td></tr>';
-  document.getElementById('cliquesonly-ignorados-label').textContent=`✕ Ignorados (${_cliquesOnlyIgnored.length}) — Sem dados nessa conta`;
+  ).join('')||'<tr><td style="padding:7px 4px;color:var(--muted)" colspan="3">Nenhum sub ID com linha lançada nesse dia.</td></tr>';
+  document.getElementById('cliquesonly-ignorados-label').textContent=`✕ Ignorados (${_cliquesOnlyIgnored.length}) — Sem linha lançada nesse dia`;
   document.getElementById('cliquesonly-ignorados-tbody').innerHTML=_cliquesOnlyIgnored.map(r=>
     `<tr><td style="padding:7px 4px;color:var(--muted);text-align:left">${r.name}</td><td style="padding:7px 4px;text-align:right;color:var(--muted)">${r.shopee.toLocaleString('pt-BR')}</td><td style="padding:7px 4px;text-align:center"><button class="btn-x" style="width:24px;height:24px;font-size:11px;background:rgba(59,240,160,0.12);border-color:rgba(59,240,160,0.35);color:var(--accent2)" onclick="moveCliquesOnly('${r.name.replace(/'/g,"\\'")}','recognize')">✓</button></td></tr>`
   ).join('')||'<tr><td style="padding:7px 4px;color:var(--muted)" colspan="3">Nenhum sub ID ignorado.</td></tr>';
@@ -2051,31 +2069,29 @@ async function updateCliquesOnly(){
   const date=document.getElementById('inp-date').value;
   if(!date){alert('Selecione a data.');return;}
   const recognized=_cliquesOnlyRecognized;
-  if(!recognized.length){alert('Nenhum sub ID na lista de Reconhecidos.');return;}
+  if(!recognized.length){alert('Nenhum sub ID com linha lançada nesse dia pra atualizar.');return;}
   setBtnLoading('btn-import-main',true);
   try{
     // Supabase upsert substitui a linha inteira nos campos que não mandamos —
     // por isso buscamos os valores atuais de cada linha existente e os
     // re-enviamos junto, pra não apagar Investimento/Comissão/Cliques Meta.
+    // (Só atualiza linhas que já existem — nunca cria linha nova aqui.)
     const{data:existingRows}=await sb.from('daily_data').select('sub_id,investimento,venda,cliques_meta,pedidos').eq('account_id',acct.id).eq('date',date).in('sub_id',recognized.map(r=>r.name));
     const existingMap={};
     (existingRows||[]).forEach(r=>{existingMap[r.sub_id]=r;});
-    const upserts=recognized.map(r=>{
+    const upserts=recognized.filter(r=>existingMap[r.name]).map(r=>{
       const prev=existingMap[r.name];
       const row={account_id:acct.id,user_id:currentUser.id,date,sub_id:r.name,cliques_shopee:r.shopee};
-      if(prev){
-        row.investimento=prev.investimento;
-        row.venda=prev.venda;
-        if(prev.cliques_meta!=null)row.cliques_meta=prev.cliques_meta;
-        if(prev.pedidos!=null)row.pedidos=prev.pedidos;
-      } else {
-        row.investimento=0;row.venda=0;
-      }
+      row.investimento=prev.investimento;
+      row.venda=prev.venda;
+      if(prev.cliques_meta!=null)row.cliques_meta=prev.cliques_meta;
+      if(prev.pedidos!=null)row.pedidos=prev.pedidos;
       return row;
     });
+    if(!upserts.length){alert('Nenhuma dessas linhas existe mais nesse dia. Tenta atualizar a lista.');setBtnLoading('btn-import-main',false);return;}
     await sb.from('daily_data').upsert(upserts,{onConflict:'account_id,date,sub_id'});
     invalidateCache(acct.id);
-    showToast(`Cliques atualizados: ${recognized.length} sub ID(s)`);
+    showToast(`Cliques atualizados: ${upserts.length} sub ID(s)`);
     clearCliquesOnlyFile();
     await renderAll();
   }catch(e){
