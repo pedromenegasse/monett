@@ -1103,14 +1103,14 @@ async function getLatestSaleDate(groupIds){
 // Escopo: só a conta única (não o grupo) e só o mês visível, pra manter leve.
 let _vendaBrutaCache={};
 function clearVendaBrutaCache(){_vendaBrutaCache={};}
-async function fetchVendaBrutaPorDia(acctId,month){
+async function fetchVendaBrutaPorDia(acctId,month,rangeStart,rangeEnd){
   if(!acctId)return{};
-  const key=acctId+'|'+month;
+  const key=acctId+'|'+month+(rangeStart?('|'+rangeStart+'_'+rangeEnd):'');
   if(_vendaBrutaCache[key])return _vendaBrutaCache[key];
   const[y,m]=month.split('-').map(Number);
-  const startStr=month+'-01';
   const lastDay=new Date(y,m,0).getDate();
-  const endStr=month+'-'+String(lastDay).padStart(2,'0');
+  const startStr=rangeStart||(month+'-01');
+  const endStr=rangeEnd||(month+'-'+String(lastDay).padStart(2,'0'));
   let allData=[];
   let from=0;
   const pageSize=1000;
@@ -3554,7 +3554,7 @@ async function openSubModal(name){
     bridgeMd=data[bridgePrevMonth]||{};
     const prevDaysAll=Object.keys(bridgeMd).sort();
     bridgeDays=prevDaysAll.slice(-(JANELA-days.length));
-    if(bridgeDays.length)bridgeVbMap=await fetchVendaBrutaPorDia(acct.id,bridgePrevMonth);
+    if(bridgeDays.length)bridgeVbMap=await fetchVendaBrutaPorDia(acct.id,bridgePrevMonth,bridgeDays[0],bridgeDays[bridgeDays.length-1]);
   }
   if(!days.length&&!bridgeDays.length)return;
 
