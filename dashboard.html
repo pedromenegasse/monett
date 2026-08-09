@@ -457,14 +457,7 @@ let currentUser=null;
       </div>
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Investimento — Meta (CSV)</label>
-        <div style="display:flex;align-items:center;gap:10px">
-          <label id="inp-meta-label" style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
-            <span style="font-size:14px">↑</span> <span id="inp-meta-filename">Selecionar arquivo CSV</span>
-            <input type="file" id="inp-meta-file" accept=".csv" style="display:none" onchange="loadMetaFile(this)">
-          </label>
-          <span id="inp-meta-status" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted)"></span>
-          <button id="inp-meta-clear" class="btn-x" onclick="clearMetaFile()" style="display:none">✕</button>
-        </div>
+        <div id="meta-slots-container"></div>
       </div>
       <div>
         <label style="font-size:11px;color:var(--yellow);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Cliques — Shopee (CSV)</label>
@@ -1837,25 +1830,47 @@ function cycleReassignRow(idx){
   row.state=(row.state+1)%totalStates;
   renderReassignSections();
 }
+function updateReassignField(idx,field,val){
+  const row=_reassignRows[idx];
+  if(!row)return;
+  if(field==='inv')row.inv=parseNum(val)||0;
+  else if(field==='venda')row.venda=parseNum(val)||0;
+  else if(field==='pedidos')row.pedidos=val===''?null:(parseInt(val)||0);
+}
 function renderReassignSections(){
   const container=document.getElementById('reassign-2x1-container');
   if(!container)return;
   const acct=getActiveAcct();
   const linked=getLinkedAccounts(acct);
   if(!_reassignRows.length){container.innerHTML='';return;}
+  const inputStyle='width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:\'DM Mono\',monospace;font-size:13px;padding:6px 8px';
   const rowHtml=(r,idx)=>{
     const v=reassignButtonVisual(r.state,linked);
-    return`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 34px;gap:10px 14px;align-items:center;padding:9px 0;border-top:1px solid var(--border)">
+    const shopee=r.cliquesShopee!=null?r.cliquesShopee:(_cliqueMap.size?lookupClicks(_cliqueMap,r.name):null);
+    const meta=r.cliquesMeta!=null?r.cliquesMeta:(_metaCliqueMap.size?lookupClicks(_metaCliqueMap,r.name):null);
+    const taxa=meta?Math.round((shopee||0)/meta*100):null;
+    const cliquesCell=(meta||shopee)
+      ?`<span style="color:var(--text);font-size:12px">${taxa!=null?taxa+'%':'—'}</span><span style="color:#378ADD;font-size:12px">${meta?meta.toLocaleString('pt-BR'):'—'}</span><span style="color:#FF9500;font-size:12px">${shopee?shopee.toLocaleString('pt-BR'):'—'}</span>`
+      :`<span style="color:var(--muted);font-size:12px">—</span><span style="color:var(--muted);font-size:12px">—</span><span style="color:var(--muted);font-size:12px">—</span>`;
+    return`<div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 34px;gap:10px 14px;align-items:center;padding:9px 0;border-top:1px solid var(--border)">
       <div style="color:var(--text);font-size:13px">${r.name}</div>
-      <div style="color:var(--text);font-size:13px">${r.inv.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-      <div style="color:var(--text);font-size:13px">${r.venda.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+      <input style="${inputStyle}" value="${r.inv.toFixed(2)}" onchange="updateReassignField(${idx},'inv',this.value)">
+      <div>
+        <input style="${inputStyle}" value="${r.venda.toFixed(2)}" onchange="updateReassignField(${idx},'venda',this.value)">
+        <div style="display:flex;align-items:center;gap:4px;margin-top:4px">
+          <input style="width:44px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;padding:3px 5px" value="${r.pedidos!=null?r.pedidos:''}" onchange="updateReassignField(${idx},'pedidos',this.value)">
+          <span style="font-size:10px;color:var(--muted)">pedidos</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;text-align:center">${cliquesCell}</div>
       <button class="btn-x" style="width:34px;height:34px;border-radius:8px;margin:0;background:${v.bg};border-color:${v.border};color:${v.color}" onclick="cycleReassignRow(${idx})">${v.icon}</button>
     </div>`;
   };
-  const colHeaderHtml=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 34px;gap:10px 14px;margin-bottom:2px">
+  const colHeaderHtml=`<div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 34px;gap:10px 14px;margin-bottom:2px">
     <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Sub ID</div>
     <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Investimento</div>
     <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Venda</div>
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center">Cliques</div>
     <div></div>
   </div>`;
   let html='';
@@ -1901,28 +1916,75 @@ function clear2x1File(){
   const rc=document.getElementById('reassign-2x1-container');if(rc)rc.innerHTML='';
 }
 
-let _metaInvMap = new Map(); // sub_id -> total investment
+let _metaInvMap = new Map(); // sub_id -> total investment (soma de todos os arquivos)
 let _cliqueMap = new Map(); // sub_id -> shopee click count
-let _metaCliqueMap = new Map(); // sub_id -> meta click count
+let _metaCliqueMap = new Map(); // sub_id -> meta click count (soma de todos os arquivos)
 let _saleItemsBuffer = []; // itens de venda (produto/canal/qtd) da planilha Vendas-Shopee
 
+// Cada gestor tem sua própria conta de Meta Ads, então às vezes é preciso subir
+// mais de um CSV de investimento (um por gestor) na mesma importação. Cada slot
+// guarda seu próprio arquivo/mapa; a combinação de todos vira _metaInvMap/_metaCliqueMap.
+let _metaSlots=[{file:null,filename:'',status:'',error:false,invMap:new Map(),cliqueMap:new Map()}];
+function renderMetaSlots(){
+  const container=document.getElementById('meta-slots-container');
+  if(!container)return;
+  container.innerHTML=_metaSlots.map((slot,i)=>{
+    const isLast=i===_metaSlots.length-1;
+    const statusColor=slot.error?'var(--red)':'var(--muted)';
+    return`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <label style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        <span style="font-size:14px">↑</span> <span>${slot.filename||'Selecionar arquivo CSV'}</span>
+        <input type="file" accept=".csv" style="display:none" onchange="loadMetaFileSlot(this,${i})">
+      </label>
+      <span style="font-size:11px;font-family:'DM Mono',monospace;color:${statusColor}">${slot.status}</span>
+      ${slot.filename?`<button class="btn-x" onclick="removeMetaSlot(${i})">✕</button>`:''}
+      ${isLast?`<button class="btn-x" style="color:var(--accent);border-color:rgba(232,201,122,0.35);background:rgba(232,201,122,0.12)" onclick="addMetaSlot()">+</button>`:''}
+    </div>`;
+  }).join('');
+}
+function addMetaSlot(){
+  _metaSlots.push({file:null,filename:'',status:'',error:false,invMap:new Map(),cliqueMap:new Map()});
+  renderMetaSlots();
+}
+function removeMetaSlot(i){
+  _metaSlots.splice(i,1);
+  if(!_metaSlots.length)_metaSlots.push({file:null,filename:'',status:'',error:false,invMap:new Map(),cliqueMap:new Map()});
+  recomputeMetaMaps();
+  renderMetaSlots();
+  applyMetaToInv();
+}
+function recomputeMetaMaps(){
+  _metaInvMap=new Map();
+  _metaCliqueMap=new Map();
+  for(const slot of _metaSlots){
+    for(const[k,v]of slot.invMap)_metaInvMap.set(k,(_metaInvMap.get(k)||0)+v);
+    for(const[k,v]of slot.cliqueMap)_metaCliqueMap.set(k,(_metaCliqueMap.get(k)||0)+v);
+  }
+}
+function resetMetaSlots(){
+  _metaSlots=[{file:null,filename:'',status:'',error:false,invMap:new Map(),cliqueMap:new Map()}];
+  recomputeMetaMaps();
+  renderMetaSlots();
+}
+
 let _rawMetaCSV='';
-function loadMetaFile(input){
+function loadMetaFileSlot(input,i){
   const file=input.files[0];
   if(!file)return;
-  document.getElementById('inp-meta-filename').textContent=file.name;
+  _metaSlots[i].filename=file.name;
   const reader=new FileReader();
   reader.onload=function(e){
-    _rawMetaCSV=e.target.result;
-    parseMetaCSV(_rawMetaCSV);
+    parseMetaCSVIntoSlot(e.target.result,i);
   };
   reader.readAsText(file,'UTF-8');
 }
 
-function parseMetaCSV(raw){
+function parseMetaCSVIntoSlot(raw,i){
+  const slot=_metaSlots[i];
+  if(!slot)return;
   const content=raw.trim().replace(/^\uFEFF/,'');
   const lines=content.split('\n').filter(l=>l.trim());
-  if(lines.length<2)return;
+  if(lines.length<2){renderMetaSlots();return;}
   // detect separator
   const sep=lines[0].includes('\t')?'\t':',';
   const headers=parseCSVLine2(lines[0],sep).map(h=>h.trim().replace(/"/g,''));
@@ -1933,10 +1995,9 @@ function parseMetaCSV(raw){
     return hl.includes('valor usado')||hl.includes('valor gasto');
   });
   if((nomeIdx<0&&campanhaIdx<0)||invIdx<0){
-    const st=document.getElementById('inp-meta-status');
-    if(st)st.textContent='Colunas não encontradas';
-    const clrBtn=document.getElementById('inp-meta-clear');
-    if(clrBtn)clrBtn.style.display='';
+    slot.status='Colunas não encontradas';
+    slot.error=true;
+    renderMetaSlots();
     return;
   }
   // Prefer an exact "Resultados"/"Resultado" header; avoid false matches like
@@ -1952,10 +2013,10 @@ function parseMetaCSV(raw){
       return hl.includes('resultado')&&!hl.includes('tipo')&&!hl.includes('custo');
     });
   }
-  _metaInvMap=new Map();
-  _metaCliqueMap=new Map();
-  for(let i=1;i<lines.length;i++){
-    const cols=parseCSVLine2(lines[i],sep).map(c=>c.trim().replace(/"/g,''));
+  slot.invMap=new Map();
+  slot.cliqueMap=new Map();
+  for(let li=1;li<lines.length;li++){
+    const cols=parseCSVLine2(lines[li],sep).map(c=>c.trim().replace(/"/g,''));
     const nomeCampanha=campanhaIdx>=0?(cols[campanhaIdx]||''):'';
     const nomeAnuncio=cols[nomeIdx]||'';
     // Sub_id is always the LAST [..] block. Different account managers put
@@ -1966,14 +2027,14 @@ function parseMetaCSV(raw){
     const sub=brackets[brackets.length-1].slice(1,-1).trim();
     if(!sub)continue;
     const inv=parseFloat((cols[invIdx]||'0').replace(',','.').replace(/[^0-9.]/g,''))||0;
-    _metaInvMap.set(sub,(_metaInvMap.get(sub)||0)+inv);
+    slot.invMap.set(sub,(slot.invMap.get(sub)||0)+inv);
     const metaClicks=resultIdx>=0?parseInt((cols[resultIdx]||'0').replace(/[^0-9]/g,''))||0:0;
-    _metaCliqueMap.set(sub,(_metaCliqueMap.get(sub)||0)+metaClicks);
+    slot.cliqueMap.set(sub,(slot.cliqueMap.get(sub)||0)+metaClicks);
   }
-  const st=document.getElementById('inp-meta-status');
-  if(st)st.textContent=`✓ ${_metaInvMap.size} sub id${_metaInvMap.size!==1?'s':''} encontrado${_metaInvMap.size!==1?'s':''}`;
-  const clrBtn=document.getElementById('inp-meta-clear');
-  if(clrBtn)clrBtn.style.display='';
+  slot.error=false;
+  slot.status=`✓ ${slot.invMap.size} sub id${slot.invMap.size!==1?'s':''} encontrado${slot.invMap.size!==1?'s':''}`;
+  recomputeMetaMaps();
+  renderMetaSlots();
   // Fill investment column if names already loaded
   applyMetaToInv();
 }
@@ -2285,11 +2346,7 @@ async function updateCliquesOnly(){
 }
 
 function clearMetaFile(){
-  _metaInvMap=new Map();
-  const f=document.getElementById('inp-meta-file');if(f)f.value='';
-  const fn=document.getElementById('inp-meta-filename');if(fn)fn.textContent='Selecionar arquivo CSV';
-  const st=document.getElementById('inp-meta-status');if(st)st.textContent='';
-  const btn=document.getElementById('inp-meta-clear');if(btn)btn.style.display='none';
+  resetMetaSlots();
   // clear inv column
   const invEl=document.getElementById('inp-2x1-inv');
   if(invEl){ce_setLines(invEl,ce_getLines(document.getElementById('inp-2x1-names')).map(()=>''));draw2x1Lines(invEl,ce_getLines(document.getElementById('inp-2x1-names')).length);}
@@ -4168,6 +4225,7 @@ async function renderBDSaldo(){
   const {data:{session}} = await sb.auth.getSession();
   if(!session){window.location.href='index.html';return;}
   currentUser = session.user;
+  renderMetaSlots();
 
   // Load accounts from Supabase
   await loadAccounts();
