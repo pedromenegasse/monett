@@ -498,6 +498,7 @@ let currentUser=null;
       <div id="inp-2x1-del-col" style="display:flex;flex-direction:column;padding-top:20px;gap:0">
       </div>
     </div>
+    <div id="reassign-2x1-container" style="margin-top:6px"></div>
   </div>
   <!-- 1 caixa -->
   <div id="mode-1col" style="display:none">
@@ -852,6 +853,46 @@ function getGroupAccountIds(acct){
   const g=acct.grupo.toLowerCase();
   return _accounts.filter(a=>(a.grupo||'').toLowerCase()===g).map(a=>a.id);
 }
+// Contas do mesmo grupo (mesmo gestor), excluindo a própria — usadas pra
+// reatribuir um sub id lançado na conta errada, sem apagar o que já foi digitado.
+function getLinkedAccounts(acct){
+  if(!acct||!acct.grupo)return[];
+  const g=acct.grupo.toLowerCase();
+  return _accounts.filter(a=>a.id!==acct.id&&(a.grupo||'').toLowerCase()===g).sort((a,b)=>a.name.localeCompare(b.name));
+}
+function hexToRgba(hex,alpha){
+  hex=(hex||'#888888').replace('#','');
+  if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');
+  const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
+  return`rgba(${r},${g},${b},${alpha})`;
+}
+function lookupClicks(map,sub){
+  if(map.has(sub))return map.get(sub);
+  const found=[...map.entries()].find(([k])=>k.toLowerCase()===sub.toLowerCase());
+  return found?found[1]:null;
+}
+// Cria o botão de reatribuir sub id (aparece na grade principal, estado "conta atual")
+function createReassignButton(idx){
+  const acct=getActiveAcct();
+  const linked=getLinkedAccounts(acct);
+  const v=reassignButtonVisual(0,linked);
+  const btn=document.createElement('button');
+  btn.textContent=v.icon;
+  btn.className='btn-x';
+  btn.style.cssText='width:34px;height:34px;border-radius:8px;margin:0;background:'+v.bg+';border-color:'+v.border+';color:'+v.color;
+  btn.onclick=()=>remove2x1Row(idx);
+  return btn;
+}
+// Calcula ícone/cor do botão de reatribuição com base em pra onde o PRÓXIMO
+// clique vai mandar a linha (não em onde ela está agora).
+function reassignButtonVisual(state,linkedAccounts){
+  const totalStates=linkedAccounts.length+2; // 0=conta atual,1..N=contas ligadas,N+1=ignorados
+  const nextState=(state+1)%totalStates;
+  if(nextState===0)return{icon:'✓',color:'#3bf0a0',bg:'rgba(59,240,160,0.12)',border:'rgba(59,240,160,0.35)'};
+  if(nextState===linkedAccounts.length+1)return{icon:'✕',color:'#ff4d6d',bg:'rgba(255,77,109,0.12)',border:'rgba(255,77,109,0.35)'};
+  const acc=linkedAccounts[nextState-1];
+  return{icon:'↘',color:acc.color,bg:hexToRgba(acc.color,0.15),border:hexToRgba(acc.color,0.4)};
+}
 function setActiveAcct(id){localStorage.setItem(SK_ACTIVE,id);}
 
 /* ── ISS ── */
@@ -919,6 +960,39 @@ function buildDataResult(data){
 }
 function invalidateCache(acctId){delete _data[acctId];clearVendaBrutaCache();}
 async function saveRows(acctId,date,rows){
+  // O Postgres recusa atualizar a mesma linha duas vezes num único upsert
+  // ("ON CONFLICT DO UPDATE... second time"). Se o mesmo sub id aparecer
+  // repetido na lista, pergunta ao usuário se quer unificar (somar) ou
+  // descartar (manter só a última) antes de continuar.
+  const seen={};
+  const dupNames=new Set();
+  for(const r of rows){
+    if(seen[r.name])dupNames.add(r.name);
+    seen[r.name]=true;
+  }
+  if(dupNames.size){
+    const choice=await askDuplicateResolution([...dupNames]);
+    if(choice===null)return false;
+    if(choice==='unificar'){
+      const merged={};
+      for(const r of rows){
+        if(!merged[r.name]){
+          merged[r.name]={...r};
+        } else {
+          merged[r.name].inv+=r.inv;
+          merged[r.name].venda+=r.venda;
+          if(r.cliquesMeta!=null)merged[r.name].cliquesMeta=(merged[r.name].cliquesMeta||0)+r.cliquesMeta;
+          if(r.cliquesShopee!=null)merged[r.name].cliquesShopee=(merged[r.name].cliquesShopee||0)+r.cliquesShopee;
+          if(r.pedidos!=null)merged[r.name].pedidos=(merged[r.name].pedidos||0)+r.pedidos;
+        }
+      }
+      rows=Object.values(merged);
+    } else {
+      const lastByName={};
+      for(const r of rows)lastByName[r.name]=r;
+      rows=Object.values(lastByName);
+    }
+  }
   // Busca os valores atuais de cliques/pedidos das linhas que já existem, pra não
   // apagar esse dado quando essa chamada específica não estiver atualizando esses
   // campos (o upsert do Supabase substitui a linha inteira nos campos que não mandamos).
@@ -949,6 +1023,7 @@ async function saveRows(acctId,date,rows){
     throw upsertError;
   }
   invalidateCache(acctId);
+  return true;
 }
 async function saveSaleItems(acctId,date,items,mode){
   if(!items||!items.length)return;
@@ -1021,6 +1096,31 @@ function askSaveMode(existingCount,subsLabel){
     bg.querySelector('#asm-somar').onclick=()=>close('somar');
     bg.querySelector('#asm-substituir').onclick=()=>close('substituir');
     bg.querySelector('#asm-cancelar').onclick=()=>close(null);
+    bg.onclick=()=>close(null);
+  });
+}
+// Pergunta o que fazer quando o mesmo sub ID aparece repetido na lista antes de salvar
+function askDuplicateResolution(dupNames){
+  return new Promise(resolve=>{
+    const bg=document.createElement('div');
+    bg.className='sub-modal-bg';
+    bg.style.zIndex='500';
+    bg.innerHTML=`<div class="sub-modal" style="max-width:460px;text-align:left" onclick="event.stopPropagation()">
+      <div class="sub-modal-header" style="margin-bottom:12px"><h3>Sub ID duplicado na lista</h3></div>
+      <p style="font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);margin:0 0 20px;line-height:1.5">
+        <b>${dupNames.join(', ')}</b> aparece mais de uma vez. O que fazer?
+      </p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button id="adr-unificar" class="sub-modal-close" style="padding:12px;border-color:var(--accent2);color:var(--accent2);text-align:left">➕ <b>Unificar</b> — soma Investimento e Venda das linhas duplicadas numa só</button>
+        <button id="adr-descartar" class="sub-modal-close" style="padding:12px;border-color:var(--red);color:var(--red);text-align:left">🗑️ <b>Descartar</b> — mantém só a última linha, ignora as anteriores</button>
+        <button id="adr-cancelar" class="sub-modal-close" style="padding:10px;text-align:center">Cancelar</button>
+      </div>
+    </div>`;
+    document.body.appendChild(bg);
+    const close=v=>{document.body.removeChild(bg);resolve(v);};
+    bg.querySelector('#adr-unificar').onclick=()=>close('unificar');
+    bg.querySelector('#adr-descartar').onclick=()=>close('descartar');
+    bg.querySelector('#adr-cancelar').onclick=()=>close(null);
     bg.onclick=()=>close(null);
   });
 }
@@ -1365,6 +1465,8 @@ function renameAccount(id){
 async function switchAccount(id){
   setActiveAcct(id);
   renderAccountTabs();
+  _reassignRows=[];
+  const rc=document.getElementById('reassign-2x1-container');if(rc)rc.innerHTML='';
   const iss=getISS();
   document.getElementById('iss-inp').value=parseFloat(iss).toFixed(2).replace('.',',');
   const metaTaxa=getMetaTaxa();
@@ -1561,7 +1663,7 @@ function ce_keydown(e,el){
       const delCol=document.getElementById('inp-2x1-del-col');
       if(delCol&&delCol.children.length!==lc){
         delCol.innerHTML='';
-        for(let i=0;i<lc;i++){const btn=document.createElement('button');btn.textContent='✕';btn.className='btn-x';btn.style.cssText='width:34px;height:34px;border-radius:8px;margin:0';const idx2=i;btn.onclick=()=>remove2x1Row(idx2);delCol.appendChild(btn);}
+        for(let i=0;i<lc;i++){delCol.appendChild(createReassignButton(i));}
       }
       draw2x1Lines(el,lc);
     } else ce_input(el,el.dataset.field);
@@ -1602,7 +1704,7 @@ function ce_keydown(e,el){
         }
         const lc2=el.querySelectorAll('.ce-line').length;
         const delCol2=document.getElementById('inp-2x1-del-col');
-        if(delCol2&&delCol2.children.length!==lc2){delCol2.innerHTML='';for(let i=0;i<lc2;i++){const btn=document.createElement('button');btn.textContent='✕';btn.className='btn-x';btn.style.cssText='width:34px;height:34px;border-radius:8px;margin:0';const idx3=i;btn.onclick=()=>remove2x1Row(idx3);delCol2.appendChild(btn);}}
+        if(delCol2&&delCol2.children.length!==lc2){delCol2.innerHTML='';for(let i=0;i<lc2;i++){delCol2.appendChild(createReassignButton(i));}}
         draw2x1Lines(el,lc2);
       } else ce_input(el,el.dataset.field);
     }
@@ -1647,11 +1749,7 @@ function ce_input_2x1(src,field){
   if(delCol&&delCol.children.length!==lineCount){
     delCol.innerHTML='';
     for(let i=0;i<lineCount;i++){
-      const btn=document.createElement('button');
-      btn.textContent='✕';btn.className='btn-x';
-      btn.style.cssText='width:34px;height:34px;border-radius:8px;margin:0';
-      const idx=i;btn.onclick=()=>remove2x1Row(idx);
-      delCol.appendChild(btn);
+      delCol.appendChild(createReassignButton(i));
     }
   }
 }
@@ -1672,6 +1770,28 @@ function ce_input(src,field){
 }
 
 function remove2x1Row(idx){
+  // Captura os dados da linha ANTES de remover, pra não perder — em vez de
+  // descartar, ela entra na lista de reatribuição (conta ligada / ignorados).
+  const namesEl0=document.getElementById('inp-2x1-names');
+  const invEl0=document.getElementById('inp-2x1-inv');
+  const vendaEl0=document.getElementById('inp-2x1-venda');
+  const namesLines=namesEl0?ce_getLines(namesEl0):[];
+  const invLines=invEl0?ce_getLines(invEl0):[];
+  const vendaLines=vendaEl0?ce_getLines(vendaEl0):[];
+  const pedidosArr0=vendaEl0?ce_getWatermarks(vendaEl0):[];
+  const capturedName=(namesLines[idx]||'').trim();
+  if(capturedName){
+    const capturedRow={
+      name:capturedName,
+      inv:parseNum(invLines[idx]||'0'),
+      venda:parseNum(vendaLines[idx]||'0'),
+      cliquesMeta:_metaCliqueMap.size?lookupClicks(_metaCliqueMap,capturedName):null,
+      cliquesShopee:_cliqueMap.size?lookupClicks(_cliqueMap,capturedName):null,
+      pedidos:pedidosArr0[idx]!=null?pedidosArr0[idx]:null,
+      state:1 // primeiro clique: sai da conta atual, vai pra 1ª conta ligada (ou ignorados, se não tiver nenhuma)
+    };
+    _reassignRows.push(capturedRow);
+  }
   const ids=['inp-2x1-names','inp-2x1-inv','inp-2x1-venda'];
   ids.forEach(id=>{
     const el=document.getElementById(id);
@@ -1703,6 +1823,61 @@ function remove2x1Row(idx){
     if(btns[idx])btns[idx].remove();
     Array.from(delCol.children).forEach((btn,i)=>{btn.onclick=()=>remove2x1Row(i);});
   }
+  renderReassignSections();
+}
+// Estado de sub ids removidos da grade principal, aguardando reatribuição
+// (conta ligada, ou descarte em Ignorados) antes de "Adicionar".
+let _reassignRows=[];
+function cycleReassignRow(idx){
+  const acct=getActiveAcct();
+  const linked=getLinkedAccounts(acct);
+  const totalStates=linked.length+2;
+  const row=_reassignRows[idx];
+  if(!row)return;
+  row.state=(row.state+1)%totalStates;
+  renderReassignSections();
+}
+function renderReassignSections(){
+  const container=document.getElementById('reassign-2x1-container');
+  if(!container)return;
+  const acct=getActiveAcct();
+  const linked=getLinkedAccounts(acct);
+  if(!_reassignRows.length){container.innerHTML='';return;}
+  const rowHtml=(r,idx)=>{
+    const v=reassignButtonVisual(r.state,linked);
+    return`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 34px;gap:10px 14px;align-items:center;padding:9px 0;border-top:1px solid var(--border)">
+      <div style="color:var(--text);font-size:13px">${r.name}</div>
+      <div style="color:var(--text);font-size:13px">${r.inv.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+      <div style="color:var(--text);font-size:13px">${r.venda.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+      <button class="btn-x" style="width:34px;height:34px;border-radius:8px;margin:0;background:${v.bg};border-color:${v.border};color:${v.color}" onclick="cycleReassignRow(${idx})">${v.icon}</button>
+    </div>`;
+  };
+  const colHeaderHtml=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 34px;gap:10px 14px;margin-bottom:2px">
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Sub ID</div>
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Investimento</div>
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Venda</div>
+    <div></div>
+  </div>`;
+  let html='';
+  // Estado 0: voltaram pra conta atual (lista congelada, não volta pra grade editável)
+  const backHome=_reassignRows.map((r,i)=>({r,i})).filter(x=>x.r.state===0);
+  if(backHome.length){
+    html+=`<div style="font-size:10px;color:${acct?acct.color:'var(--accent2)'};text-transform:uppercase;letter-spacing:.06em;margin:18px 0 8px">↩ ${acct?acct.name:'Conta atual'} (${backHome.length})</div>`+colHeaderHtml+backHome.map(x=>rowHtml(x.r,x.i)).join('');
+  }
+  // Estados 1..N: contas ligadas
+  linked.forEach((la,li)=>{
+    const state=li+1;
+    const group=_reassignRows.map((r,i)=>({r,i})).filter(x=>x.r.state===state);
+    if(!group.length)return;
+    html+=`<div style="font-size:10px;color:${la.color};text-transform:uppercase;letter-spacing:.06em;margin:18px 0 8px">↳ ${la.name} (${group.length})</div>`+colHeaderHtml+group.map(x=>rowHtml(x.r,x.i)).join('');
+  });
+  // Último estado: Ignorados
+  const ignoredState=linked.length+1;
+  const ignored=_reassignRows.map((r,i)=>({r,i})).filter(x=>x.r.state===ignoredState);
+  if(ignored.length){
+    html+=`<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 8px">✕ Ignorados (${ignored.length})</div>`+colHeaderHtml+ignored.map(x=>rowHtml(x.r,x.i)).join('');
+  }
+  container.innerHTML=html;
 }
 
 function draw2x1Lines(el,lineCount){
@@ -1722,6 +1897,8 @@ function clear2x1File(){
   const grid=document.getElementById('grid-2x1');if(grid)grid.style.display='none';
   ['inp-2x1-names','inp-2x1-inv','inp-2x1-venda'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
   const delCol=document.getElementById('inp-2x1-del-col');if(delCol)delCol.innerHTML='';
+  _reassignRows=[];
+  const rc=document.getElementById('reassign-2x1-container');if(rc)rc.innerHTML='';
 }
 
 let _metaInvMap = new Map(); // sub_id -> total investment
@@ -1856,11 +2033,7 @@ function applyMetaToInv(){
   if(delCol){
     delCol.innerHTML='';
     mergedNames.forEach((_,i)=>{
-      const btn=document.createElement('button');
-      btn.textContent='✕';btn.className='btn-x';
-      btn.style.cssText='width:34px;height:34px;border-radius:8px;margin:0';
-      btn.onclick=()=>remove2x1Row(i);
-      delCol.appendChild(btn);
+      delCol.appendChild(createReassignButton(i));
     });
   }
 
@@ -2146,6 +2319,8 @@ function parseCSVLine(line){
 }
 
 function parse2x1(rawInput){
+  _reassignRows=[];
+  const rc0=document.getElementById('reassign-2x1-container');if(rc0)rc0.innerHTML='';
   const raw=(rawInput||'').trim().replace(/^\uFEFF/,'');
   if(!raw)return;
   const lines=raw.split('\n').filter(l=>l.trim());
@@ -2239,12 +2414,7 @@ function parse2x1(rawInput){
   if(delCol){
     delCol.innerHTML='';
     subs.forEach((_,i)=>{
-      const btn=document.createElement('span');
-      btn.textContent='✕';
-      btn.className='btn-x';
-      btn.style.cssText='width:34px;height:34px;border-radius:8px;margin:0';
-      btn.onclick=()=>remove2x1Row(i);
-      delCol.appendChild(btn);
+      delCol.appendChild(createReassignButton(i));
     });
   }
   const grid=document.getElementById('grid-2x1');
@@ -2295,12 +2465,7 @@ async function importDataInner(){
     const names=ce_getLines(document.getElementById('inp-2x1-names')).map(s=>s.trim());
     const invs=ce_getLines(document.getElementById('inp-2x1-inv')).map(s=>s.trim());
     const vendas=ce_getLines(document.getElementById('inp-2x1-venda')).map(s=>s.trim());
-    if(!names.filter(Boolean).length){alert('Cole a tabela externa primeiro!');return;}
-    function lookupClicks(map,sub){
-      if(map.has(sub))return map.get(sub);
-      const found=[...map.entries()].find(([k])=>k.toLowerCase()===sub.toLowerCase());
-      return found?found[1]:null;
-    }
+    if(!names.filter(Boolean).length&&!_reassignRows.length){alert('Cole a tabela externa primeiro!');return;}
     const pedidosArr=ce_getWatermarks(document.getElementById('inp-2x1-venda'));
     rows=names.map((name,i)=>({
       name,
@@ -2310,6 +2475,11 @@ async function importDataInner(){
       cliquesShopee:_cliqueMap.size?lookupClicks(_cliqueMap,name):null,
       pedidos:pedidosArr[i]!=null?pedidosArr[i]:null
     })).filter(r=>r.name);
+    // Sub ids que voltaram pro "estado 0" na lista de reatribuição entram aqui também
+    const linkedAccts=getLinkedAccounts(acct);
+    for(const r of _reassignRows){
+      if(r.state===0)rows.push({name:r.name,inv:r.inv,venda:r.venda,cliquesMeta:r.cliquesMeta,cliquesShopee:r.cliquesShopee,pedidos:r.pedidos});
+    }
       if(!rows.length){alert('Nenhum dado válido encontrado. Verifique os campos.');return;}
   } else {
     const txt=document.getElementById('inp-paste').value;
@@ -2324,6 +2494,7 @@ async function importDataInner(){
 
   // save all rows first with original names
   const saveResult=await saveRows(acct.id,dt,rows);
+  if(saveResult===false)return; // usuário cancelou no modal de sub id duplicado
   // Só salva itens de venda cujo sub_id ainda está na tabela final —
   // respeita as linhas que o usuário apagou manualmente antes de "Adicionar"
   const finalSubs=new Set(rows.map(r=>r.name.toLowerCase()));
@@ -2344,6 +2515,24 @@ async function importDataInner(){
       mode=chosen;
     }
     await saveSaleItems(acct.id,dt,saleItemsToSave,mode);
+  }
+  // Distribui as linhas que foram reatribuídas pra outras contas ligadas (mesma data)
+  // — só faz sentido no modo Auto, que é onde esse recurso existe.
+  if(mode==='2x1'&&_reassignRows.length){
+    const linkedAccts=getLinkedAccounts(acct);
+    for(let li=0;li<linkedAccts.length;li++){
+      const targetAcct=linkedAccts[li];
+      const state=li+1;
+      const theseRows=_reassignRows.filter(r=>r.state===state).map(r=>({name:r.name,inv:r.inv,venda:r.venda,cliquesMeta:r.cliquesMeta,cliquesShopee:r.cliquesShopee,pedidos:r.pedidos}));
+      if(!theseRows.length)continue;
+      await saveRows(targetAcct.id,dt,theseRows);
+      const theseNames=new Set(theseRows.map(r=>r.name.toLowerCase()));
+      const theseSaleItems=_saleItemsBuffer.filter(it=>it.sub&&theseNames.has(it.sub.toLowerCase()));
+      if(theseSaleItems.length)await saveSaleItems(targetAcct.id,dt,theseSaleItems,'somar');
+      invalidateCache(targetAcct.id);
+    }
+    _reassignRows=[];
+    const rc=document.getElementById('reassign-2x1-container');if(rc)rc.innerHTML='';
   }
   delete _data[acct.id]; // force full cache clear
   clearVendaBrutaCache();
