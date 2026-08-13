@@ -359,6 +359,8 @@ let currentUser=null;
     <button class="btn-import" id="btn-import-main" onclick="importData()" style="height:36px;padding:0 20px"><span class="btn-spinner" id="btn-import-main-spinner"></span><span class="btn-import-label" id="btn-import-main-label">Adicionar</span></button>
     <div id="inp-2x1-totais" style="display:none;align-items:center;gap:8px;font-family:'DM Mono',monospace;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 10px;height:36px;min-width:320px;flex:1;justify-content:space-between;white-space:nowrap">
+        <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Investimento</span><span id="tot-inv" style="font-size:12px;color:#378ADD;font-weight:500;line-height:1.2">—</span></div>
+        <span style="color:var(--border);font-size:13px">|</span>
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Pedidos</span><span id="tot-pedidos" style="font-size:12px;color:var(--text);font-weight:500;line-height:1.2">—</span></div>
         <span style="color:var(--border);font-size:13px">|</span>
         <div style="display:flex;flex-direction:column;gap:0"><span style="font-size:9px;color:rgba(232,201,122,0.4);text-transform:uppercase;letter-spacing:.06em">Vendas</span><span id="tot-vendas" style="font-size:12px;color:var(--accent2);font-weight:500;line-height:1.2">—</span></div>
@@ -1833,9 +1835,9 @@ function cycleReassignRow(idx){
 function updateReassignField(idx,field,val){
   const row=_reassignRows[idx];
   if(!row)return;
-  if(field==='inv')row.inv=parseNum(val)||0;
+  if(field==='name')row.name=val.trim();
+  else if(field==='inv')row.inv=parseNum(val)||0;
   else if(field==='venda')row.venda=parseNum(val)||0;
-  else if(field==='pedidos')row.pedidos=val===''?null:(parseInt(val)||0);
 }
 function renderReassignSections(){
   const container=document.getElementById('reassign-2x1-container');
@@ -1843,33 +1845,32 @@ function renderReassignSections(){
   const acct=getActiveAcct();
   const linked=getLinkedAccounts(acct);
   if(!_reassignRows.length){container.innerHTML='';return;}
-  const inputStyle='width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:\'DM Mono\',monospace;font-size:13px;padding:6px 8px';
+  // Mesmo estilo da linha da grade principal (.ce-line): 34px, sem caixa, texto puro
+  const cellStyle='height:34px;line-height:34px;padding:0 12px;color:var(--text);font-family:\'DM Mono\',monospace;font-size:13px;background:transparent;border:none;outline:none;width:100%';
   const rowHtml=(r,idx)=>{
     const v=reassignButtonVisual(r.state,linked);
     const shopee=r.cliquesShopee!=null?r.cliquesShopee:(_cliqueMap.size?lookupClicks(_cliqueMap,r.name):null);
     const meta=r.cliquesMeta!=null?r.cliquesMeta:(_metaCliqueMap.size?lookupClicks(_metaCliqueMap,r.name):null);
     const taxa=meta?Math.round((shopee||0)/meta*100):null;
     const cliquesCell=(meta||shopee)
-      ?`<span style="color:var(--text);font-size:12px">${taxa!=null?taxa+'%':'—'}</span><span style="color:#378ADD;font-size:12px">${meta?meta.toLocaleString('pt-BR'):'—'}</span><span style="color:#FF9500;font-size:12px">${shopee?shopee.toLocaleString('pt-BR'):'—'}</span>`
-      :`<span style="color:var(--muted);font-size:12px">—</span><span style="color:var(--muted);font-size:12px">—</span><span style="color:var(--muted);font-size:12px">—</span>`;
-    return`<div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 34px;gap:10px 14px;align-items:center;padding:9px 0;border-top:1px solid var(--border)">
-      <div style="color:var(--text);font-size:13px">${r.name}</div>
-      <input style="${inputStyle}" value="${r.inv.toFixed(2)}" onchange="updateReassignField(${idx},'inv',this.value)">
-      <div>
-        <input style="${inputStyle}" value="${r.venda.toFixed(2)}" onchange="updateReassignField(${idx},'venda',this.value)">
-        <div style="display:flex;align-items:center;gap:4px;margin-top:4px">
-          <input style="width:44px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;padding:3px 5px" value="${r.pedidos!=null?r.pedidos:''}" onchange="updateReassignField(${idx},'pedidos',this.value)">
-          <span style="font-size:10px;color:var(--muted)">pedidos</span>
-        </div>
+      ?`<span style="color:var(--text);font-size:13px;text-align:left">${taxa!=null?taxa+'%':'—'}</span><span style="color:#378ADD;font-size:13px;text-align:center">${meta?meta.toLocaleString('pt-BR'):'—'}</span><span style="color:#FF9500;font-size:13px;text-align:right">${shopee?shopee.toLocaleString('pt-BR'):'—'}</span>`
+      :`<span style="color:var(--muted);font-size:13px;text-align:left">—</span><span style="color:var(--muted);font-size:13px;text-align:center">—</span><span style="color:var(--muted);font-size:13px;text-align:right">—</span>`;
+    const pedidosWm=r.pedidos?`<span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:rgba(232,201,122,0.25);pointer-events:none;white-space:nowrap">${r.pedidos} pedido${r.pedidos!==1?'s':''}</span>`:'';
+    return`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 34px;gap:0 14px;align-items:center;border-top:1px solid rgba(232,201,122,0.18)">
+      <input style="${cellStyle}" value="${r.name}" onchange="updateReassignField(${idx},'name',this.value)">
+      <input style="${cellStyle}" value="${r.inv.toFixed(2)}" onchange="updateReassignField(${idx},'inv',this.value)">
+      <div style="position:relative;height:34px">
+        <input style="${cellStyle};padding-right:${r.pedidos?'80px':'12px'}" value="${r.venda.toFixed(2)}" onchange="updateReassignField(${idx},'venda',this.value)">
+        ${pedidosWm}
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;text-align:center">${cliquesCell}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;height:34px;align-items:center">${cliquesCell}</div>
       <button class="btn-x" style="width:34px;height:34px;border-radius:8px;margin:0;background:${v.bg};border-color:${v.border};color:${v.color}" onclick="cycleReassignRow(${idx})">${v.icon}</button>
     </div>`;
   };
-  const colHeaderHtml=`<div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 34px;gap:10px 14px;margin-bottom:2px">
-    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Sub ID</div>
-    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Investimento</div>
-    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Venda</div>
+  const colHeaderHtml=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 34px;gap:0 14px;margin-bottom:2px">
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:0 12px">Sub ID</div>
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:0 12px">Investimento</div>
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:0 12px">Venda</div>
     <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center">Cliques</div>
     <div></div>
   </div>`;
@@ -1938,7 +1939,7 @@ function renderMetaSlots(){
       </label>
       <span style="font-size:11px;font-family:'DM Mono',monospace;color:${statusColor}">${slot.status}</span>
       ${slot.filename?`<button class="btn-x" onclick="removeMetaSlot(${i})">✕</button>`:''}
-      ${isLast?`<button class="btn-x" style="color:var(--accent);border-color:rgba(232,201,122,0.35);background:rgba(232,201,122,0.12)" onclick="addMetaSlot()">+</button>`:''}
+      ${isLast&&slot.filename?`<button class="btn-x" style="color:var(--accent);border-color:rgba(232,201,122,0.35);background:rgba(232,201,122,0.12)" onclick="addMetaSlot()">+</button>`:''}
     </div>`;
   }).join('');
 }
@@ -1953,6 +1954,17 @@ function removeMetaSlot(i){
   renderMetaSlots();
   applyMetaToInv();
 }
+function updateInvTotal(){
+  const el=document.getElementById('tot-inv');
+  if(!el)return;
+  let total=0;
+  for(const v of _metaInvMap.values())total+=v;
+  el.textContent=_metaInvMap.size?fmt(total):'—';
+  if(_metaInvMap.size){
+    const totDiv=document.getElementById('inp-2x1-totais');
+    if(totDiv)totDiv.style.display='flex';
+  }
+}
 function recomputeMetaMaps(){
   _metaInvMap=new Map();
   _metaCliqueMap=new Map();
@@ -1960,6 +1972,7 @@ function recomputeMetaMaps(){
     for(const[k,v]of slot.invMap)_metaInvMap.set(k,(_metaInvMap.get(k)||0)+v);
     for(const[k,v]of slot.cliqueMap)_metaCliqueMap.set(k,(_metaCliqueMap.get(k)||0)+v);
   }
+  updateInvTotal();
 }
 function resetMetaSlots(){
   _metaSlots=[{file:null,filename:'',status:'',error:false,invMap:new Map(),cliqueMap:new Map()}];
@@ -2483,6 +2496,7 @@ function parse2x1(rawInput){
   if(totDiv){
     totDiv.style.display='flex';
     document.getElementById('tot-pedidos').textContent=totalSeenPedidos.size;
+    updateInvTotal();
     document.getElementById('tot-vendas').textContent=fmt(totalBruto);
     document.getElementById('tot-com').textContent=fmt(totalComissao);
     document.getElementById('tot-dir-pedidos').textContent=dirPedidos.size;
