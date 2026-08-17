@@ -1848,6 +1848,8 @@ function renderReassignSections(){
   // Mesmo estilo da linha da grade principal (.ce-line): 34px, sem caixa, texto puro
   const cellStyle='height:34px;line-height:34px;padding:0 12px;color:var(--text);font-family:\'DM Mono\',monospace;font-size:13px;background:transparent;border:none;outline:none;width:100%';
   const colDivider='border-right:1px solid rgba(232,201,122,0.15)';
+  const showCliques=!!_cliqueMap.size;
+  const gridCols=showCliques?'1fr 1fr 1fr 1fr 34px':'1fr 1fr 1fr 34px';
   const rowHtml=(r,idx)=>{
     const v=reassignButtonVisual(r.state,linked);
     const shopee=r.cliquesShopee!=null?r.cliquesShopee:(_cliqueMap.size?lookupClicks(_cliqueMap,r.name):null);
@@ -1857,22 +1859,22 @@ function renderReassignSections(){
       ?`<span style="color:var(--text);font-size:13px;text-align:left">${taxa!=null?taxa+'%':'—'}</span><span style="color:#378ADD;font-size:13px;text-align:center">${meta?meta.toLocaleString('pt-BR'):'—'}</span><span style="color:#FF9500;font-size:13px;text-align:right">${shopee?shopee.toLocaleString('pt-BR'):'—'}</span>`
       :`<span style="color:var(--muted);font-size:13px;text-align:left">—</span><span style="color:var(--muted);font-size:13px;text-align:center">—</span><span style="color:var(--muted);font-size:13px;text-align:right">—</span>`;
     const pedidosWm=r.pedidos?`<span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:rgba(232,201,122,0.25);pointer-events:none;white-space:nowrap">${r.pedidos} pedido${r.pedidos!==1?'s':''}</span>`:'';
-    return`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 34px;gap:0 14px;align-items:center;border-top:1px solid rgba(232,201,122,0.18)">
+    return`<div style="display:grid;grid-template-columns:${gridCols};gap:0 14px;align-items:center;border-top:1px solid rgba(232,201,122,0.18)">
       <div style="${colDivider}"><input style="${cellStyle}" value="${r.name}" onchange="updateReassignField(${idx},'name',this.value)"></div>
       <div style="${colDivider}"><input style="${cellStyle}" value="${r.inv.toFixed(2)}" onchange="updateReassignField(${idx},'inv',this.value)"></div>
-      <div style="${colDivider};position:relative;height:34px">
+      <div style="${showCliques?colDivider:''};position:relative;height:34px">
         <input style="${cellStyle};padding-right:${r.pedidos?'80px':'12px'}" value="${r.venda.toFixed(2)}" onchange="updateReassignField(${idx},'venda',this.value)">
         ${pedidosWm}
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;height:34px;align-items:center;padding-right:12px">${cliquesCell}</div>
+      ${showCliques?`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;height:34px;align-items:center;padding-right:12px">${cliquesCell}</div>`:''}
       <button class="btn-x" style="width:34px;height:34px;border-radius:8px;margin:0;background:${v.bg};border-color:${v.border};color:${v.color}" onclick="cycleReassignRow(${idx})">${v.icon}</button>
     </div>`;
   };
-  const colHeaderHtml=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 34px;gap:0 14px;margin-bottom:2px">
+  const colHeaderHtml=`<div style="display:grid;grid-template-columns:${gridCols};gap:0 14px;margin-bottom:2px">
     <div style="font-size:10px;color:var(--yellow);text-transform:uppercase;letter-spacing:.06em;padding:0 12px">Sub ID</div>
     <div style="font-size:10px;color:var(--yellow);text-transform:uppercase;letter-spacing:.06em;padding:0 12px">Investimento</div>
     <div style="font-size:10px;color:var(--yellow);text-transform:uppercase;letter-spacing:.06em;padding:0 12px">Venda</div>
-    <div style="font-size:10px;color:var(--yellow);text-transform:uppercase;letter-spacing:.06em;padding:0 12px">Cliques</div>
+    ${showCliques?'<div style="font-size:10px;color:var(--yellow);text-transform:uppercase;letter-spacing:.06em;padding:0 12px">Cliques</div>':''}
     <div></div>
   </div>`;
   let html='';
@@ -2274,12 +2276,18 @@ async function classifyCliquesOnly(acct,date){
   // Só reconhece sub ids que JÁ têm uma linha lançada nesse dia específico —
   // clique sozinho nunca cria linha nova, porque não sabemos se virou venda
   // (essa informação só vem da planilha de Vendas, que esse modo não usa).
+  // Checa em TODAS as contas do grupo, não só a atual — um sub id pode ter
+  // sido lançado numa conta ligada (ex: Carol|João) mesmo vendo Carol|Duda.
   const names=[..._cliquesOnlyMap.keys()];
-  const{data:existingRows}=await sb.from('daily_data').select('sub_id').eq('account_id',acct.id).eq('date',date).in('sub_id',names);
-  const existingSet=new Set((existingRows||[]).map(r=>r.sub_id));
+  const groupIds=getGroupAccountIds(acct);
+  const{data:existingRows}=await sb.from('daily_data').select('sub_id,account_id').in('account_id',groupIds).eq('date',date).in('sub_id',names);
+  const ownerMap={}; // sub_id -> account_id dono da linha (prefere a conta atual se existir nas duas)
+  (existingRows||[]).forEach(r=>{
+    if(!ownerMap[r.sub_id]||r.account_id===acct.id)ownerMap[r.sub_id]=r.account_id;
+  });
   _cliquesOnlyRecognized=[];_cliquesOnlyIgnored=[];
   for(const[sub,count]of _cliquesOnlyMap){
-    if(existingSet.has(sub))_cliquesOnlyRecognized.push({name:sub,shopee:count});
+    if(ownerMap[sub])_cliquesOnlyRecognized.push({name:sub,shopee:count,accountId:ownerMap[sub]});
     else _cliquesOnlyIgnored.push({name:sub,shopee:count});
   }
   _cliquesOnlyRecognized.sort((a,b)=>b.shopee-a.shopee);
@@ -2295,9 +2303,16 @@ async function onCliquesOnlyDateChange(){
   renderCliquesOnlyTables();
 }
 function renderCliquesOnlyTables(){
+  const acct=getActiveAcct();
+  const accountBadge=(accountId)=>{
+    if(!accountId||accountId===acct?.id)return'';
+    const a=_accounts.find(x=>x.id===accountId);
+    if(!a)return'';
+    return`<span style="margin-left:8px;font-size:10px;padding:2px 7px;border-radius:5px;background:${hexToRgba(a.color,0.15)};border:1px solid ${hexToRgba(a.color,0.4)};color:${a.color}">${a.name}</span>`;
+  };
   document.getElementById('cliquesonly-reconhecidos-label').textContent=`✓ Reconhecidos (${_cliquesOnlyRecognized.length})`;
   document.getElementById('cliquesonly-reconhecidos-tbody').innerHTML=_cliquesOnlyRecognized.map(r=>
-    `<tr><td style="padding:7px 4px;color:var(--text);text-align:left">${r.name}</td><td style="padding:7px 4px;text-align:right;color:var(--text)">${r.shopee.toLocaleString('pt-BR')}</td><td style="padding:7px 4px;text-align:center"><button class="btn-x" style="width:24px;height:24px;font-size:11px" onclick="moveCliquesOnly('${r.name.replace(/'/g,"\\'")}','ignore')">✕</button></td></tr>`
+    `<tr><td style="padding:7px 4px;color:var(--text);text-align:left">${r.name}${accountBadge(r.accountId)}</td><td style="padding:7px 4px;text-align:right;color:var(--text)">${r.shopee.toLocaleString('pt-BR')}</td><td style="padding:7px 4px;text-align:center"><button class="btn-x" style="width:24px;height:24px;font-size:11px" onclick="moveCliquesOnly('${r.name.replace(/'/g,"\\'")}','ignore')">✕</button></td></tr>`
   ).join('')||'<tr><td style="padding:7px 4px;color:var(--muted)" colspan="3">Nenhum sub ID com linha lançada nesse dia.</td></tr>';
   document.getElementById('cliquesonly-ignorados-label').textContent=`✕ Ignorados (${_cliquesOnlyIgnored.length}) — Sem linha lançada nesse dia`;
   document.getElementById('cliquesonly-ignorados-tbody').innerHTML=_cliquesOnlyIgnored.map(r=>
@@ -2315,6 +2330,7 @@ function moveCliquesOnly(name,direction){
     const idx=_cliquesOnlyIgnored.findIndex(r=>r.name===name);
     if(idx<0)return;
     const[item]=_cliquesOnlyIgnored.splice(idx,1);
+    if(!item.accountId){const acct=getActiveAcct();item.accountId=acct?acct.id:null;}
     _cliquesOnlyRecognized.push(item);
     _cliquesOnlyRecognized.sort((a,b)=>b.shopee-a.shopee);
   }
@@ -2330,26 +2346,39 @@ async function updateCliquesOnly(){
   if(!recognized.length){alert('Nenhum sub ID com linha lançada nesse dia pra atualizar.');return;}
   setBtnLoading('btn-import-main',true);
   try{
-    // Supabase upsert substitui a linha inteira nos campos que não mandamos —
-    // por isso buscamos os valores atuais de cada linha existente e os
-    // re-enviamos junto, pra não apagar Investimento/Comissão/Cliques Meta.
-    // (Só atualiza linhas que já existem — nunca cria linha nova aqui.)
-    const{data:existingRows}=await sb.from('daily_data').select('sub_id,investimento,venda,cliques_meta,pedidos').eq('account_id',acct.id).eq('date',date).in('sub_id',recognized.map(r=>r.name));
-    const existingMap={};
-    (existingRows||[]).forEach(r=>{existingMap[r.sub_id]=r;});
-    const upserts=recognized.filter(r=>existingMap[r.name]).map(r=>{
-      const prev=existingMap[r.name];
-      const row={account_id:acct.id,user_id:currentUser.id,date,sub_id:r.name,cliques_shopee:r.shopee};
-      row.investimento=prev.investimento;
-      row.venda=prev.venda;
-      if(prev.cliques_meta!=null)row.cliques_meta=prev.cliques_meta;
-      if(prev.pedidos!=null)row.pedidos=prev.pedidos;
-      return row;
+    // Agrupa por conta dona (pode ser a atual ou uma conta ligada do grupo)
+    const byAccount={};
+    recognized.forEach(r=>{
+      const aid=r.accountId||acct.id;
+      if(!byAccount[aid])byAccount[aid]=[];
+      byAccount[aid].push(r);
     });
-    if(!upserts.length){alert('Nenhuma dessas linhas existe mais nesse dia. Tenta atualizar a lista.');setBtnLoading('btn-import-main',false);return;}
-    await sb.from('daily_data').upsert(upserts,{onConflict:'account_id,date,sub_id'});
-    invalidateCache(acct.id);
-    showToast(`Cliques atualizados: ${upserts.length} sub ID(s)`);
+    let totalSaved=0;
+    for(const aid of Object.keys(byAccount)){
+      const rowsForAcct=byAccount[aid];
+      // Supabase upsert substitui a linha inteira nos campos que não mandamos —
+      // por isso buscamos os valores atuais de cada linha existente e os
+      // re-enviamos junto, pra não apagar Investimento/Comissão/Cliques Meta.
+      // (Só atualiza linhas que já existem — nunca cria linha nova aqui.)
+      const{data:existingRows}=await sb.from('daily_data').select('sub_id,investimento,venda,cliques_meta,pedidos').eq('account_id',aid).eq('date',date).in('sub_id',rowsForAcct.map(r=>r.name));
+      const existingMap={};
+      (existingRows||[]).forEach(r=>{existingMap[r.sub_id]=r;});
+      const upserts=rowsForAcct.filter(r=>existingMap[r.name]).map(r=>{
+        const prev=existingMap[r.name];
+        const row={account_id:aid,user_id:currentUser.id,date,sub_id:r.name,cliques_shopee:r.shopee};
+        row.investimento=prev.investimento;
+        row.venda=prev.venda;
+        if(prev.cliques_meta!=null)row.cliques_meta=prev.cliques_meta;
+        if(prev.pedidos!=null)row.pedidos=prev.pedidos;
+        return row;
+      });
+      if(!upserts.length)continue;
+      await sb.from('daily_data').upsert(upserts,{onConflict:'account_id,date,sub_id'});
+      invalidateCache(aid);
+      totalSaved+=upserts.length;
+    }
+    if(!totalSaved){alert('Nenhuma dessas linhas existe mais nesse dia. Tenta atualizar a lista.');setBtnLoading('btn-import-main',false);return;}
+    showToast(`Cliques atualizados: ${totalSaved} sub ID(s)`);
     clearCliquesOnlyFile();
     await renderAll();
   }catch(e){
