@@ -211,6 +211,7 @@ let currentUser=null;
   .sub-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
   .sub-modal-header h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent);margin:0}
   .sub-modal-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+  #sub-modal-cards{grid-template-columns:repeat(5,1fr)}
   .sub-modal-scroll{overflow-y:auto;overflow-x:hidden;flex:1;scrollbar-color:var(--border) transparent;min-height:0;scrollbar-gutter:stable}
   .sub-modal-scroll::-webkit-scrollbar{width:6px}
   .sub-modal-scroll::-webkit-scrollbar-track{background:transparent}
@@ -870,7 +871,7 @@ function lookupClicks(map,sub){
 function createReassignButton(idx){
   const acct=getActiveAcct();
   const linked=getLinkedAccounts(acct);
-  const v=reassignButtonVisual(0,linked);
+  const v=reassignButtonVisual('home',linked);
   const btn=document.createElement('button');
   btn.textContent=v.icon;
   btn.className='btn-x';
@@ -880,12 +881,21 @@ function createReassignButton(idx){
 }
 // Calcula ícone/cor do botão de reatribuição com base em pra onde o PRÓXIMO
 // clique vai mandar a linha (não em onde ela está agora).
+// state: 'home' (conta atual), um account id (conta ligada), ou 'ignorado'.
+// Usar o ID de verdade (em vez de posição numérica) garante que a reatribuição
+// continue apontando pra conta certa mesmo se você trocar de conta ativa depois.
+function nextReassignState(state,linkedAccounts){
+  if(state==='home')return linkedAccounts.length?linkedAccounts[0].id:'ignorado';
+  if(state==='ignorado')return'home';
+  const idx=linkedAccounts.findIndex(a=>a.id===state);
+  if(idx<0)return'ignorado'; // conta não existe mais nesse contexto (grupo mudou) — vai pro seguro
+  return idx+1<linkedAccounts.length?linkedAccounts[idx+1].id:'ignorado';
+}
 function reassignButtonVisual(state,linkedAccounts){
-  const totalStates=linkedAccounts.length+2; // 0=conta atual,1..N=contas ligadas,N+1=ignorados
-  const nextState=(state+1)%totalStates;
-  if(nextState===0)return{icon:'✓',color:'#3bf0a0',bg:'rgba(59,240,160,0.12)',border:'rgba(59,240,160,0.35)'};
-  if(nextState===linkedAccounts.length+1)return{icon:'✕',color:'#ff4d6d',bg:'rgba(255,77,109,0.12)',border:'rgba(255,77,109,0.35)'};
-  const acc=linkedAccounts[nextState-1];
+  const next=nextReassignState(state,linkedAccounts);
+  if(next==='home')return{icon:'✓',color:'#3bf0a0',bg:'rgba(59,240,160,0.12)',border:'rgba(59,240,160,0.35)'};
+  if(next==='ignorado')return{icon:'✕',color:'#ff4d6d',bg:'rgba(255,77,109,0.12)',border:'rgba(255,77,109,0.35)'};
+  const acc=linkedAccounts.find(a=>a.id===next);
   return{icon:'↘',color:acc.color,bg:hexToRgba(acc.color,0.15),border:hexToRgba(acc.color,0.4)};
 }
 function setActiveAcct(id){localStorage.setItem(SK_ACTIVE,id);}
@@ -1460,8 +1470,10 @@ function renameAccount(id){
 async function switchAccount(id){
   setActiveAcct(id);
   renderAccountTabs();
-  _reassignRows=[];
-  const rc=document.getElementById('reassign-2x1-container');if(rc)rc.innerHTML='';
+  // Se uma linha estava marcada pra ir pra uma conta que virou a conta ativa
+  // agora, ela vira "conta atual" — nunca fica órfã ou aponta pra ela mesma.
+  _reassignRows.forEach(r=>{if(r.state===id)r.state='home';});
+  renderReassignSections(); // recalcula rótulos/cores pra conta ativa nova, sem apagar o progresso
   const iss=getISS();
   document.getElementById('iss-inp').value=parseFloat(iss).toFixed(2).replace('.',',');
   const metaTaxa=getMetaTaxa();
@@ -1776,6 +1788,8 @@ function remove2x1Row(idx){
   const pedidosArr0=vendaEl0?ce_getWatermarks(vendaEl0):[];
   const capturedName=(namesLines[idx]||'').trim();
   if(capturedName){
+    const acct0=getActiveAcct();
+    const linked0=getLinkedAccounts(acct0);
     const capturedRow={
       name:capturedName,
       inv:parseNum(invLines[idx]||'0'),
@@ -1783,7 +1797,7 @@ function remove2x1Row(idx){
       cliquesMeta:_metaCliqueMap.size?lookupClicks(_metaCliqueMap,capturedName):null,
       cliquesShopee:_cliqueMap.size?lookupClicks(_cliqueMap,capturedName):null,
       pedidos:pedidosArr0[idx]!=null?pedidosArr0[idx]:null,
-      state:1 // primeiro clique: sai da conta atual, vai pra 1ª conta ligada (ou ignorados, se não tiver nenhuma)
+      state:linked0.length?linked0[0].id:'ignorado' // primeiro clique: sai da conta atual, vai pra 1ª conta ligada (ou ignorados, se não tiver nenhuma)
     };
     _reassignRows.push(capturedRow);
   }
@@ -1826,10 +1840,9 @@ let _reassignRows=[];
 function cycleReassignRow(idx){
   const acct=getActiveAcct();
   const linked=getLinkedAccounts(acct);
-  const totalStates=linked.length+2;
   const row=_reassignRows[idx];
   if(!row)return;
-  row.state=(row.state+1)%totalStates;
+  row.state=nextReassignState(row.state,linked);
   renderReassignSections();
 }
 function updateReassignField(idx,field,val){
@@ -1849,7 +1862,7 @@ function renderReassignSections(){
   const cellStyle='height:34px;line-height:34px;padding:0 12px;color:var(--text);font-family:\'DM Mono\',monospace;font-size:13px;background:transparent;border:none;outline:none;width:100%';
   const colDivider='border-right:1px solid rgba(232,201,122,0.15)';
   const showCliques=!!_cliqueMap.size;
-  const gridCols=showCliques?'1fr 1fr 1fr 1fr 34px':'1fr 1fr 1fr 34px';
+  const gridCols=showCliques?'1fr 1fr 1fr 1fr auto':'1fr 1fr 1fr auto';
   const rowHtml=(r,idx)=>{
     const v=reassignButtonVisual(r.state,linked);
     const shopee=r.cliquesShopee!=null?r.cliquesShopee:(_cliqueMap.size?lookupClicks(_cliqueMap,r.name):null);
@@ -1859,7 +1872,7 @@ function renderReassignSections(){
       ?`<span style="color:var(--text);font-size:13px;text-align:left">${taxa!=null?taxa+'%':'—'}</span><span style="color:#378ADD;font-size:13px;text-align:center">${meta?meta.toLocaleString('pt-BR'):'—'}</span><span style="color:#FF9500;font-size:13px;text-align:right">${shopee?shopee.toLocaleString('pt-BR'):'—'}</span>`
       :`<span style="color:var(--muted);font-size:13px;text-align:left">—</span><span style="color:var(--muted);font-size:13px;text-align:center">—</span><span style="color:var(--muted);font-size:13px;text-align:right">—</span>`;
     const pedidosWm=r.pedidos?`<span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:rgba(232,201,122,0.25);pointer-events:none;white-space:nowrap">${r.pedidos} pedido${r.pedidos!==1?'s':''}</span>`:'';
-    return`<div style="display:grid;grid-template-columns:${gridCols};gap:0 14px;align-items:center;border-top:1px solid rgba(232,201,122,0.18)">
+    return`<div style="display:grid;grid-template-columns:${gridCols};gap:10px;align-items:center;border-top:1px solid rgba(232,201,122,0.18)">
       <div style="${colDivider}"><input style="${cellStyle}" value="${r.name}" onchange="updateReassignField(${idx},'name',this.value)"></div>
       <div style="${colDivider}"><input style="${cellStyle}" value="${r.inv.toFixed(2)}" onchange="updateReassignField(${idx},'inv',this.value)"></div>
       <div style="${showCliques?colDivider:''};position:relative;height:34px">
@@ -1870,7 +1883,7 @@ function renderReassignSections(){
       <button class="btn-x" style="width:34px;height:34px;border-radius:8px;margin:0;background:${v.bg};border-color:${v.border};color:${v.color}" onclick="cycleReassignRow(${idx})">${v.icon}</button>
     </div>`;
   };
-  const colHeaderHtml=`<div style="display:grid;grid-template-columns:${gridCols};gap:0 14px;margin-bottom:2px">
+  const colHeaderHtml=`<div style="display:grid;grid-template-columns:${gridCols};gap:10px;margin-bottom:2px">
     <div style="font-size:10px;color:var(--yellow);text-transform:uppercase;letter-spacing:.06em;padding:0 12px">Sub ID</div>
     <div style="font-size:10px;color:var(--yellow);text-transform:uppercase;letter-spacing:.06em;padding:0 12px">Investimento</div>
     <div style="font-size:10px;color:var(--yellow);text-transform:uppercase;letter-spacing:.06em;padding:0 12px">Venda</div>
@@ -1878,21 +1891,19 @@ function renderReassignSections(){
     <div></div>
   </div>`;
   let html='';
-  // Estado 0: voltaram pra conta atual (lista congelada, não volta pra grade editável)
-  const backHome=_reassignRows.map((r,i)=>({r,i})).filter(x=>x.r.state===0);
+  // "home": voltaram pra conta atual (lista congelada, não volta pra grade editável)
+  const backHome=_reassignRows.map((r,i)=>({r,i})).filter(x=>x.r.state==='home');
   if(backHome.length){
     html+=`<div style="font-size:10px;color:${acct?acct.color:'var(--accent2)'};text-transform:uppercase;letter-spacing:.06em;margin:18px 0 8px">↩ ${acct?acct.name:'Conta atual'} (${backHome.length})</div>`+colHeaderHtml+backHome.map(x=>rowHtml(x.r,x.i)).join('');
   }
-  // Estados 1..N: contas ligadas
-  linked.forEach((la,li)=>{
-    const state=li+1;
-    const group=_reassignRows.map((r,i)=>({r,i})).filter(x=>x.r.state===state);
+  // Contas ligadas — cada uma mostra só as linhas cujo state é o ID dela
+  linked.forEach(la=>{
+    const group=_reassignRows.map((r,i)=>({r,i})).filter(x=>x.r.state===la.id);
     if(!group.length)return;
     html+=`<div style="font-size:10px;color:${la.color};text-transform:uppercase;letter-spacing:.06em;margin:18px 0 8px">↳ ${la.name} (${group.length})</div>`+colHeaderHtml+group.map(x=>rowHtml(x.r,x.i)).join('');
   });
-  // Último estado: Ignorados
-  const ignoredState=linked.length+1;
-  const ignored=_reassignRows.map((r,i)=>({r,i})).filter(x=>x.r.state===ignoredState);
+  // Ignorados
+  const ignored=_reassignRows.map((r,i)=>({r,i})).filter(x=>x.r.state==='ignorado');
   if(ignored.length){
     html+=`<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 8px">✕ Ignorados (${ignored.length})</div>`+colHeaderHtml+ignored.map(x=>rowHtml(x.r,x.i)).join('');
   }
@@ -2576,10 +2587,16 @@ async function importDataInner(){
       cliquesShopee:_cliqueMap.size?lookupClicks(_cliqueMap,name):null,
       pedidos:pedidosArr[i]!=null?pedidosArr[i]:null
     })).filter(r=>r.name);
-    // Sub ids que voltaram pro "estado 0" na lista de reatribuição entram aqui também
+    // Sub ids que voltaram pro "estado home" na lista de reatribuição entram aqui também
     const linkedAccts=getLinkedAccounts(acct);
+    const validStates=new Set(['home','ignorado',...linkedAccts.map(a=>a.id)]);
+    const orphaned=_reassignRows.filter(r=>!validStates.has(r.state));
+    if(orphaned.length){
+      alert('Atenção: '+orphaned.map(r=>r.name).join(', ')+' estava(m) marcado(s) pra uma conta que não faz mais parte do grupo atual. Nada foi salvo pra ele(s) — revise a lista antes de continuar.');
+      return;
+    }
     for(const r of _reassignRows){
-      if(r.state===0)rows.push({name:r.name,inv:r.inv,venda:r.venda,cliquesMeta:r.cliquesMeta,cliquesShopee:r.cliquesShopee,pedidos:r.pedidos});
+      if(r.state==='home')rows.push({name:r.name,inv:r.inv,venda:r.venda,cliquesMeta:r.cliquesMeta,cliquesShopee:r.cliquesShopee,pedidos:r.pedidos});
     }
       if(!rows.length){alert('Nenhum dado válido encontrado. Verifique os campos.');return;}
   } else {
@@ -2621,10 +2638,8 @@ async function importDataInner(){
   // — só faz sentido no modo Auto, que é onde esse recurso existe.
   if(mode==='2x1'&&_reassignRows.length){
     const linkedAccts=getLinkedAccounts(acct);
-    for(let li=0;li<linkedAccts.length;li++){
-      const targetAcct=linkedAccts[li];
-      const state=li+1;
-      const theseRows=_reassignRows.filter(r=>r.state===state).map(r=>({name:r.name,inv:r.inv,venda:r.venda,cliquesMeta:r.cliquesMeta,cliquesShopee:r.cliquesShopee,pedidos:r.pedidos}));
+    for(const targetAcct of linkedAccts){
+      const theseRows=_reassignRows.filter(r=>r.state===targetAcct.id).map(r=>({name:r.name,inv:r.inv,venda:r.venda,cliquesMeta:r.cliquesMeta,cliquesShopee:r.cliquesShopee,pedidos:r.pedidos}));
       if(!theseRows.length)continue;
       await saveRows(targetAcct.id,dt,theseRows);
       const theseNames=new Set(theseRows.map(r=>r.name.toLowerCase()));
@@ -3382,12 +3397,25 @@ async function renderMonth(data,month,acctId){
   const latestDay=days[days.length-1];
   // collect all sub IDs seen in the month
   const allNames=[...new Set(days.flatMap(d=>md[d].map(r=>r.name)))];
+  // Sub ids que já existiam no mês anterior não devem aparecer como "NEW" só
+  // porque é o dia 1 do mês — não temos um rank anterior de verdade pra
+  // comparar entre meses, então tratamos como "igual" (—) em vez de estreia.
+  const[py,pm]=month.split('-').map(Number);
+  const prevDate=new Date(py,pm-2,1);
+  const prevMonthKey=prevDate.getFullYear()+'-'+String(prevDate.getMonth()+1).padStart(2,'0');
+  const prevMonthNames=new Set(Object.values(data[prevMonthKey]||{}).flatMap(rows=>rows.map(r=>r.name)));
   container.innerHTML=loadingSpinnerHtml('Carregando dados diários...');
   const vbMap=await fetchVendaBrutaPorDia(acctId,month);
   container.innerHTML=[...days].reverse().map(day=>{
     const dayIdx=days.indexOf(day);
     const curRankArr=buildRanking(md,days,dayIdx,month);
     const prevRank=dayIdx>0?rankMap(buildRanking(md,days,dayIdx-1,month)):{};
+    if(dayIdx===0){
+      const curMap=rankMap(curRankArr);
+      for(const name of allNames){
+        if(prevMonthNames.has(name)&&curMap[name]!=null)prevRank[name]=curMap[name];
+      }
+    }
     const cumSaldo={};for(const o of curRankArr)cumSaldo[o.name]=o.saldo;
     const isLatest=day===latestDay;
     const dayMap={};for(const r of md[day])dayMap[r.name]=r;
@@ -3883,6 +3911,7 @@ async function openSubModal(name){
   const totRc=totC.roi!==null?(totC.roi>=1?'cv-green':'cv-red'):'cv-muted';
   document.getElementById('sub-modal-title').textContent=name;
   document.getElementById('sub-modal-cards').innerHTML=`
+    <div class="card" style="text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center"><div class="card-label">Vendas</div><div class="card-value" style="text-align:center;color:var(--text)">${fmt(totVendaBruta)}</div></div>
     <div class="card" style="text-align:center">
       <div class="card-label">Investimento</div>
       <div class="card-value cv-muted" style="font-size:16px;margin:6px 0 4px">${fmt(totInv)}</div>
