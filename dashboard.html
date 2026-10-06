@@ -1837,6 +1837,12 @@ function remove2x1Row(idx){
 // Estado de sub ids removidos da grade principal, aguardando reatribuição
 // (conta ligada, ou descarte em Ignorados) antes de "Adicionar".
 let _reassignRows=[];
+let _vendasLoaded=false;
+function resetVendasTotaisDisplay(){
+  ['tot-pedidos','tot-vendas','tot-com','tot-dir-pedidos','tot-dir-vendas','tot-dir-com','tot-ind-pedidos','tot-ind-vendas','tot-ind-com'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.textContent='—';
+  });
+}
 function cycleReassignRow(idx){
   const acct=getActiveAcct();
   const linked=getLinkedAccounts(acct);
@@ -1929,6 +1935,8 @@ function clear2x1File(){
   const delCol=document.getElementById('inp-2x1-del-col');if(delCol)delCol.innerHTML='';
   _reassignRows=[];
   const rc=document.getElementById('reassign-2x1-container');if(rc)rc.innerHTML='';
+  _vendasLoaded=false;
+  resetVendasTotaisDisplay();
 }
 
 let _metaInvMap = new Map(); // sub_id -> total investment (soma de todos os arquivos)
@@ -1977,6 +1985,7 @@ function updateInvTotal(){
   if(_metaInvMap.size){
     const totDiv=document.getElementById('inp-2x1-totais');
     if(totDiv)totDiv.style.display='flex';
+    if(!_vendasLoaded)resetVendasTotaisDisplay();
   }
 }
 function recomputeMetaMaps(){
@@ -2451,9 +2460,15 @@ function parse2x1(rawInput){
   const canalIdx=headers.findIndex(h=>h.trim()==='Canal');
   const qtdIdx=headers.findIndex(h=>h.trim()==='Qtd');
   const comissaoItemIdx=headers.findIndex(h=>h.includes('Comissão total do item'));
+  const statusPedidoIdx=hNorm.findIndex(h=>h==='statusdopedido');
+  const statusItemIdx=hNorm.findIndex(h=>h==='statusdoitemdoafiliado');
   if(subIdx<0||vendaIdx<0){
     alert('Colunas Sub_id1 ou Comissão total do pedido(R$) não encontradas.');return;
   }
+  const isBadStatus=v=>{
+    const n=norm(v||'');
+    return n.includes('cancel')||n.includes('naopago')||n.includes('invalid')||n.includes('devolu')||n.includes('reembols')||n.includes('estorn');
+  };
   _saleItemsBuffer=[];
   const seen=new Set();
   const seenOrders=new Map();
@@ -2465,8 +2480,13 @@ function parse2x1(rawInput){
   const dirPedidos=new Set();
   const indPedidos=new Set();
   let dirVendas=0,indVendas=0,dirCom=0,indCom=0;
+  let ignoredCount=0;
   for(let i=1;i<lines.length;i++){
     const cols=parseCSVLine(lines[i]);
+    if((statusPedidoIdx>=0&&isBadStatus(cols[statusPedidoIdx]))||(statusItemIdx>=0&&isBadStatus(cols[statusItemIdx]))){
+      ignoredCount++;
+      continue;
+    }
     const sub=(cols[subIdx]||'').trim();
     const pedido=pedidoIdx>=0?(cols[pedidoIdx]||'').trim():'';
     // count all unique pedidos for totals (regardless of sub_id)
@@ -2532,9 +2552,10 @@ function parse2x1(rawInput){
   if(grid)grid.style.display='grid';
   applyMetaToInv();
   const st=document.getElementById('inp-2x1-status');
-  if(st)st.textContent=`✓ ${subs.length} sub id${subs.length!==1?'s':''} encontrado${subs.length!==1?'s':''}`;  const clrBtn=document.getElementById('inp-2x1-clear');if(clrBtn)clrBtn.style.display='';
+  if(st)st.textContent=`✓ ${subs.length} sub id${subs.length!==1?'s':''} encontrado${subs.length!==1?'s':''}`+(ignoredCount?` (${ignoredCount} pedido${ignoredCount!==1?'s':''} cancelado${ignoredCount!==1?'s':''}/não pago${ignoredCount!==1?'s':''} ignorado${ignoredCount!==1?'s':''})`:'');  const clrBtn=document.getElementById('inp-2x1-clear');if(clrBtn)clrBtn.style.display='';
   const totDiv=document.getElementById('inp-2x1-totais');
   if(totDiv){
+    _vendasLoaded=true;
     totDiv.style.display='flex';
     document.getElementById('tot-pedidos').textContent=totalSeenPedidos.size;
     updateInvTotal();
@@ -2670,6 +2691,8 @@ async function importDataInner(){
   const fn=document.getElementById('inp-2x1-filename');if(fn)fn.textContent='Selecionar arquivo CSV';
   const st=document.getElementById('inp-2x1-status');if(st)st.textContent='';
   const totDiv2=document.getElementById('inp-2x1-totais');if(totDiv2)totDiv2.style.display='none';
+  _vendasLoaded=false;
+  resetVendasTotaisDisplay();
   showToast('✓ Importado!');
 
   // normalize: remove accents, lowercase for comparison
@@ -3489,12 +3512,14 @@ function buildDayTbodyRows(day,sortedRows,crMap,displayRankMap,prevRankMap,cumSa
     const missingStyle=isMissing?'opacity:0.35':'';
     const deleteBtn=isMissing?'':` <button class="btn-x" onclick="deleteRow('${day}','${r.name.replace(/'/g,"\\'")}')">✕</button>`;
     const isZeroInv=!isMissing&&Number(r.inv)===0;
-    return`<tr class="${rowClass}" style="${missingStyle}" data-missing="${isMissing}" data-zero-inv="${isZeroInv}" data-venda-bruta="${r.vendaBruta||0}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roi="${c.roi??-999}" data-acum="${acum}" data-name="${r.name}">
+    const pedidosVal=r.pedidos!=null?r.pedidos:'';
+    return`<tr class="${rowClass}" style="${missingStyle}" data-missing="${isMissing}" data-zero-inv="${isZeroInv}" data-venda-bruta="${r.vendaBruta||0}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roi="${c.roi??-999}" data-acum="${acum}" data-pedidos="${r.pedidos||0}" data-name="${r.name}">
       <td>${rankCell}</td>
       <td onclick="openSubModal('${r.name.replace(/'/g,"\\'")}');event.stopPropagation()" style="cursor:pointer;${isMissing?'opacity:0.35':''}">${r.name}</td>
       <td>${fmt(r.vendaBruta||0)}</td>
-      <td>${fmt(r.inv)}</td><td>${fmt(r.venda)}</td>
-      <td>${fmt(c.comMeta)}</td><td>${fmt(c.menosISS)}</td>
+      <td>${pedidosVal}</td>
+      <td><span style="color:var(--muted)">${fmt(r.inv)}</span><br><span style="color:var(--yellow)">${fmt(c.comMeta)}</span></td>
+      <td><span style="color:var(--muted)">${fmt(r.venda)}</span><br><span style="color:var(--yellow)">${fmt(c.menosISS)}</span></td>
       <td class="${sClass}">${fmt(c.saldo)}</td>
       <td${isMissing?'':` style="color:${roasColor(c.roi)}"`}>${isMissing?'<span class="neu">—</span>':roiStr}</td>
       <td class="${acumClass}" style="font-weight:500">${fmt(acum)}</td>
@@ -3508,8 +3533,8 @@ let _dayBuildCache={};
 function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
   const [y,m,d]=day.split('-');
   const dateLabel=`${d}/${m}/${y}`;
-  let dayInv=0,dayVenda=0,dayVendaBruta=0;
-  for(const r of rows){dayInv+=r.inv;dayVenda+=r.venda;dayVendaBruta+=r.vendaBruta||0;}
+  let dayInv=0,dayVenda=0,dayVendaBruta=0,dayPedidos=0;
+  for(const r of rows){dayInv+=r.inv;dayVenda+=r.venda;dayVendaBruta+=r.vendaBruta||0;dayPedidos+=r.pedidos||0;}
   const dayCalc=calc(dayInv,dayVenda,month);
   const sc=dayCalc.saldo>=0?'pos':'neg';
   const crMap={};for(const o of curRanking)crMap[o.name]=o.rank;
@@ -3580,19 +3605,18 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
     <div class="day-table-wrap" style="${tableDisplay}">
       <table id="tbl-${dayId}" data-lazy="${isLatest?'false':'true'}">
         <colgroup>
-          <col style="width:5%"><col style="width:16%"><col style="width:10%"><col style="width:10%">
-          <col style="width:10%"><col style="width:9%"><col style="width:9%"><col style="width:9%">
-          <col style="width:7%"><col style="width:10%"><col style="width:5%">
+          <col style="width:5%"><col style="width:15%"><col style="width:9%"><col style="width:7%">
+          <col style="width:13%"><col style="width:13%"><col style="width:10%"><col style="width:8%">
+          <col style="width:15%"><col style="width:5%">
         </colgroup>
         <thead>
         <tr class="totals-row" onclick="toggleDay(this)">
           <td><span class="chevron">▾</span></td>
           <td><span class="day-date">${dateLabel}</span></td>
           <td>${fmt(dayVendaBruta)}</td>
-          <td>${fmt(dayInv)}</td>
-          <td>${fmt(dayVenda)}</td>
-          <td>${fmt(dayCalc.comMeta)}</td>
-          <td>${fmt(dayCalc.menosISS)}</td>
+          <td>${dayPedidos}</td>
+          <td><span style="color:var(--muted)">${fmt(dayInv)}</span><br><span style="color:var(--yellow)">${fmt(dayCalc.comMeta)}</span></td>
+          <td><span style="color:var(--muted)">${fmt(dayVenda)}</span><br><span style="color:var(--yellow)">${fmt(dayCalc.menosISS)}</span></td>
           <td class="${sc}">${fmt(dayCalc.saldo)}</td>
           <td style="color:${dayRoasColor}">${dayRoas}</td>
           <td class="${totMesClass}">${fmt(totMesSaldo)}</td>
@@ -3602,10 +3626,9 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
           <th style="cursor:pointer;user-select:none;transition:color .15s" onmouseover="this.style.color='#e8ecf4'" onmouseout="this.style.color=''" onclick="openRankModal()">Rank 🏆</th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','name')">Sub ID <span class="sort-ind" data-col="name"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','vendaBruta')">Vendas <span class="sort-ind" data-col="vendaBruta"></span></th>
-          <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','inv')">Investimento <span class="sort-ind" data-col="inv"></span></th>
-          <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','venda')">Comissão <span class="sort-ind" data-col="venda"></span></th>
-          <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','meta')">+Meta (${fmtPct(getMetaTaxa())}) <span class="sort-ind" data-col="meta"></span></th>
-          <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','iss')">−ISS (${fmtPct(getISS())}) <span class="sort-ind" data-col="iss"></span></th>
+          <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','pedidos')">Pedidos <span class="sort-ind" data-col="pedidos"></span></th>
+          <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','inv')" title="Meta (${fmtPct(getMetaTaxa())})">Investimento <span class="sort-ind" data-col="inv"></span></th>
+          <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','venda')" title="ISS (${fmtPct(getISS())})">Comissão <span class="sort-ind" data-col="venda"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','saldo')">Saldo/Dia <span class="sort-ind" data-col="saldo"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','roi')">ROAS <span class="sort-ind" data-col="roi"></span></th>
           <th style="${thStyle}" ${thHover} onclick="sortTable('${dayId}','acum')">Saldo Mês <span class="sort-ind" data-col="acum"></span></th>
