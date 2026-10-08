@@ -161,16 +161,16 @@ let currentUser=null;
   tr.roi-gold td{background:var(--gold-bg)}
   tr.roi-gold{outline:1px solid var(--gold-border);outline-offset:-1px}
   tr.roi-gold td:nth-child(2){color:var(--gold-text);font-weight:600}
-  tr.roi-gold td:nth-child(9){color:var(--gold-text);font-weight:600}
+  tr.roi-gold td:nth-child(8){color:var(--gold-text);font-weight:600}
   tr.roi-bord td{background:var(--bord-bg)}
   tr.roi-bord{outline:1px solid var(--bord-border);outline-offset:-1px}
   tr.roi-bord td:nth-child(2){color:var(--bord-text);font-weight:600}
-  tr.roi-bord td:nth-child(9){color:var(--bord-text);font-weight:600}
+  tr.roi-bord td:nth-child(8){color:var(--bord-text);font-weight:600}
   @keyframes blink-purple{0%,100%{background:rgba(90,30,140,0.22)}50%{background:rgba(90,30,140,0.70)}}
   tr.roi-blink td{animation:blink-purple 1s ease-in-out infinite}
   tr.roi-blink{outline:2px solid var(--bord-border);outline-offset:-1px}
   tr.roi-blink td:nth-child(2){color:var(--bord-text);font-weight:700}
-  tr.roi-blink td:nth-child(9){color:var(--bord-text);font-weight:700}
+  tr.roi-blink td:nth-child(8){color:var(--bord-text);font-weight:700}
   /* iOS toggle */
   .ios-toggle{position:relative;display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
   .ios-toggle input{display:none}
@@ -2030,6 +2030,8 @@ function parseMetaCSVIntoSlot(raw,i){
     const hl=h.toLowerCase();
     return hl.includes('valor usado')||hl.includes('valor gasto');
   });
+  const orcamentoIdx=headers.findIndex(h=>h.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').includes('orcamento'));
+  const veiculacaoIdx=headers.findIndex(h=>h.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').includes('veiculac'));
   if((nomeIdx<0&&campanhaIdx<0)||invIdx<0){
     slot.status='Colunas não encontradas';
     slot.error=true;
@@ -2051,10 +2053,11 @@ function parseMetaCSVIntoSlot(raw,i){
   }
   slot.invMap=new Map();
   slot.cliqueMap=new Map();
+  const namingIssues=[];
   for(let li=1;li<lines.length;li++){
     const cols=parseCSVLine2(lines[li],sep).map(c=>c.trim().replace(/"/g,''));
     const nomeCampanha=campanhaIdx>=0?(cols[campanhaIdx]||''):'';
-    const nomeAnuncio=cols[nomeIdx]||'';
+    const nomeAnuncio=nomeIdx>=0?(cols[nomeIdx]||''):'';
     // Sub_id is always the LAST [..] block. Different account managers put
     // the tags on different fields, so check "Nome da campanha" first, then
     // fall back to "Nome do anúncio".
@@ -2066,6 +2069,16 @@ function parseMetaCSVIntoSlot(raw,i){
     slot.invMap.set(sub,(slot.invMap.get(sub)||0)+inv);
     const metaClicks=resultIdx>=0?parseInt((cols[resultIdx]||'0').replace(/[^0-9]/g,''))||0:0;
     slot.cliqueMap.set(sub,(slot.cliqueMap.get(sub)||0)+metaClicks);
+    // Alerta de nomenclatura: a campanha deveria ter o mesmo nome do anúncio.
+    if(nomeCampanha&&nomeAnuncio&&nomeCampanha.trim().toLowerCase()!==nomeAnuncio.trim().toLowerCase()){
+      namingIssues.push({
+        campanha:nomeCampanha,
+        anuncio:nomeAnuncio,
+        gasto:inv,
+        orcamento:orcamentoIdx>=0?(cols[orcamentoIdx]||'—'):'—',
+        veiculacao:veiculacaoIdx>=0?(cols[veiculacaoIdx]||'—'):'—'
+      });
+    }
   }
   slot.error=false;
   slot.status=`✓ ${slot.invMap.size} sub id${slot.invMap.size!==1?'s':''} encontrado${slot.invMap.size!==1?'s':''}`;
@@ -2073,6 +2086,36 @@ function parseMetaCSVIntoSlot(raw,i){
   renderMetaSlots();
   // Fill investment column if names already loaded
   applyMetaToInv();
+  if(namingIssues.length)showMetaNamingAlert(namingIssues);
+}
+
+function showMetaNamingAlert(issues){
+  const bg=document.createElement('div');
+  bg.className='sub-modal-bg';
+  bg.style.zIndex='500';
+  const rows=issues.map(it=>`<tr>
+      <td>${it.campanha}</td>
+      <td>${it.anuncio}</td>
+      <td>${fmt(it.gasto)}</td>
+      <td>${it.orcamento}</td>
+      <td>${it.veiculacao}</td>
+    </tr>
+    <tr><td colspan="5" style="text-align:left;font-family:'DM Mono',monospace;font-size:11px;color:var(--yellow);border-bottom:1px solid var(--border);padding-top:0">↳ Renomear a campanha para "${it.anuncio}"</td></tr>`).join('');
+  bg.innerHTML=`<div class="sub-modal" style="max-width:640px" onclick="event.stopPropagation()">
+    <div class="sub-modal-header"><h3>Nomes inconsistentes encontrados</h3></div>
+    <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);margin:-10px 0 16px">${issues.length} campanha${issues.length!==1?'s':''} com nome diferente do anúncio</p>
+    <div class="sub-modal-scroll">
+      <table>
+        <thead><tr><th>Campanha</th><th>Anúncio</th><th>Gasto</th><th>Orçamento</th><th>Veiculação</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div style="margin-top:18px;text-align:center">
+      <button class="sub-modal-close" onclick="document.body.removeChild(this.closest('.sub-modal-bg'))">Fechar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(bg);
+  bg.onclick=()=>document.body.removeChild(bg);
 }
 
 function parseCSVLine2(line,sep){
@@ -3518,8 +3561,8 @@ function buildDayTbodyRows(day,sortedRows,crMap,displayRankMap,prevRankMap,cumSa
       <td onclick="openSubModal('${r.name.replace(/'/g,"\\'")}');event.stopPropagation()" style="cursor:pointer;${isMissing?'opacity:0.35':''}">${r.name}</td>
       <td>${fmt(r.vendaBruta||0)}</td>
       <td>${pedidosVal}</td>
-      <td><span style="color:var(--muted)">${fmt(r.inv)}</span><br><span style="color:var(--yellow)">${fmt(c.comMeta)}</span></td>
-      <td><span style="color:var(--muted)">${fmt(r.venda)}</span><br><span style="color:var(--yellow)">${fmt(c.menosISS)}</span></td>
+      <td><span style="color:var(--muted)">${fmt(r.inv)}</span><br><span style="color:var(--text)">${fmt(c.comMeta)}</span></td>
+      <td><span style="color:var(--muted)">${fmt(r.venda)}</span><br><span style="color:var(--text)">${fmt(c.menosISS)}</span></td>
       <td class="${sClass}">${fmt(c.saldo)}</td>
       <td${isMissing?'':` style="color:${roasColor(c.roi)}"`}>${isMissing?'<span class="neu">—</span>':roiStr}</td>
       <td class="${acumClass}" style="font-weight:500">${fmt(acum)}</td>
@@ -3615,8 +3658,8 @@ function renderDay(day,rows,curRanking,prevRankMap,cumSaldo,isLatest,month){
           <td><span class="day-date">${dateLabel}</span></td>
           <td>${fmt(dayVendaBruta)}</td>
           <td>${dayPedidos}</td>
-          <td><span style="color:var(--muted)">${fmt(dayInv)}</span><br><span style="color:var(--yellow)">${fmt(dayCalc.comMeta)}</span></td>
-          <td><span style="color:var(--muted)">${fmt(dayVenda)}</span><br><span style="color:var(--yellow)">${fmt(dayCalc.menosISS)}</span></td>
+          <td><span style="color:var(--muted)">${fmt(dayInv)}</span><br><span style="color:var(--text)">${fmt(dayCalc.comMeta)}</span></td>
+          <td><span style="color:var(--muted)">${fmt(dayVenda)}</span><br><span style="color:var(--text)">${fmt(dayCalc.menosISS)}</span></td>
           <td class="${sc}">${fmt(dayCalc.saldo)}</td>
           <td style="color:${dayRoasColor}">${dayRoas}</td>
           <td class="${totMesClass}">${fmt(totMesSaldo)}</td>
@@ -3899,7 +3942,7 @@ async function openSubModal(name){
   }
   if(!days.length&&!bridgeDays.length)return;
 
-  let totInv=0,totVenda=0,totSaldo=0,totMeta=0,totISS=0,totVendaBruta=0,count=0;
+  let totInv=0,totVenda=0,totSaldo=0,totMeta=0,totISS=0,totVendaBruta=0,totPedidos=0,count=0;
   const buildRow=(day,idx,isBridge)=>{
     const rowsSource=isBridge?bridgeMd:md;
     const rowMonth=isBridge?bridgePrevMonth:month;
@@ -3910,17 +3953,17 @@ async function openSubModal(name){
     const c=calc(r.inv,r.venda,rowMonth);
     const vMap=isBridge?bridgeVbMap:vbMap;
     const vendaBruta=(vMap[day]&&vMap[day][nameKey])||0;
-    if(!isBridge){totInv+=r.inv;totVenda+=r.venda;totSaldo+=c.saldo;totVendaBruta+=vendaBruta;count++;}
+    if(!isBridge){totInv+=r.inv;totVenda+=r.venda;totSaldo+=c.saldo;totVendaBruta+=vendaBruta;totPedidos+=r.pedidos||0;count++;}
     const sc=c.saldo>=0?'color:var(--accent2)':'color:var(--red)';
     const rc='color:'+roasColor(c.roi);
     const bridgeStyle=isBridge?'opacity:0.55':'';
-    return`<tr data-idx="${idx}" data-date="${day}" style="${bridgeStyle}" data-vendabruta="${vendaBruta}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roas="${c.roi??-999}">
+    const pedidosVal=r.pedidos!=null?r.pedidos:'';
+    return`<tr data-idx="${idx}" data-date="${day}" style="${bridgeStyle}" data-vendabruta="${vendaBruta}" data-pedidos="${r.pedidos||0}" data-inv="${r.inv}" data-meta="${c.comMeta}" data-venda="${r.venda}" data-iss="${c.menosISS}" data-saldo="${c.saldo}" data-roas="${c.roi??-999}">
       <td>${lbl}</td>
       <td>${fmt(vendaBruta)}</td>
-      <td>${fmt(r.inv)}</td>
-      <td>${fmt(r.venda)}</td>
-      <td>${fmt(c.comMeta)}</td>
-      <td>${fmt(c.menosISS)}</td>
+      <td>${pedidosVal}</td>
+      <td><span style="color:var(--muted)">${fmt(r.inv)}</span><br><span style="color:var(--text)">${fmt(c.comMeta)}</span></td>
+      <td><span style="color:var(--muted)">${fmt(r.venda)}</span><br><span style="color:var(--text)">${fmt(c.menosISS)}</span></td>
       <td style="${sc};font-weight:600">${fmt(c.saldo)}</td>
       <td style="${rc};font-weight:600">${c.roi!==null?c.roi.toFixed(2):'—'}</td>
     </tr>`;
@@ -3952,8 +3995,8 @@ async function openSubModal(name){
   if(!document.getElementById('sub-modal-colgroup')){
     document.getElementById('sub-modal-table').insertAdjacentHTML('afterbegin',
       `<colgroup id="sub-modal-colgroup">
-        <col style="width:10%"><col style="width:13%"><col style="width:13%"><col style="width:13%">
-        <col style="width:13%"><col style="width:13%"><col style="width:13%"><col style="width:12%">
+        <col style="width:10%"><col style="width:12%"><col style="width:9%"><col style="width:16%">
+        <col style="width:16%"><col style="width:14%"><col style="width:13%">
       </colgroup>`);
   }
   const thS='cursor:pointer;user-select:none;transition:color .15s';
@@ -3961,10 +4004,9 @@ async function openSubModal(name){
   document.getElementById('sub-modal-thead').innerHTML=`<tr>
       <th style="${thS}" ${thH} onclick="sortSubModal('date')">Data <span class="sort-ind" id="sms-date"></span></th>
       <th style="${thS}" ${thH} onclick="sortSubModal('vendabruta')">Vendas <span class="sort-ind" id="sms-vendabruta"></span></th>
-      <th style="${thS}" ${thH} onclick="sortSubModal('inv')">Investimento <span class="sort-ind" id="sms-inv"></span></th>
-      <th style="${thS}" ${thH} onclick="sortSubModal('venda')">Comissão <span class="sort-ind" id="sms-venda"></span></th>
-      <th style="${thS}" ${thH} onclick="sortSubModal('meta')">+Meta <span class="sort-ind" id="sms-meta"></span></th>
-      <th style="${thS}" ${thH} onclick="sortSubModal('iss')">−ISS <span class="sort-ind" id="sms-iss"></span></th>
+      <th style="${thS}" ${thH} onclick="sortSubModal('pedidos')">Pedidos <span class="sort-ind" id="sms-pedidos"></span></th>
+      <th style="${thS}" ${thH} onclick="sortSubModal('inv')" title="Meta (${fmtPct(getMetaTaxa())})">Investimento <span class="sort-ind" id="sms-inv"></span></th>
+      <th style="${thS}" ${thH} onclick="sortSubModal('venda')" title="ISS (${fmtPct(getISS())})">Comissão <span class="sort-ind" id="sms-venda"></span></th>
       <th style="${thS}" ${thH} onclick="sortSubModal('saldo')">Saldo/Dia <span class="sort-ind" id="sms-saldo"></span></th>
       <th style="${thS}" ${thH} onclick="sortSubModal('roas')">ROAS <span class="sort-ind" id="sms-roas"></span></th>
     </tr>`;
@@ -3991,7 +4033,7 @@ function sortSubModal(col){
   if(!tbody)return;
   const trs=[...tbody.querySelectorAll('tr')];
   // update indicators
-  ['date','vendabruta','inv','meta','venda','iss','saldo','roas'].forEach(c=>{
+  ['date','vendabruta','pedidos','inv','venda','saldo','roas'].forEach(c=>{
     const el=document.getElementById('sms-'+c);
     if(c==='date') el&&(el.textContent=(col==='date'&&dir===1)?'↓':'');
     else el&&(el.textContent=(c===col&&dir===1)?'↓':(c===col&&dir===-1)?'↑':'');
@@ -4031,17 +4073,18 @@ async function openRankModal(){
   const lastDayActive=new Set((md[lastDay]||[]).filter(r=>r.inv>0).map(r=>r.name));
   for(const day of days){
     for(const r of md[day]){
-      if(!acc[r.name])acc[r.name]={inv:0,venda:0,vendaBruta:0};
+      if(!acc[r.name])acc[r.name]={inv:0,venda:0,vendaBruta:0,pedidos:0};
       acc[r.name].inv+=r.inv;
       acc[r.name].venda+=r.venda;
       acc[r.name].vendaBruta+=(vbMap[day]&&vbMap[day][r.name.toLowerCase()])||0;
+      acc[r.name].pedidos+=r.pedidos||0;
     }
   }
 
   // sort by saldo desc
   const ranked=Object.entries(acc).map(([name,t])=>{
     const c=calc(t.inv,t.venda,month);
-    return{name,inv:t.inv,venda:t.venda,vendaBruta:t.vendaBruta,comMeta:c.comMeta,menosISS:c.menosISS,saldo:c.saldo,roi:c.roi};
+    return{name,inv:t.inv,venda:t.venda,vendaBruta:t.vendaBruta,pedidos:t.pedidos,comMeta:c.comMeta,menosISS:c.menosISS,saldo:c.saldo,roi:c.roi};
   }).sort((a,b)=>b.saldo-a.saldo);
 
   // month totals
@@ -4081,14 +4124,13 @@ async function openRankModal(){
     const sc=r.saldo>=0?'color:var(--accent2)':'color:var(--red)';
     const rc='color:'+roasColor(r.roi);
     const isLastDayActive=lastDayActive.has(r.name);
-    return`<tr data-rank="${i}" data-vendabruta="${r.vendaBruta}" data-inv="${r.inv}" data-meta="${r.comMeta}" data-venda="${r.venda}" data-iss="${r.menosISS}" data-saldo="${r.saldo}" data-roi="${r.roi??-999}" data-name="${r.name}" data-lastday="${isLastDayActive?1:0}">
+    return`<tr data-rank="${i}" data-vendabruta="${r.vendaBruta}" data-pedidos="${r.pedidos||0}" data-inv="${r.inv}" data-meta="${r.comMeta}" data-venda="${r.venda}" data-iss="${r.menosISS}" data-saldo="${r.saldo}" data-roi="${r.roi??-999}" data-name="${r.name}" data-lastday="${isLastDayActive?1:0}">
       <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:600">${i+1}</td>
       <td style="text-align:left;font-family:'DM Sans',sans-serif">${r.name}</td>
       <td>${fmt(r.vendaBruta)}</td>
-      <td>${fmt(r.inv)}</td>
-      <td>${fmt(r.venda)}</td>
-      <td>${fmt(r.comMeta)}</td>
-      <td>${fmt(r.menosISS)}</td>
+      <td>${r.pedidos||0}</td>
+      <td><span style="color:var(--muted)">${fmt(r.inv)}</span><br><span style="color:var(--text)">${fmt(r.comMeta)}</span></td>
+      <td><span style="color:var(--muted)">${fmt(r.venda)}</span><br><span style="color:var(--text)">${fmt(r.menosISS)}</span></td>
       <td style="${sc};font-weight:600">${fmt(r.saldo)}</td>
       <td style="${rc};font-weight:600">${r.roi!==null?r.roi.toFixed(2):'—'}</td>
     </tr>`;
@@ -4101,22 +4143,20 @@ async function openRankModal(){
     <colgroup>
       <col style="width:50px">
       <col style="width:16%">
-      <col style="width:12%">
-      <col style="width:12%">
-      <col style="width:12%">
-      <col style="width:12%">
-      <col style="width:12%">
-      <col style="width:13%">
-      <col style="width:7%">
+      <col style="width:10%">
+      <col style="width:8%">
+      <col style="width:16%">
+      <col style="width:16%">
+      <col style="width:14%">
+      <col style="width:8%">
     </colgroup>
     <thead><tr>
       <th>Rank</th>
       <th style="${thS};text-align:left" ${thH} onclick="sortRankModal('name')">Sub ID <span class="sort-ind" id="rms-name"></span></th>
       <th style="${thS}" ${thH} onclick="sortRankModal('vendabruta')">Vendas <span class="sort-ind" id="rms-vendabruta"></span></th>
-      <th style="${thS}" ${thH} onclick="sortRankModal('inv')">Investimento <span class="sort-ind" id="rms-inv"></span></th>
-      <th style="${thS}" ${thH} onclick="sortRankModal('venda')">Comissão <span class="sort-ind" id="rms-venda"></span></th>
-      <th style="${thS}" ${thH} onclick="sortRankModal('meta')">+Meta <span class="sort-ind" id="rms-meta"></span></th>
-      <th style="${thS}" ${thH} onclick="sortRankModal('iss')">−ISS <span class="sort-ind" id="rms-iss"></span></th>
+      <th style="${thS}" ${thH} onclick="sortRankModal('pedidos')">Pedidos <span class="sort-ind" id="rms-pedidos"></span></th>
+      <th style="${thS}" ${thH} onclick="sortRankModal('inv')" title="Meta (${fmtPct(getMetaTaxa())})">Investimento <span class="sort-ind" id="rms-inv"></span></th>
+      <th style="${thS}" ${thH} onclick="sortRankModal('venda')" title="ISS (${fmtPct(getISS())})">Comissão <span class="sort-ind" id="rms-venda"></span></th>
       <th style="${thS}" ${thH} onclick="sortRankModal('saldo')">Saldo Mês <span class="sort-ind" id="rms-saldo"></span></th>
       <th style="${thS}" ${thH} onclick="sortRankModal('roi')">ROAS <span class="sort-ind" id="rms-roi"></span></th>
     </tr></thead>
@@ -4157,7 +4197,7 @@ function sortRankModal(col){
     else{dir=1;}
   }
   _rankSortState.col=col;_rankSortState.dir=dir;
-  ['rank','inv','meta','venda','iss','roi','saldo','name','vendabruta'].forEach(c=>{
+  ['rank','inv','venda','roi','saldo','name','vendabruta','pedidos'].forEach(c=>{
     const el=document.getElementById('rms-'+c);
     if(c==='saldo') el&&(el.textContent=(col==='saldo'&&dir===1)?'↓':'');
     else el&&(el.textContent=(c===col&&dir===1)?'↓':(c===col&&dir===-1)?'↑':'');
